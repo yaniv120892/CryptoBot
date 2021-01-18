@@ -1,0 +1,48 @@
+﻿{
+    "Logging": {
+        "IncludeScopes": false,
+        "LogLevel": {
+            "Default": "Debug",
+            "Microsoft": "Warning",
+            "Microsoft.Hosting.Lifetime": "Warning"
+        }
+    },
+    "AllowedHosts": "*",
+    "NLog": {
+        "targets": {
+            "logConsole": {
+                "type": "ColoredConsole",
+                "layout": "${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
+            },
+            "high_logFile": {
+                "type": "file",
+                "name": "file",
+                "fileName": "logs\\demo_crypto_high_${shortdate}.log",
+                "layout": "${longdate}|${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
+            },
+            "logFile": {
+                "type": "file",
+                "name": "file",
+                "fileName": "logs\\demo_crypto_${shortdate}.log",
+                "layout": "${longdate}|${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
+            }
+        },
+        "rules": [
+            {
+                "logger": "*",
+                "minLevel": "Info",
+                "writeTo": "logConsole"
+            },
+            {
+                "logger": "*",
+                "minLevel": "Info",
+                "writeTo": "logFile"
+            },
+            {
+                "logger": "*",
+                "minLevel": "Debug",
+                "writeTo": "high_logFile"
+            }
+        ]
+    }
+}
