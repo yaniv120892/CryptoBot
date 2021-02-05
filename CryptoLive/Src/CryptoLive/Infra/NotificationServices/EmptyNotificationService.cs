@@ -8,8 +8,7 @@ namespace Infra.NotificationServices
         
         public void Notify(string body)
         {
-            s_logger.LogInformation($"Notification is disabled, don't send");
-            s_logger.LogInformation(body);
+            s_logger.LogTrace(body);
         }
     }
 }

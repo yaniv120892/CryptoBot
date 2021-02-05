@@ -1,4 +1,5 @@
 ﻿using System;
+using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
@@ -12,5 +13,10 @@ namespace Common.PollingResponses
 
         public DateTime Time { get; }
         public decimal Rsi { get; }
+
+        public override string ToString()
+        {
+            return $"Rsi: {Rsi}, Time: {Time}";
+        }
     }
 }

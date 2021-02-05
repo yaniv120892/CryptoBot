@@ -1,7 +1,9 @@
-﻿namespace Utils.Abstractions
+﻿using System;
+
+namespace Utils.Abstractions
 {
     public interface INotificationHandler
     {
-        bool NotifyIfNeeded(decimal indicator, string symbol);
+        bool NotifyIfNeeded(Func<bool> condition, string symbol);
     }
 }

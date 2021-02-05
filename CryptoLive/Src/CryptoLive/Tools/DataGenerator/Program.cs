@@ -2,13 +2,14 @@
 using System.Collections;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using CsvHelper;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Utils.Abstractions;
-using Utils.CurrencyService;
+using Services;
+using Services.Abstractions;
 
 namespace DataGenerator
 {
@@ -20,45 +21,61 @@ namespace DataGenerator
         public static async Task Main(string[] args)
         {
             DataGeneratorParameters dataGeneratorParameters = AppParametersLoader<DataGeneratorParameters>.Load(s_configFile);
-            ICurrencyService currencyService = new BinanceCurrencyService(dataGeneratorParameters.BinanceApiKey, dataGeneratorParameters.BinanceApiSecretKey);
-            const int candleSizeInMinutes = 1;
+            ICandlesService candleService = CreateCandleService(dataGeneratorParameters);
             const int candlesAmount = 999;
             CreateDirectoryIfNotExist(dataGeneratorParameters.CandlesDataFolder);
-            foreach (string currency in  dataGeneratorParameters.Currencies)
+            foreach (string currency in dataGeneratorParameters.Currencies)
             {
                 string fileName = GetFileName(currency, dataGeneratorParameters.CandlesDataFolder);
-                MyCandle[] candles = await currencyService.GetCandlesAsync(currency, candleSizeInMinutes, candlesAmount, DateTime.Now);
+                MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, candlesAmount, DateTime.Now)).ToArray();
                 if (File.Exists(fileName))
                 {
-                    s_logger.LogInformation($"Start append data to {fileName}");
-                    await using var stream = File.Open(fileName, FileMode.Append);
-                    await using var writer = new StreamWriter(stream);
-                    {
-                        await using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-                        {
-                            csvWriter.Configuration.HasHeaderRecord = false;
-                            await csvWriter.WriteRecordsAsync((IEnumerable) candles);
-                        }
-                    }
+                    MyCandle[] oldCandles = ReadOldCandles(fileName);
+                    s_logger.LogInformation($"Merge old and new data");
+                    var mergedCandles = (oldCandles.Union(newCandles)).Distinct().ToArray();
+                    DeleteOldFile(fileName);
+                    newCandles = mergedCandles;
                 }
-                else
+
+                s_logger.LogInformation($"Start write new data to {fileName}");
+                await using var writer = new StreamWriter(fileName);
                 {
-                    await using var writer = new StreamWriter(fileName);
+                    await using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
                     {
-                        await using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-                        {
-                            await csvWriter.WriteRecordsAsync((IEnumerable) candles);
-                        }
+                        csvWriter.Configuration.HasHeaderRecord = true;
+                        await csvWriter.WriteRecordsAsync((IEnumerable) newCandles.ToArray());
                     }
                 }
-                
                 s_logger.LogInformation($"Done create {fileName}");
             }
         }
 
+        private static ICandlesService CreateCandleService(DataGeneratorParameters dataGeneratorParameters)
+        {
+            ICurrencyClientFactory currencyClientFactory =
+                new CurrencyClientFactory(dataGeneratorParameters.BinanceApiKey,
+                    dataGeneratorParameters.BinanceApiSecretKey);
+            return new BinanceCandleService(currencyClientFactory);
+        }
+
+        private static void DeleteOldFile(string fileName)
+        {
+            s_logger.LogInformation($"Delete file {fileName}");
+            File.Delete(fileName);
+        }
+
+        private static MyCandle[] ReadOldCandles(string fileName)
+        {
+            using var reader = new StreamReader(fileName);
+            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+            csvReader.Configuration.HeaderValidated = null;
+            var oldCandles = csvReader.GetRecords<MyCandle>();
+            return oldCandles.ToArray();
+        }
+
         private static string GetFileName(string currency, string candlesDataFolder)
         {
-            return $"{candlesDataFolder}/{currency}.csv";
+            return $"{candlesDataFolder}\\{currency}.csv";
         }
 
         private static void CreateDirectoryIfNotExist(string folderName)

@@ -1,4 +1,5 @@
 ﻿using System;
+using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
@@ -16,5 +17,10 @@ namespace Common.PollingResponses
         }
         
         public bool IsGain => IsAbove;
+
+        public override string ToString()
+        {
+            return $"IsAbove {IsAbove}, IsBelow {IsBelow}, Time {Time}";
+        }
     }
 }
