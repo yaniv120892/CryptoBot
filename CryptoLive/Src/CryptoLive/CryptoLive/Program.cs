@@ -25,7 +25,6 @@ namespace CryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
-        private static readonly int s_botVersion = 1;
 
         public static void Main()
         {
@@ -102,16 +101,16 @@ namespace CryptoLive
 
         private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot, DateTime timeToStartBot)
         {
-            int gainCounter = 0;
+            int winCounter = 0;
             int lossCounter = 0;
             int noChangeCounter = 0;
-            while(gainCounter + lossCounter < 10)
+            while(winCounter + lossCounter < 10)
             {
-                (BotResult botResult, DateTime _) = await currencyBot.StartAsync(timeToStartBot, s_botVersion);
-                switch (botResult)
+                (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync(timeToStartBot);
+                switch (botResultDetails.BotResult)
                 {
-                    case BotResult.Gain:
-                        gainCounter++;
+                    case BotResult.Win:
+                        winCounter++;
                         break;
                     case BotResult.Even:
                         noChangeCounter++;
@@ -122,7 +121,7 @@ namespace CryptoLive
                 }
             }
 
-            s_logger.LogInformation($"{currencyBot.Currency}: Gain - {gainCounter}, Loss - {lossCounter}, NoChange: {noChangeCounter}");
+            s_logger.LogInformation($"{currencyBot.Currency}: Win - {winCounter}, Loss - {lossCounter}, NoChange: {noChangeCounter}");
         }
         
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<MyCandle> candleRepository,

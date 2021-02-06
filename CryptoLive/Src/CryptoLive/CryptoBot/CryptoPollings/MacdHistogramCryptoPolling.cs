@@ -34,7 +34,7 @@ namespace CryptoBot.CryptoPollings
             m_maxMacdPollingTime = maxMacdPollingTime;
         }
 
-        public async Task<IPollingResponse> Start(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
         {
             s_logger.LogDebug($"{symbol}: {nameof(MacdHistogramCryptoPolling)} start, " +
                               $"Get update every 1 minute," +

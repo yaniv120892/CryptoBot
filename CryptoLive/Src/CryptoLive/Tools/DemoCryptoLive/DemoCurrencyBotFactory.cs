@@ -10,19 +10,18 @@ namespace DemoCryptoLive
             ICryptoBotPhasesFactory cryptoBotPhasesFactory, string currency)
         {
             int minutesToWaitBeforePollingPrice = appParameters.CandleSize;
-            return new CurrencyBot(cryptoBotPhasesFactory, 
-                currency,
+            CurrencyBotPhasesExecutor currencyBotPhasesExecutor = new CurrencyBotPhasesExecutor(
+                cryptoBotPhasesFactory,
                 appParameters.MaxRsiToNotify,
+                appParameters.RsiMemorySize,
                 appParameters.CandleSize,
                 appParameters.CandleSize,
                 appParameters.CandleSize,
                 appParameters.DelayTimeIterationsInSeconds,
-                appParameters.PriceChangeToNotify,
-                appParameters.CandleSize,
-                appParameters.RsiMemorySize,
-                appParameters.CandleSize,
                 minutesToWaitBeforePollingPrice,
-                appParameters.MaxMacdPollingTime);
+                appParameters.PriceChangeToNotify,
+                appParameters.CandleSize);
+            return new CurrencyBot(currencyBotPhasesExecutor, currency);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace CryptoBot.CryptoPollings
             m_cryptoFixedSizeQueueImpl = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
         }
 
-        public async Task<IPollingResponse> Start(string symbol, CancellationToken cancellationToken,
+        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken,
             DateTime currentTime)
         {
             s_logger.LogDebug($"{symbol}: {nameof(PriceAndRsiCryptoPolling)} start, " +

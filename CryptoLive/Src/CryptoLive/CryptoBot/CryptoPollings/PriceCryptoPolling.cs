@@ -34,7 +34,7 @@ namespace CryptoBot.CryptoPollings
             m_priceChangeInPercentage = priceChangeInPercentage;
         }
 
-        public async Task<IPollingResponse> Start(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
         {
             decimal initialPrice = await m_currencyDataProvider.GetPriceAsync(symbol, currentTime);
             decimal minPrice = initialPrice * (100 - m_priceChangeInPercentage) / 100;

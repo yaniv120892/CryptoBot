@@ -47,7 +47,7 @@ namespace CryptoBot.CryptoPollings
             m_maxPrice = maxPrice;
         }
 
-        public async Task<IPollingResponse> Start(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
         {
             s_logger.LogDebug($"{symbol}: {nameof(CandleCryptoPolling)}, " +
                               $"Get update every {m_delayTimeInSeconds / 60} minutes");
@@ -60,7 +60,7 @@ namespace CryptoBot.CryptoPollings
                 (isBelow, isAbove) = IsCandleInRange(currCandle);
             }
 
-            var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, currentTime);
+            var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, currentTime, currCandle);
             string message = $"{symbol}: {nameof(CandleCryptoPolling)} done, {candlePollingResponse}";
             m_notificationService.Notify(message);
             s_logger.LogDebug(message);

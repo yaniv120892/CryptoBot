@@ -8,15 +8,21 @@ namespace Common.PollingResponses
         public bool IsBelow { get; }
         public bool IsAbove { get; }
         public DateTime Time { get; }
+        public MyCandle Candle { get; }
 
-        public CandlePollingResponse(in bool isBelow, in bool isAbove, DateTime time)
+
+        public CandlePollingResponse(bool isBelow, 
+            bool isAbove, 
+            DateTime time, 
+            MyCandle candle)
         {
             IsBelow = isBelow;
             IsAbove = isAbove;
             Time = time;
+            Candle = candle;
         }
         
-        public bool IsGain => IsAbove;
+        public bool IsWin => IsAbove;
 
         public override string ToString()
         {
