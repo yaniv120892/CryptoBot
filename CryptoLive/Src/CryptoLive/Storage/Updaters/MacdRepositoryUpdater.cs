@@ -34,15 +34,20 @@ namespace Storage.Updaters
             m_emaAndSignalStorageObject = emaAndSignalStorageObject;
         }
 
-        public void AddInfo(MyCandle candle, DateTime newMacdTime, DateTime previousMacdTime)
+        public void AddInfo(MyCandle candle, DateTime previousTime, DateTime newTime)
         {
-            AddEmaAndSignalToRepository(candle, newMacdTime, previousMacdTime);
-            decimal newMacdHistogram = CalculateNewMacdHistogram(newMacdTime);
-            MacdStorageObject macdStorageObject = new MacdStorageObject(newMacdHistogram);
-            m_macdRepository.Add(m_symbol, newMacdTime, macdStorageObject);        
+            AddEmaAndSignalToRepository(candle, previousTime, newTime);
+            AddMacdToRepository(newTime);
         }
 
-        private void AddEmaAndSignalToRepository(MyCandle candle, DateTime newMacdTime, DateTime previousMacdTime)
+        private void AddMacdToRepository(DateTime newTime)
+        {
+            decimal newMacdHistogram = CalculateNewMacdHistogram(newTime);
+            MacdStorageObject macdStorageObject = new MacdStorageObject(newMacdHistogram);
+            m_macdRepository.Add(m_symbol, newTime, macdStorageObject);
+        }
+
+        private void AddEmaAndSignalToRepository(MyCandle candle, DateTime previousMacdTime, DateTime newMacdTime)
         {
             EmaAndSignalStorageObject emaAndSignalStorageObject = CalculateNewEmaAndSignal(previousMacdTime, candle);
             m_emaAndSignalStorageObject.Add(m_symbol, newMacdTime, emaAndSignalStorageObject);        

@@ -27,15 +27,20 @@ namespace Storage.Updaters
             m_rsiSize = rsiSize;
         }
 
-        public void AddInfo(MyCandle candle, DateTime newRsiTime, DateTime previousRsiTime)
+        public void AddInfo(MyCandle candle, DateTime previousTime, DateTime newTime)
         {
-            AddWsmaToRepository(candle, newRsiTime, previousRsiTime);
-            decimal newRsi = CalculateNewRsi(newRsiTime);
-            RsiStorageObject rsiStorageObject = new RsiStorageObject(newRsi);
-            m_rsiRepository.Add(m_symbol, newRsiTime, rsiStorageObject);
+            AddWsmaToRepository(candle, previousTime, newTime);
+            AddRsiToRepository(newTime);
         }
 
-        private void AddWsmaToRepository(MyCandle candle, DateTime newWsmaTime, DateTime previousWsmTime)
+        private void AddRsiToRepository(DateTime newTime)
+        {
+            decimal newRsi = CalculateNewRsi(newTime);
+            RsiStorageObject rsiStorageObject = new RsiStorageObject(newRsi);
+            m_rsiRepository.Add(m_symbol, newTime, rsiStorageObject);
+        }
+
+        private void AddWsmaToRepository(MyCandle candle, DateTime previousWsmTime, DateTime newWsmaTime)
         {
             WsmaStorageObject newWsma = CalculateNewWsma(previousWsmTime, candle);
             m_wsmaRepository.Add(m_symbol, newWsmaTime, newWsma);

@@ -15,9 +15,9 @@ namespace Storage.Updaters
             m_symbol = symbol;
         }
 
-        public void AddInfo(MyCandle candle, DateTime candleTime, DateTime newCandleTime)
+        public void AddInfo(MyCandle candle, DateTime previousTime, DateTime newTime)
         {
-            m_candleRepository.Add(m_symbol, newCandleTime, candle);
+            m_candleRepository.Add(m_symbol, newTime, candle);
         }
     }
 }

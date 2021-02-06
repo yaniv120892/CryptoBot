@@ -21,7 +21,7 @@ namespace Storage.Workers
         private readonly StorageWorkerMode m_storageWorkerMode;
         private readonly IRepositoryUpdater m_rsiRepositoryUpdater;
         private readonly IRepositoryUpdater m_candleRepositoryUpdater;
-        private readonly IRepositoryUpdater m_macdRepositoryUpdater;
+        //private readonly IRepositoryUpdater m_macdRepositoryUpdater;
         private readonly CancellationToken m_cancellationToken;
         private readonly int m_candleSize;
         private readonly string m_symbol;
@@ -43,7 +43,7 @@ namespace Storage.Workers
             m_storageWorkerMode = storageWorkerMode;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
-            m_macdRepositoryUpdater = macdRepositoryUpdater;
+            //m_macdRepositoryUpdater = macdRepositoryUpdater;
             m_candlesService = candlesService;
             m_cancellationToken = cancellationToken;
         }
@@ -105,8 +105,8 @@ namespace Storage.Workers
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_symbol, amountOfOneMinuteKlines, currentTime);
             MyCandle candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
             (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
-            m_candleRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
-            m_rsiRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
+            m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
+            m_rsiRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
             //m_macdRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
         }
     }

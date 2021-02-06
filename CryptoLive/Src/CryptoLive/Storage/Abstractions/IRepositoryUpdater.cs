@@ -5,6 +5,6 @@ namespace Storage.Abstractions
 {
     public interface IRepositoryUpdater
     {
-        void AddInfo(MyCandle candle, DateTime candleTime, DateTime newCandleTime);
+        void AddInfo(MyCandle candle, DateTime previousTime, DateTime newTime);
     }
 }
