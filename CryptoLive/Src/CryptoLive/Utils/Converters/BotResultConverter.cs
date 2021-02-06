@@ -10,7 +10,7 @@ namespace Utils.Converters
             switch (value)
             {
                 case 1:
-                    return BotResult.Gain;
+                    return BotResult.Win;
                 case 0:
                     return BotResult.Even;
                 case -1:

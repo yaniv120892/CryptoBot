@@ -74,10 +74,10 @@ namespace Storage.Updaters
 
         private static WsmaStorageObject CalculateFirstWsma(MyCandle candle)
         {
-            var gainOrLossAmount = (candle.Close - candle.Open);
-            return gainOrLossAmount > 0 ? 
-                new WsmaStorageObject(gainOrLossAmount, gainOrLossAmount) : 
-                new WsmaStorageObject(-gainOrLossAmount, -gainOrLossAmount);
+            var winOrLossAmount = (candle.Close - candle.Open);
+            return winOrLossAmount > 0 ? 
+                new WsmaStorageObject(winOrLossAmount, winOrLossAmount) : 
+                new WsmaStorageObject(-winOrLossAmount, -winOrLossAmount);
         }
 
         private static (decimal upValue, decimal downValue) GetLastCandleUpAndDownValue(MyCandle candle)

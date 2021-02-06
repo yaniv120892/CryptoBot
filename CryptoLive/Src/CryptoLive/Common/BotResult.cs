@@ -4,6 +4,6 @@
     {
         Loss,
         Even,
-        Gain,
+        Win,
     }
 }
