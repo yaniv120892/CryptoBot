@@ -67,8 +67,7 @@ namespace Storage.Providers
         {
             MyCandle lastCandle = m_candlesProvider.GetLastCandle(symbol, candleSizeInMinutes, currentTime);
             decimal rsi = m_rsiProvider.Get(symbol, currentTime);
-            decimal closePrice = lastCandle.Close;
-            return new PriceAndRsi(closePrice, rsi);
+            return new PriceAndRsi(lastCandle.Close, rsi, lastCandle.CloseTime);
         }
     }
 }

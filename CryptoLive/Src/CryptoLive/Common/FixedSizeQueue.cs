@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Linq;
 
 namespace Common
 {
@@ -24,17 +23,5 @@ namespace Common
             }
         }
 
-    }
-
-    public class CryptoFixedSizeQueueImpl<TPriceAndRsi> : FixedSizeQueue<TPriceAndRsi> where TPriceAndRsi: PriceAndRsi
-    {
-        public TPriceAndRsi GetLowerRsiAndHigherPrice(TPriceAndRsi priceAndRsi) => 
-            MyQueue.FirstOrDefault(oldRsiAndPrice => 
-                priceAndRsi.Rsi > oldRsiAndPrice.Rsi
-                && priceAndRsi.Price < oldRsiAndPrice.Price);
-
-        public CryptoFixedSizeQueueImpl(int size) : base(size)
-        {
-        }
     }
 }

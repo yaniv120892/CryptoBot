@@ -78,7 +78,7 @@ namespace CryptoBot
             IPollingResponse response = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {response.Time}"); 
             phasesDescription.Add($"{phaseNumber}.Wait until lower price and higher RSI, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{response.Time}, New:{((RsiAndPricePollingResponse)response).NewPriceAndRsi}, Old:{((RsiAndPricePollingResponse)response).OldPriceAndRsi}");
+                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{response.Time}, \nNew:{((RsiAndPricePollingResponse)response).NewPriceAndRsi}, \nOld:{((RsiAndPricePollingResponse)response).OldPriceAndRsi}");
             return response.Time;
         }
         

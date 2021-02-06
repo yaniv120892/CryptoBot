@@ -26,7 +26,8 @@ namespace DemoCryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
-        private static readonly DateTime s_initialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
+        private static readonly DateTime s_storageInitialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
+        private static readonly DateTime s_botInitialTime = s_storageInitialTime.AddMinutes(120);
 
         public static void Main()
         {
@@ -106,7 +107,7 @@ namespace DemoCryptoLive
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, symbol, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, CancellationToken.None, candleSize);
-                storageWorkersTasks[i] = storageWorker.StartAsync(s_initialTime);
+                storageWorkersTasks[i] = storageWorker.StartAsync(s_storageInitialTime);
             }
 
             await Task.WhenAll(storageWorkersTasks);
@@ -163,7 +164,7 @@ namespace DemoCryptoLive
         {
             int winCounter = 0;
             int lossCounter = 0;
-            DateTime currentTime = s_initialTime;
+            DateTime currentTime = s_botInitialTime;
             bool gotException = false;
             var winPhaseDetails = new List<List<string>>();
             var lossesPhaseDetails = new List<List<string>>();
