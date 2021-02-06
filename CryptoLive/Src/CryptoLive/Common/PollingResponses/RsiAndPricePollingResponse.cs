@@ -6,17 +6,21 @@ namespace Common.PollingResponses
     public class RsiAndPricePollingResponse : IPollingResponse
     {
         public DateTime Time { get; }
-        public PriceAndRsi PriceAndRsi { get; }
+        public PriceAndRsi NewPriceAndRsi { get; }
+        public PriceAndRsi OldPriceAndRsi { get; }
 
-        public RsiAndPricePollingResponse(DateTime dateTime, PriceAndRsi priceAndRsi)
+        public RsiAndPricePollingResponse(DateTime dateTime, 
+            PriceAndRsi oldPriceAndRsi,
+            PriceAndRsi newPriceAndRsi)
         {
             Time = dateTime;
-            PriceAndRsi = priceAndRsi;
+            NewPriceAndRsi = newPriceAndRsi;
+            OldPriceAndRsi = oldPriceAndRsi;
         }
         
         public override string ToString()
         {
-            return $"{PriceAndRsi}, Time: {Time}";
+            return $"{NewPriceAndRsi}, Time: {Time}";
         }
     }
 }

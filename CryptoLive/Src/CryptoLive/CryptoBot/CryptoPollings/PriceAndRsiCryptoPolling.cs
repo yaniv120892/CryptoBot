@@ -45,18 +45,18 @@ namespace CryptoBot.CryptoPollings
             s_logger.LogDebug($"{symbol}: {nameof(PriceAndRsiCryptoPolling)} start, " +
                               $"Get update every  {s_timeToWaitInSeconds / 60} minutes");
             
-            PriceAndRsi priceAndRsi =
+            PriceAndRsi currentPriceAndRsi =
                 m_currencyDataProvider.GetRsiAndClosePrice(symbol, m_candleSizeInMinutes, currentTime);
-            
-            while (ShouldContinuePolling(priceAndRsi))
+            PriceAndRsi oldPriceAndRsi;
+            while (ShouldContinuePolling(currentPriceAndRsi, out oldPriceAndRsi))
             {
-                m_cryptoFixedSizeQueueImpl.Enqueue(priceAndRsi);
+                m_cryptoFixedSizeQueueImpl.Enqueue(currentPriceAndRsi);
                 currentTime = await m_systemClock.Wait(cancellationToken, symbol, s_timeToWaitInSeconds, "RSI And Price",
                     currentTime);
-                priceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(symbol, m_candleSizeInMinutes, currentTime);
+                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(symbol, m_candleSizeInMinutes, currentTime);
             }
 
-            var rsiAndPricePollingResponse = new RsiAndPricePollingResponse(currentTime, priceAndRsi);
+            var rsiAndPricePollingResponse = new RsiAndPricePollingResponse(currentTime, oldPriceAndRsi ,currentPriceAndRsi);
             string message =
                 $"{symbol}: {nameof(PriceAndRsiCryptoPolling)} done, {rsiAndPricePollingResponse}";
             m_notificationService.Notify(message);
@@ -64,13 +64,14 @@ namespace CryptoBot.CryptoPollings
             return rsiAndPricePollingResponse;
         }
         
-        private bool ShouldContinuePolling(PriceAndRsi priceAndRsi)
+        private bool ShouldContinuePolling(PriceAndRsi priceAndRsi, out PriceAndRsi oldPriceAndRsi)
         {
+            oldPriceAndRsi = null;
             if (priceAndRsi.Rsi > m_maxRsiToNotify)
             {
                 return true;
             }
-            PriceAndRsi oldPriceAndRsi = m_cryptoFixedSizeQueueImpl.GetLowerRsiAndHigherPrice(priceAndRsi);
+            oldPriceAndRsi = m_cryptoFixedSizeQueueImpl.GetLowerRsiAndHigherPrice(priceAndRsi);
             if (oldPriceAndRsi is null)
             {
                 return true;

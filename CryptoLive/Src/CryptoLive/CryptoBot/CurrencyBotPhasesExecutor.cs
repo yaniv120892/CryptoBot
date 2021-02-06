@@ -78,7 +78,7 @@ namespace CryptoBot
             IPollingResponse response = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {response.Time}"); 
             phasesDescription.Add($"{phaseNumber}.Wait until lower price and higher RSI, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{response.Time}, PriceAndRsi:{((RsiAndPricePollingResponse)response).PriceAndRsi}");
+                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{response.Time}, New:{((RsiAndPricePollingResponse)response).NewPriceAndRsi}, Old:{((RsiAndPricePollingResponse)response).OldPriceAndRsi}");
             return response.Time;
         }
         
@@ -91,7 +91,7 @@ namespace CryptoBot
             List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: get price every {m_priceChangeDelayTimeIterationsInSeconds / 60} minutes until it changed by {m_priceChangeToNotify}%, price: {basePrice}, {currentTime}");
-            currentTime = await m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken, currency,m_minutesToWaitBeforePollingPrice*60, "FullMode_WaitBeforeStartChild", currentTime);
+            currentTime = await m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken, currency,m_minutesToWaitBeforePollingPrice*60, "FullMode_WaitBeforeStartPricePolling", currentTime);
             CandleCryptoPolling candlePolling = m_cryptoBotPhasesFactory.CreateCandlePolling(basePrice, m_priceChangeDelayTimeIterationsInSeconds, m_priceChangeCandleSize, m_priceChangeToNotify);
             IPollingResponse response = await candlePolling.StartAsync(currency,cancellationToken, currentTime);
             var candlePollingResponse = AssertIsCandlePollingResponse(response);
