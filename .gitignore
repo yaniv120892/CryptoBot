@@ -348,3 +348,10 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+CryptoLive/CryptoNotes.txt
+CryptoLive/CurrenciesData/
+CryptoLive/Src/CryptoLive/.idea/
+CryptoLive/Src/CryptoLive/CryptoLive/appsettings.json
+CryptoLive/Src/CryptoLive/Tools/DataGenerator/appsettings.json
+CryptoLive/Src/CryptoLive/Tools/DemoCryptoLive/appsettings.json
