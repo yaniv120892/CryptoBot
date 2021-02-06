@@ -25,10 +25,20 @@ namespace Services
             BinanceClient client = m_currencyClientFactory.Create();
             string symbol = desiredSymbol;
             KlineInterval interval = KlineInterval.OneMinute;
-            var response = await client.Spot.Market.GetKlinesAsync(symbol, interval, limit: candlesAmount);
-            IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
-            Memory<MyCandle> candlesDescription = BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
-            return candlesDescription;
+            try
+            {
+                var response = await client.Spot.Market.GetKlinesAsync(symbol, interval, limit: candlesAmount);
+                IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
+                Memory<MyCandle> candlesDescription =
+                    BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
+                return candlesDescription;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+            
         }
     }
 }

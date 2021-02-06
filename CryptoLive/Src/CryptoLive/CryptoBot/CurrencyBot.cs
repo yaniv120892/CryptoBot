@@ -86,7 +86,6 @@ namespace CryptoBot
             s_logger.LogInformation($"{currency}_{age}: Start iteration");
             
             // Indicator
-            // currentTime = await WaitUntilLowerPriceAndHigherRsi(currency, currentTime, age);
             currentTime = await WaitUntilRsiIsBelowMaxValue(currency, CancellationToken.None, age, currentTime);
             
             // Validator

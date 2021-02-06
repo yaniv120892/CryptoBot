@@ -48,9 +48,9 @@ namespace Storage.Workers
             m_cancellationToken = cancellationToken;
         }
 
-        public async Task Start(DateTime currentTime)
+        public async Task StartAsync(DateTime currentTime)
         {
-            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_symbol}");
+            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_symbol} at {currentTime}");
             Stopwatch stopwatch = new Stopwatch();
             try
             {
@@ -92,10 +92,11 @@ namespace Storage.Workers
         
         private (DateTime previousTime, DateTime newTime) GetNewAndPreviousCandleTimes(MyCandle candleDescription)
         {
-            DateTime newTime = candleDescription.OpenTime;
-            DateTime previousTime = newTime.Subtract(TimeSpan.FromMinutes(m_candleSize));
+            DateTime newTime = candleDescription.CloseTime;
+            DateTime newDateTimeWithoutSeconds = newTime.AddSeconds(-newTime.Second);
+            DateTime previousTime = newDateTimeWithoutSeconds.Subtract(TimeSpan.FromMinutes(m_candleSize));
 
-            return (previousTime, newTime);
+            return (previousTime, newDateTimeWithoutSeconds);
         } 
 
         private async Task AddDataToRepositories(DateTime currentTime)
@@ -106,7 +107,7 @@ namespace Storage.Workers
             (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
             m_candleRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
             m_rsiRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
-            m_macdRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
+            //m_macdRepositoryUpdater.AddInfo(candle, newCandleTime, previousCandleTime);
         }
     }
 }

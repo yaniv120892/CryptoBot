@@ -14,9 +14,10 @@ namespace Utils.SystemClocks
         public async Task<DateTime> Wait(CancellationToken cancellationToken, string desiredSymbol, int timeToWaitInSeconds, string action,
             DateTime currentTime)
         {
-            s_logger.LogDebug($"{desiredSymbol}_{action}: Wait for next candle {timeToWaitInSeconds} seconds");
+            s_logger.LogTrace($"{desiredSymbol}_{action}: Wait for next candle {timeToWaitInSeconds} seconds");
             await Task.Delay(1000 * timeToWaitInSeconds, cancellationToken);
-            return DateTime.Now;
+            DateTime dateTime = DateTime.UtcNow;
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute,0);
         }
     }
 }

@@ -69,12 +69,12 @@ namespace CryptoBot.CryptoPollings
 
         private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle)
         {
-            if (currCandle.Low > m_minPrice)
+            if (currCandle.Low < m_minPrice)
             {
                 return (true, false);
             }
             
-            return currCandle.High < m_maxPrice ? 
+            return currCandle.High > m_maxPrice ? 
                 (false, true) : 
                 (false, false);
         }

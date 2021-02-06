@@ -24,6 +24,7 @@ namespace CryptoLive
         public int SlowEmaSize { get; set; }
         public int SignalSize { get; set; }
         public int MaxMacdPollingTime { get; set; }
+        public int BotDelayTime { get; set; }
 
         public CryptoLiveParameters(IConfigurationSection applicationSection)
         {
@@ -45,6 +46,7 @@ namespace CryptoLive
             SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
             SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
             MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
+            BotDelayTime = int.Parse(applicationSection[nameof(BotDelayTime)]);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace CryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
-        private static readonly int s_botVersion = 2;
+        private static readonly int s_botVersion = 1;
 
         public static void Main()
         {
@@ -37,6 +37,7 @@ namespace CryptoLive
         private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
         {               
             var systemClock = new SystemClock();
+            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
             var cancellationTokenSource = new CancellationTokenSource();
             
             var currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, cryptoLiveParameters.BinanceApiSecretKey);
@@ -55,7 +56,7 @@ namespace CryptoLive
             int candleSize = cryptoLiveParameters.CandleSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClock, currencyClientFactory);
+                macdRepository, systemClockWithDelay, currencyClientFactory);
             
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
@@ -67,8 +68,10 @@ namespace CryptoLive
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, cancellationTokenSource, candleSize);
                 CurrencyBot currencyBot = CurrencyBotFactory.Create(cryptoLiveParameters, cryptoBotPhasesFactory, symbol);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot);
-                storageWorkersTasks[i] = storageWorker.Start(DateTime.Now);
+                DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, symbol, 0, "Init",DateTime.UtcNow);
+                storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
+                await systemClock.Wait(CancellationToken.None, symbol, 120, "Init2",storageStartTime);
+                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, storageStartTime);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -97,14 +100,14 @@ namespace CryptoLive
             return storageWorker;
         }
 
-        private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot)
+        private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot, DateTime timeToStartBot)
         {
             int gainCounter = 0;
             int lossCounter = 0;
             int noChangeCounter = 0;
             while(gainCounter + lossCounter < 10)
             {
-                (BotResult botResult, DateTime _) = await currencyBot.StartAsync(DateTime.Now, s_botVersion);
+                (BotResult botResult, DateTime _) = await currencyBot.StartAsync(timeToStartBot, s_botVersion);
                 switch (botResult)
                 {
                     case BotResult.Gain:

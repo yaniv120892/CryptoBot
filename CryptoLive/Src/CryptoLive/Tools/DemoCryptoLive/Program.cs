@@ -25,7 +25,7 @@ namespace DemoCryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
-        private static readonly int s_botVersion = 3;
+        private static readonly int s_botVersion = 1;
         private static readonly DateTime s_initialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
 
         public static void Main()
@@ -38,9 +38,9 @@ namespace DemoCryptoLive
         private static async Task RunMultiplePhases(DemoCryptoParameters appParameters)
         {
             var systemClock = new DummySystemClock();
-            var candleRepository = new RepositoryImpl<MyCandle>(appParameters.Currencies);
-            var rsiRepository = new RepositoryImpl<RsiStorageObject>(appParameters.Currencies);
-            var macdRepository = new RepositoryImpl<MacdStorageObject>(appParameters.Currencies);
+            var candleRepository = new RepositoryImpl<MyCandle>(appParameters.Currencies, deleteOldData: false);
+            var rsiRepository = new RepositoryImpl<RsiStorageObject>(appParameters.Currencies, deleteOldData: false);
+            var macdRepository = new RepositoryImpl<MacdStorageObject>(appParameters.Currencies, deleteOldData: false);
 
             DemoCandleService demoCandleService = new DemoCandleService(appParameters.Currencies, 
                 appParameters.CandlesDataFolder);
@@ -95,8 +95,8 @@ namespace DemoCryptoLive
             int slowEmaSize, 
             int signalSize)
         {
-            var wsmRepository = new RepositoryImpl<WsmaStorageObject>(currencies);
-            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(currencies);
+            var wsmRepository = new RepositoryImpl<WsmaStorageObject>(currencies, deleteOldData: false);
+            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(currencies, deleteOldData: false);
 
             var storageWorkersTasks = new Task[currencies.Count];
             for (int i = 0; i < storageWorkersTasks.Length; i++)
@@ -105,7 +105,7 @@ namespace DemoCryptoLive
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, symbol, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, CancellationToken.None, candleSize);
-                storageWorkersTasks[i] = storageWorker.Start(s_initialTime);
+                storageWorkersTasks[i] = storageWorker.StartAsync(s_initialTime);
             }
 
             await Task.WhenAll(storageWorkersTasks);

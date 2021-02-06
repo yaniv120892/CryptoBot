@@ -40,7 +40,7 @@
             },
             {
                 "logger": "*",
-                "minLevel": "Debug",
+                "minLevel": "Trace",
                 "writeTo": "high_logFile"
             }
         ]

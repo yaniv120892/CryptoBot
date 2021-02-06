@@ -27,7 +27,7 @@ namespace DataGenerator
             foreach (string currency in dataGeneratorParameters.Currencies)
             {
                 string fileName = GetFileName(currency, dataGeneratorParameters.CandlesDataFolder);
-                MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, candlesAmount, DateTime.Now)).ToArray();
+                MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, candlesAmount, DateTime.UtcNow)).ToArray();
                 if (File.Exists(fileName))
                 {
                     MyCandle[] oldCandles = ReadOldCandles(fileName);
