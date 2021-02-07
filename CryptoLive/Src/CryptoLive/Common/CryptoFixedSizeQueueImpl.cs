@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace Common
@@ -9,7 +10,8 @@ namespace Common
             return MyQueue.FirstOrDefault(oldRsiAndPrice => 
                 priceAndRsi.Rsi > oldRsiAndPrice.Rsi
                 && priceAndRsi.Price < oldRsiAndPrice.Price
-                );
+                && oldRsiAndPrice.CandleTime < priceAndRsi.CandleTime.Subtract(TimeSpan.FromMinutes(15))
+            );
         } 
             
 
