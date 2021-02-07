@@ -1,10 +1,13 @@
+using System;
+
 namespace Utils.Calculators
 {
     public class EmaCalculator
     {
         public static decimal Calculate(decimal valueToAdd, decimal previousEma, int emaSize)
         {
-            return (valueToAdd - previousEma) * (decimal) (2d / (emaSize + 1)) + previousEma;
+            var ans = (valueToAdd - previousEma) * (decimal) (2d / (emaSize + 1)) + previousEma;
+            return Math.Round(ans, 3);
         }
     }
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace Utils.Calculators
 {
     public class MacdHistogramCalculator
@@ -6,7 +8,8 @@ namespace Utils.Calculators
         {
             decimal difference = fastEma - slowEma;
             decimal macd = difference - signal;
-            return macd;
+            return Math.Round(macd, 3);
+
         }
     }
 }
