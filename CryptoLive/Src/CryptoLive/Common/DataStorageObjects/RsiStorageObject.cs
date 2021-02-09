@@ -1,12 +1,20 @@
+using System;
+
 namespace Common.DataStorageObjects
 {
-    public class RsiStorageObject
+    public class RsiStorageObject : StorageObjectBase
     {
-        public RsiStorageObject(decimal rsi)
+        public decimal Rsi { get; set; }
+        
+        public RsiStorageObject()
+        {
+            // For csvHelper
+        }
+        
+        public RsiStorageObject(decimal rsi, DateTime time)
+            : base(time)
         {
             Rsi = rsi;
         }
-
-        public decimal Rsi { get; }
     }
 }

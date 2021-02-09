@@ -1,10 +1,12 @@
 using System;
-using Common;
+using System.Threading.Tasks;
+using Common.DataStorageObjects;
 
 namespace Storage.Abstractions
 {
     public interface IRepositoryUpdater
     {
-        void AddInfo(MyCandle candle, DateTime previousTime, DateTime newTime);
+        void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime);
+        Task PersistDataToFileAsync();
     }
 }

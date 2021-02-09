@@ -1,16 +1,25 @@
+using System;
+
 namespace Common.DataStorageObjects
 {
-    public class EmaAndSignalStorageObject
+    public class EmaAndSignalStorageObject : StorageObjectBase
     {
-        public EmaAndSignalStorageObject(decimal fastEma, decimal slowEma, decimal signal)
+        
+        public decimal FastEma { get; set; }
+        public decimal SlowEma { get; set; }
+        public decimal Signal { get; set; }
+        
+        public EmaAndSignalStorageObject()
+        {
+            // For csvHelper
+        }
+        
+        public EmaAndSignalStorageObject(decimal fastEma, decimal slowEma, decimal signal, DateTime time) 
+            :base(time)
         {
             FastEma = fastEma;
             SlowEma = slowEma;
             Signal = signal;
         }
-
-        public decimal FastEma { get; }
-        public decimal SlowEma { get; }
-        public decimal Signal { get; }
     }
 }

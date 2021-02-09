@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Infra;
 using Infra.NotificationServices;
 using Microsoft.Extensions.Logging;
 using Services.Abstractions;
+using Storage;
 using Storage.Abstractions;
 using Storage.Providers;
 using Storage.Repository;
@@ -26,8 +28,8 @@ namespace DemoCryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
-        private static readonly DateTime s_storageInitialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
-        private static readonly DateTime s_botInitialTime = s_storageInitialTime.AddMinutes(120);
+        private static readonly DateTime s_defaultStorageInitialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
+        private static readonly DateTime s_botInitialTime = s_defaultStorageInitialTime.AddMinutes(120);
 
         public static void Main()
         {
@@ -39,16 +41,29 @@ namespace DemoCryptoLive
         private static async Task RunMultiplePhases(DemoCryptoParameters appParameters)
         {
             var systemClock = new DummySystemClock();
-            var candleRepository = new RepositoryImpl<MyCandle>(appParameters.Currencies, deleteOldData: false);
-            var rsiRepository = new RepositoryImpl<RsiStorageObject>(appParameters.Currencies, deleteOldData: false);
-            var macdRepository = new RepositoryImpl<MacdStorageObject>(appParameters.Currencies, deleteOldData: false);
+            var candleRepository = new RepositoryImpl<CandleStorageObject>(appParameters.Currencies
+                    .ToDictionary(currency=> currency, 
+                        currency=> 
+                            CalculatedFileProvider.GetCalculatedCandleFile(currency, appParameters.CandleSize  ,appParameters.CalculatedDataFolder)), 
+                deleteOldData: false);
+            var rsiRepository = new RepositoryImpl<RsiStorageObject>(appParameters.Currencies
+                    .ToDictionary(currency=> currency, 
+                        currency=> 
+                            CalculatedFileProvider.GetCalculatedRsiFile(currency, appParameters.RsiSize  ,appParameters.CalculatedDataFolder)), 
+                deleteOldData: false);
+            var macdRepository = new RepositoryImpl<MacdStorageObject>(appParameters.Currencies
+                    .ToDictionary(currency=> currency, 
+                        currency=> 
+                            CalculatedFileProvider.GetCalculatedMacdFile(currency, appParameters.SlowEmaSize, 
+                                appParameters.FastEmaSize, appParameters.SignalSize ,appParameters.CalculatedDataFolder)), 
+                deleteOldData: false);
 
             DemoCandleService demoCandleService = new DemoCandleService(appParameters.Currencies, 
                 appParameters.CandlesDataFolder);
 
             await RunStorageWorkers(macdRepository, rsiRepository, candleRepository, systemClock, demoCandleService ,
                 appParameters.Currencies , appParameters.CandleSize, appParameters.RsiSize, 
-                appParameters.FastEmaSize, appParameters.SlowEmaSize, appParameters.SignalSize);
+                appParameters.FastEmaSize, appParameters.SlowEmaSize, appParameters.SignalSize, appParameters.CalculatedDataFolder);
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
                 macdRepository, systemClock, demoCandleService);
             
@@ -87,18 +102,26 @@ namespace DemoCryptoLive
 
         private static async Task RunStorageWorkers(RepositoryImpl<MacdStorageObject> macdRepository,
             RepositoryImpl<RsiStorageObject> rsiRepository,
-            RepositoryImpl<MyCandle> candleRepository,
-            ISystemClock systemClock, 
-            ICandlesService candlesService , 
-            IReadOnlyList<string> currencies, 
+            RepositoryImpl<CandleStorageObject> candleRepository,
+            ISystemClock systemClock,
+            ICandlesService candlesService,
+            IReadOnlyList<string> currencies,
             int candleSize,
             int rsiSize,
             int fastEmaSize,
-            int slowEmaSize, 
-            int signalSize)
+            int slowEmaSize,
+            int signalSize,
+            string calculatedDataFolder)
         {
-            var wsmRepository = new RepositoryImpl<WsmaStorageObject>(currencies, deleteOldData: false);
-            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(currencies, deleteOldData: false);
+            var wsmRepository = new RepositoryImpl<WsmaStorageObject>(currencies.ToDictionary(currency=> currency, 
+                    currency=> 
+                        CalculatedFileProvider.GetCalculatedWsmaFile(currency, rsiSize ,calculatedDataFolder)), 
+                deleteOldData: false);
+            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(currencies.ToDictionary(currency=> currency, 
+                    currency=> 
+                        CalculatedFileProvider.GetCalculatedEmaAndSignalFile(currency, slowEmaSize, 
+                            fastEmaSize, signalSize ,calculatedDataFolder)),
+                deleteOldData: false);
 
             var storageWorkersTasks = new Task[currencies.Count];
             for (int i = 0; i < storageWorkersTasks.Length; i++)
@@ -106,11 +129,23 @@ namespace DemoCryptoLive
                 string symbol = currencies[i];
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, symbol, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
-                    systemClock, CancellationToken.None, candleSize);
-                storageWorkersTasks[i] = storageWorker.StartAsync(s_storageInitialTime);
+                    systemClock, CancellationToken.None, candleSize, calculatedDataFolder);
+                DateTime storageInitialTime = GetStorageInitialTime(symbol, candleRepository);
+                storageWorkersTasks[i] = storageWorker.StartAsync(s_defaultStorageInitialTime);
             }
 
             await Task.WhenAll(storageWorkersTasks);
+        }
+
+        private static DateTime GetStorageInitialTime(string symbol, RepositoryImpl<CandleStorageObject> candleRepository)
+        {
+            DateTime lastSavedCandleTime = candleRepository.GetLastByTime(symbol);
+            if (default == lastSavedCandleTime)
+            {
+                return s_defaultStorageInitialTime; ;
+            }
+
+            return lastSavedCandleTime;
         }
 
         private static StorageWorker CreateStorageWorker(RepositoryImpl<RsiStorageObject> rsiRepository,
@@ -121,18 +156,20 @@ namespace DemoCryptoLive
             RepositoryImpl<EmaAndSignalStorageObject> emaAndSignalStorageObject,
             int fastEmaSize,
             int slowEmaSize,
-            int signalSize, 
-            RepositoryImpl<MyCandle> candleRepository, 
-            ICandlesService candlesService, 
-            ISystemClock systemClock, 
-            CancellationToken cancellationToken, 
-            int candleSize)
+            int signalSize,
+            RepositoryImpl<CandleStorageObject> candleRepository,
+            ICandlesService candlesService,
+            ISystemClock systemClock,
+            CancellationToken cancellationToken,
+            int candleSize, 
+            string calculatedDataFolder)
         {
-            IRepositoryUpdater rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, symbol, rsiSize);
+            IRepositoryUpdater rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, symbol, rsiSize, calculatedDataFolder);
             IRepositoryUpdater macdRepositoryUpdater = new MacdRepositoryUpdater(macdRepository, emaAndSignalStorageObject,
                 symbol,
-                fastEmaSize, slowEmaSize, signalSize);
-            IRepositoryUpdater candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, symbol);
+                fastEmaSize, slowEmaSize, signalSize, calculatedDataFolder);
+            IRepositoryUpdater candleRepositoryUpdater =
+                new CandleRepositoryUpdater(candleRepository, symbol, candleSize, calculatedDataFolder);
             var storageWorker = new StorageWorker(candlesService,
                 systemClock,
                 rsiRepositoryUpdater,
@@ -145,7 +182,7 @@ namespace DemoCryptoLive
             return storageWorker;        
         }
 
-        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(RepositoryImpl<MyCandle> candleRepository,
+        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(RepositoryImpl<CandleStorageObject> candleRepository,
             RepositoryImpl<RsiStorageObject> rsiRepository, RepositoryImpl<MacdStorageObject> macdRepository, ISystemClock systemClock,
             IPriceService priceService)
         {

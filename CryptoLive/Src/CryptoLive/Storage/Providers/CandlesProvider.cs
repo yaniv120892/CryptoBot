@@ -1,14 +1,15 @@
 using System;
 using Common;
+using Common.DataStorageObjects;
 using Storage.Abstractions;
 
 namespace Storage.Providers
 {
     public class CandlesProvider : ICandlesProvider
     {
-        private readonly IRepository<MyCandle> m_repository;
+        private readonly IRepository<CandleStorageObject> m_repository;
 
-        public CandlesProvider(IRepository<MyCandle> repository)
+        public CandlesProvider(IRepository<CandleStorageObject> repository)
         {
             m_repository = repository;
         }
@@ -22,7 +23,7 @@ namespace Storage.Providers
             DateTime time = currentTime;
             for (int i = ans.Length-1; i >= 0; i-- , time = time.Subtract(TimeSpan.FromMinutes(candleSize)))
             {
-                ans.Span[i] = m_repository.Get(desiredSymbol, time);
+                ans.Span[i] = m_repository.Get(desiredSymbol, time).Candle;
             }
 
             return ans;
