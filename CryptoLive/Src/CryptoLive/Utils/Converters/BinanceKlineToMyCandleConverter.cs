@@ -1,6 +1,7 @@
 using System;
 using Binance.Net.Interfaces;
 using Common;
+using Common.DataStorageObjects;
 
 namespace Utils.Converters
 {
@@ -42,12 +43,13 @@ namespace Utils.Converters
             return ans;
         }
         
-        public static MyCandle ConvertByCandleSize(Span<MyCandle> candles, int candleSizeInMinutes)
+        public static CandleStorageObject ConvertByCandleSize(Span<MyCandle> candles, int candleSizeInMinutes)
         {
             const int start = 0;
             int end = start + candleSizeInMinutes - 1;
             (decimal low, decimal high) = GetHighAndLow(candles, start, end);
-            return new MyCandle(candles[start].Open, candles[end].Close, candles[start].OpenTime, candles[end].CloseTime, low, high);
+            var candle = new MyCandle(candles[start].Open, candles[end].Close, candles[start].OpenTime, candles[end].CloseTime, low, high);
+            return new CandleStorageObject(candle);
         }
         
         private static (decimal low, decimal high) GetHighAndLow(Span<MyCandle> candles, int start, int end)

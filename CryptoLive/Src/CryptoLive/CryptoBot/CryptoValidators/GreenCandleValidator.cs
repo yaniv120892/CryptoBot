@@ -36,6 +36,13 @@ namespace CryptoBot.CryptoValidators
             }
             s_logger.LogDebug($"{symbol}: Candle is green, {currCandle} ,{time}");
             
+            if (currCandle.Close < currCandle.Open * (decimal)1.005)
+            {
+                s_logger.LogDebug($"{symbol}: Candle increase is less than 1%, {currCandle} ,{time}");
+                return false;
+            }
+            
+            s_logger.LogDebug($"{symbol}: Candle increase is above 1%, {currCandle} ,{time}");
             if (prevCandle.High < currCandle.Close)
             {
                 string message =

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.DataStorageObjects;
 using Infra;
 using Microsoft.Extensions.Logging;
 using Services.Abstractions;
@@ -67,8 +68,7 @@ namespace Storage.Workers
                         s_logger.LogWarning($"Add data to repositories took way long {stopwatch.Elapsed.Seconds}");
                         break;
                     }
-
-
+                    
                     currentTime = await m_systemClock.Wait(m_cancellationToken, m_symbol, timeToWaitInSeconds,
                         nameof(StorageWorker), currentTime);
                 }
@@ -78,7 +78,23 @@ namespace Storage.Workers
                 s_logger.LogError(e, $"{m_symbol} {nameof(StorageWorker)} got exception {currentTime}");
             }
 
+            await PersistRepositoriesDataIfNeeded();
             s_logger.LogInformation($"Stop {nameof(StorageWorker)} for {m_symbol}");
+        }
+
+        private async Task PersistRepositoriesDataIfNeeded()
+        {
+            if (m_storageWorkerMode.Equals(StorageWorkerMode.Demo))
+            {
+                await PersistRepositoriesData();
+            }
+        }
+
+        private async Task PersistRepositoriesData()
+        {
+            await m_candleRepositoryUpdater.PersistDataToFileAsync();
+            await m_rsiRepositoryUpdater.PersistDataToFileAsync();
+            await m_macdRepositoryUpdater.PersistDataToFileAsync();
         }
 
         private int GetTimeToWait(int elapsedSeconds)
@@ -90,9 +106,9 @@ namespace Storage.Workers
             return 60;
         }
         
-        private (DateTime previousTime, DateTime newTime) GetNewAndPreviousCandleTimes(MyCandle candleDescription)
+        private (DateTime previousTime, DateTime newTime) GetNewAndPreviousCandleTimes(CandleStorageObject candleDescription)
         {
-            DateTime newTime = candleDescription.CloseTime;
+            DateTime newTime = candleDescription.Candle.CloseTime;
             DateTime newDateTimeWithoutSeconds = newTime.AddSeconds(-newTime.Second);
             DateTime previousTime = newDateTimeWithoutSeconds.Subtract(TimeSpan.FromMinutes(m_candleSize));
 
@@ -103,7 +119,7 @@ namespace Storage.Workers
         {
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_symbol, amountOfOneMinuteKlines, currentTime);
-            MyCandle candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
             (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
             m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
             m_rsiRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);

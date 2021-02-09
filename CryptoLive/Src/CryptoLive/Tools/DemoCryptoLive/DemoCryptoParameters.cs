@@ -18,6 +18,7 @@ namespace DemoCryptoLive
         public int SlowEmaSize { get; set; }
         public int SignalSize { get; set; }
         public int MaxMacdPollingTime { get; set; }
+        public string CalculatedDataFolder { get; set; }
 
 
         public DemoCryptoParameters(IConfigurationSection applicationSection)
@@ -30,6 +31,7 @@ namespace DemoCryptoLive
             DelayTimeIterationsInSeconds = int.Parse(applicationSection[nameof(DelayTimeIterationsInSeconds)]);
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             CandlesDataFolder = applicationSection[nameof(CandlesDataFolder)];
+            CalculatedDataFolder = applicationSection[nameof(CalculatedDataFolder)];
             RsiMemorySize = int.Parse(applicationSection[nameof(RsiMemorySize)]);
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
             FastEmaSize = int.Parse(applicationSection[nameof(FastEmaSize)]);
