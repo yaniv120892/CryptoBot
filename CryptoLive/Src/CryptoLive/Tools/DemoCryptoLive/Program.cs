@@ -131,7 +131,7 @@ namespace DemoCryptoLive
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, CancellationToken.None, candleSize, calculatedDataFolder);
                 DateTime storageInitialTime = GetStorageInitialTime(symbol, candleRepository);
-                s_botInitialTime = storageInitialTime.AddMinutes(120);
+                s_botInitialTime = s_defaultStorageInitialTime.AddMinutes(120);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageInitialTime);
             }
 
