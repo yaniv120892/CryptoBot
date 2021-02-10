@@ -2,7 +2,7 @@ using System;
 
 namespace Common.DataStorageObjects
 {
-    public abstract class StorageObjectBase
+    public abstract class StorageObjectBase : IComparable<StorageObjectBase>
     {
         public DateTime Time { get; set; }
 
@@ -15,5 +15,7 @@ namespace Common.DataStorageObjects
         {
             Time = time;
         }
+
+        public int CompareTo(StorageObjectBase obj) => Time.CompareTo(obj.Time);
     }
 }
