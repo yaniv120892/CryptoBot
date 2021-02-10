@@ -121,6 +121,7 @@ namespace Storage.Repository
                 newCalculated = mergedCalculated;
             }
 
+            newCalculated.ToList().Sort();
             await CsvFileAccess.WriteCsvAsync(fileName, newCalculated);
             s_logger.LogInformation($"Done create {fileName}");        
         }
@@ -134,7 +135,7 @@ namespace Storage.Repository
 
             T[] oldCalculated = CsvFileAccess.ReadCsv<T>(fileName);
             m_mapSymbolTimeToStoredData[symbol] = new ConcurrentDictionary<string, T>
-                (oldCalculated.ToDictionary(m => m.Time.ToString(CultureInfo.InvariantCulture)));
+                (oldCalculated.ToDictionary(m => m.Time.AddSeconds(-m.Time.Second).ToString(CultureInfo.InvariantCulture)));
         }
 
         public DateTime GetLastByTime(string symbol)

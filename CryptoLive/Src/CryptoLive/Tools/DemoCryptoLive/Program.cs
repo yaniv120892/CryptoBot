@@ -29,7 +29,7 @@ namespace DemoCryptoLive
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
         private static readonly DateTime s_defaultStorageInitialTime = DateTime.Parse("2/2/2021  12:59:00 PM");
-        private static readonly DateTime s_botInitialTime = s_defaultStorageInitialTime.AddMinutes(120);
+        private static DateTime s_botInitialTime;
 
         public static void Main()
         {
@@ -131,7 +131,8 @@ namespace DemoCryptoLive
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, CancellationToken.None, candleSize, calculatedDataFolder);
                 DateTime storageInitialTime = GetStorageInitialTime(symbol, candleRepository);
-                storageWorkersTasks[i] = storageWorker.StartAsync(s_defaultStorageInitialTime);
+                s_botInitialTime = storageInitialTime.AddMinutes(120);
+                storageWorkersTasks[i] = storageWorker.StartAsync(storageInitialTime);
             }
 
             await Task.WhenAll(storageWorkersTasks);
@@ -142,7 +143,7 @@ namespace DemoCryptoLive
             DateTime lastSavedCandleTime = candleRepository.GetLastByTime(symbol);
             if (default == lastSavedCandleTime)
             {
-                return s_defaultStorageInitialTime; ;
+                return s_defaultStorageInitialTime;
             }
 
             return lastSavedCandleTime;
