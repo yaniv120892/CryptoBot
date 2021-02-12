@@ -1,7 +1,7 @@
 using System;
 using Common;
 
-namespace Storage.Abstractions
+namespace Storage.Abstractions.Providers
 {
     public interface ICandlesProvider
     {

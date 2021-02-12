@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Common.DataStorageObjects;
 
-namespace Storage.Abstractions
+namespace Storage.Abstractions.Repository
 {
     public interface IRepositoryUpdater
     {

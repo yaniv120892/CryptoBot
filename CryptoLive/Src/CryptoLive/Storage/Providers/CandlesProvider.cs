@@ -2,6 +2,8 @@ using System;
 using Common;
 using Common.DataStorageObjects;
 using Storage.Abstractions;
+using Storage.Abstractions.Providers;
+using Storage.Abstractions.Repository;
 
 namespace Storage.Providers
 {

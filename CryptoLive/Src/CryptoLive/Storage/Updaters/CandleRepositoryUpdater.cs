@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Common.DataStorageObjects;
 using Storage.Abstractions;
+using Storage.Abstractions.Repository;
 
 namespace Storage.Updaters
 {

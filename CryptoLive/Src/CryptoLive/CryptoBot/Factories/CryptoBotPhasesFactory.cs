@@ -3,6 +3,7 @@ using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
 using Infra;
 using Storage.Abstractions;
+using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
 namespace CryptoBot.Factories

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Common;
 
-namespace Storage.Abstractions
+namespace Storage.Abstractions.Providers
 {
     public interface ICurrencyDataProvider
     {

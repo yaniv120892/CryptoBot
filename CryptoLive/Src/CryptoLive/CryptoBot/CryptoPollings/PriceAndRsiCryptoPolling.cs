@@ -8,6 +8,7 @@ using CryptoBot.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
 using Storage.Abstractions;
+using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
 namespace CryptoBot.CryptoPollings
