@@ -10,7 +10,6 @@ namespace Storage.Abstractions
         decimal GetRsi(string currency, DateTime currentTime);
         PriceAndRsi GetRsiAndClosePrice(string currency, int candleSizeInMinutes, DateTime currentTime);
         (MyCandle prevCandle , MyCandle currCandle) GetLastCandles(string currency, int candleSizeInMinutes, DateTime currentTime);
-        Memory<MyCandle> GetCandles(string currency, int candleSizeInMinutes, int candlesAmount, DateTime currentDateTime);
         decimal GetMacdHistogram(string currency, int candleSizeInMinutes, DateTime currentTime);
     }
 }

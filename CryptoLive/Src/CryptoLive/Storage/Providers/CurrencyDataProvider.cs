@@ -39,9 +39,6 @@ namespace Storage.Providers
         public decimal GetMacdHistogram(string currency, int candleSizeInMinutes, DateTime currentTime) => 
             m_macdProvider.Get(currency, currentTime);
 
-        public Memory<MyCandle> GetCandles(string currency, int candleSizeInMinutes, int candlesAmount, DateTime currentTime) => 
-            m_candlesProvider.GetCandles(currency, candlesAmount , candleSizeInMinutes, currentTime);
-
         private PriceAndRsi GetRsiAndPriceImpl(string currency, int candleSizeInMinutes, DateTime currentTime)
         {
             MyCandle lastCandle = m_candlesProvider.GetLastCandle(currency, candleSizeInMinutes, currentTime);
@@ -52,7 +49,7 @@ namespace Storage.Providers
         private (MyCandle prevCandle, MyCandle currCandle) GetLastCandlesImpl(string currency, int candleSizeInMinutes,
             DateTime currentTime)
         {
-            Memory<MyCandle> lastCandles = GetCandles(currency, candleSizeInMinutes, 2, currentTime);
+            Memory<MyCandle> lastCandles = m_candlesProvider.GetCandles(currency, candleSizeInMinutes, 2, currentTime);
             MyCandle prevCandle = lastCandles.Span[0];
             MyCandle currCandle = lastCandles.Span[1];
             return (prevCandle, currCandle);
