@@ -10,7 +10,6 @@ namespace Common.PollingResponses
         public DateTime Time { get; }
         public MyCandle Candle { get; }
 
-
         public CandlePollingResponse(bool isBelow, 
             bool isAbove, 
             DateTime time, 
