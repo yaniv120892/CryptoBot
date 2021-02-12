@@ -11,11 +11,11 @@ namespace Utils.SystemClocks
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<DummySystemClock>();
 
-        public async Task<DateTime> Wait(CancellationToken cancellationToken, string desiredSymbol, int timeToWaitInSeconds, string action,
+        public async Task<DateTime> Wait(CancellationToken cancellationToken, string currency, int timeToWaitInSeconds, string action,
             DateTime currentTime)
         {
             await Task.Delay(1 * timeToWaitInSeconds , cancellationToken);
-            s_logger.LogTrace($"{desiredSymbol}_{action}: dummy wait for next candle {timeToWaitInSeconds} seconds");
+            s_logger.LogTrace($"{currency}_{action}: dummy wait for next candle {timeToWaitInSeconds} seconds");
             return currentTime.AddSeconds(timeToWaitInSeconds);
         }
     }

@@ -47,21 +47,21 @@ namespace CryptoBot.CryptoPollings
             m_maxPrice = maxPrice;
         }
 
-        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
-            s_logger.LogDebug($"{symbol}: {nameof(CandleCryptoPolling)}, " +
+            s_logger.LogDebug($"{currency}: {nameof(CandleCryptoPolling)}, " +
                               $"Get update every {m_delayTimeInSeconds / 60} minutes");
-            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(symbol, m_candleSize, currentTime);
+            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, m_candleSize, currentTime);
             (bool isBelow, bool isAbove) = IsCandleInRange(currCandle);
             while (isBelow == false && isAbove == false)
             {
-                currentTime = await m_systemClock.Wait(cancellationToken, symbol, m_delayTimeInSeconds, "Price range", currentTime);
-                (_, currCandle) = m_currencyDataProvider.GetLastCandles(symbol, 1, currentTime);
+                currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds, "Price range", currentTime);
+                (_, currCandle) = m_currencyDataProvider.GetLastCandles(currency, 1, currentTime);
                 (isBelow, isAbove) = IsCandleInRange(currCandle);
             }
 
             var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, currentTime, currCandle);
-            string message = $"{symbol}: {nameof(CandleCryptoPolling)} done, {candlePollingResponse}";
+            string message = $"{currency}: {nameof(CandleCryptoPolling)} done, {candlePollingResponse}";
             m_notificationService.Notify(message);
             s_logger.LogDebug(message);
             return candlePollingResponse;

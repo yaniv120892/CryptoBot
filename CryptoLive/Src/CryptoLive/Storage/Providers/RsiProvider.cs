@@ -13,6 +13,6 @@ namespace Storage.Providers
             m_rsiRepository = rsiRepository;
         }
 
-        public decimal Get(string symbol, DateTime dateTime) => m_rsiRepository.Get(symbol, dateTime).Rsi;
+        public decimal Get(string currency, DateTime dateTime) => m_rsiRepository.Get(currency, dateTime).Rsi;
     }
 }

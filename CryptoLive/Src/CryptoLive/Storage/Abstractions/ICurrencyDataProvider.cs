@@ -6,11 +6,11 @@ namespace Storage.Abstractions
 {
     public interface ICurrencyDataProvider
     {
-        Task<decimal> GetPriceAsync(string desiredSymbol, DateTime currentTime);
-        decimal GetRsi(string desiredSymbol, DateTime currentTime);
-        PriceAndRsi GetRsiAndClosePrice(string desiredSymbol, int candleSizeInMinutes, DateTime currentTime);
-        (MyCandle prevCandle , MyCandle currCandle) GetLastCandles(string desiredSymbol, int candleSizeInMinutes, DateTime currentTime);
-        Memory<MyCandle> GetCandles(string desiredSymbol, int candleSizeInMinutes, int candlesAmount, DateTime currentDateTime);
-        decimal GetMacdHistogram(string desiredSymbol, int candleSizeInMinutes, DateTime currentTime);
+        Task<decimal> GetPriceAsync(string currency, DateTime currentTime);
+        decimal GetRsi(string currency, DateTime currentTime);
+        PriceAndRsi GetRsiAndClosePrice(string currency, int candleSizeInMinutes, DateTime currentTime);
+        (MyCandle prevCandle , MyCandle currCandle) GetLastCandles(string currency, int candleSizeInMinutes, DateTime currentTime);
+        Memory<MyCandle> GetCandles(string currency, int candleSizeInMinutes, int candlesAmount, DateTime currentDateTime);
+        decimal GetMacdHistogram(string currency, int candleSizeInMinutes, DateTime currentTime);
     }
 }

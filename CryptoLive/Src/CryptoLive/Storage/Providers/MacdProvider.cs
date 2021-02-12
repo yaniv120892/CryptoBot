@@ -13,6 +13,6 @@ namespace Storage.Providers
             m_macdRepository = macdRepository;
         }
 
-        public decimal Get(string symbol, DateTime dateTime) => m_macdRepository.Get(symbol, dateTime).MacdHistogram;
+        public decimal Get(string currency, DateTime dateTime) => m_macdRepository.Get(currency, dateTime).MacdHistogram;
     }
 }

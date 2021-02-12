@@ -15,11 +15,11 @@ namespace Utils.Notifications
             m_notificationMessage = notificationMessage;
         }
 
-        public bool NotifyIfNeeded(Func<bool> condition, string symbol)
+        public bool NotifyIfNeeded(Func<bool> condition, string currency)
         {
             if (condition.Invoke())
             {
-                string body = CreateMessageBody(symbol);
+                string body = CreateMessageBody(currency);
                 m_notificationService.Notify(body);
                 return true;
             }
@@ -27,7 +27,7 @@ namespace Utils.Notifications
             return false;
         }
 
-        private string CreateMessageBody(string symbol) =>
-            $"{symbol}: {m_notificationMessage}";
+        private string CreateMessageBody(string currency) =>
+            $"{currency}: {m_notificationMessage}";
     }
 }

@@ -25,7 +25,7 @@ namespace Storage.Workers
         private readonly IRepositoryUpdater m_macdRepositoryUpdater;
         private readonly CancellationToken m_cancellationToken;
         private readonly int m_candleSize;
-        private readonly string m_symbol;
+        private readonly string m_currency;
 
         public StorageWorker(
             ICandlesService candlesService,
@@ -35,12 +35,12 @@ namespace Storage.Workers
             IRepositoryUpdater macdRepositoryUpdater,
             CancellationToken cancellationToken,
             int candleSize,
-            string symbol,
+            string currency,
             StorageWorkerMode storageWorkerMode)
         {
             m_systemClock = systemClock;
             m_candleSize = candleSize;
-            m_symbol = symbol;
+            m_currency = currency;
             m_storageWorkerMode = storageWorkerMode;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
@@ -51,7 +51,7 @@ namespace Storage.Workers
 
         public async Task StartAsync(DateTime currentTime)
         {
-            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_symbol} at {currentTime}");
+            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {currentTime}");
             Stopwatch stopwatch = new Stopwatch();
             try
             {
@@ -69,17 +69,17 @@ namespace Storage.Workers
                         break;
                     }
                     
-                    currentTime = await m_systemClock.Wait(m_cancellationToken, m_symbol, timeToWaitInSeconds,
+                    currentTime = await m_systemClock.Wait(m_cancellationToken, m_currency, timeToWaitInSeconds,
                         nameof(StorageWorker), currentTime);
                 }
             }
             catch (Exception e)
             {
-                s_logger.LogError(e, $"{m_symbol} {nameof(StorageWorker)} got exception {currentTime}");
+                s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {currentTime}");
             }
 
             await PersistRepositoriesDataIfNeeded();
-            s_logger.LogInformation($"Stop {nameof(StorageWorker)} for {m_symbol}");
+            s_logger.LogInformation($"Stop {nameof(StorageWorker)} for {m_currency}");
         }
 
         private async Task PersistRepositoriesDataIfNeeded()
@@ -118,7 +118,7 @@ namespace Storage.Workers
         private async Task AddDataToRepositories(DateTime currentTime)
         {
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
-            Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_symbol, amountOfOneMinuteKlines, currentTime);
+            Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_currency, amountOfOneMinuteKlines, currentTime);
             CandleStorageObject candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
             (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
             m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);

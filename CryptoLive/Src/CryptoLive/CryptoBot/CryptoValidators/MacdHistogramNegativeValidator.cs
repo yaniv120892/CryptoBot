@@ -24,18 +24,18 @@ namespace CryptoBot.CryptoValidators
             m_notificationService = notificationService;
         }
 
-        public bool Validate(string symbol, DateTime time)
+        public bool Validate(string currency, DateTime time)
         {
-            decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(symbol, m_candleSizeInMinutes, time);
+            decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, time);
             if (macdHistogram < 0)
             {
-                string message = $"{symbol}: MACD histogram is negative, {macdHistogram}, {time}";
+                string message = $"{currency}: MACD histogram is negative, {macdHistogram}, {time}";
                 m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }
 
-            s_logger.LogDebug($"{symbol}: MACD histogram is positive, {macdHistogram}, {time}");
+            s_logger.LogDebug($"{currency}: MACD histogram is positive, {macdHistogram}, {time}");
             return false;
         }
     }

@@ -15,16 +15,16 @@ namespace Storage.Updaters
 
         private readonly RepositoryImpl<RsiStorageObject> m_rsiRepository;
         private readonly RepositoryImpl<WsmaStorageObject> m_wsmaRepository;
-        private readonly string m_symbol;
+        private readonly string m_currency;
         private readonly int m_rsiSize;
         private readonly string m_calculatedDataFolder;
 
         public RsiRepositoryUpdater(RepositoryImpl<RsiStorageObject> rsiRepository, 
-            RepositoryImpl<WsmaStorageObject> wsmaRepository, string symbol, int rsiSize,
+            RepositoryImpl<WsmaStorageObject> wsmaRepository, string currency, int rsiSize,
             string calculatedDataFolder)
         {
             m_rsiRepository = rsiRepository;
-            m_symbol = symbol;
+            m_currency = currency;
             m_wsmaRepository = wsmaRepository;
             m_rsiSize = rsiSize;
             m_calculatedDataFolder = calculatedDataFolder;
@@ -39,41 +39,41 @@ namespace Storage.Updaters
         public async Task PersistDataToFileAsync()
         {
             string rsiStorageObjectsFileName =
-                CalculatedFileProvider.GetCalculatedRsiFile(m_symbol, m_rsiSize, m_calculatedDataFolder);
-            await m_rsiRepository.SaveDataToFileAsync(m_symbol, rsiStorageObjectsFileName);
+                CalculatedFileProvider.GetCalculatedRsiFile(m_currency, m_rsiSize, m_calculatedDataFolder);
+            await m_rsiRepository.SaveDataToFileAsync(m_currency, rsiStorageObjectsFileName);
             string wsmaStorageObjectsFileName = 
-                CalculatedFileProvider.GetCalculatedWsmaFile(m_symbol, m_rsiSize, m_calculatedDataFolder);
-            await m_wsmaRepository.SaveDataToFileAsync(m_symbol, wsmaStorageObjectsFileName);
+                CalculatedFileProvider.GetCalculatedWsmaFile(m_currency, m_rsiSize, m_calculatedDataFolder);
+            await m_wsmaRepository.SaveDataToFileAsync(m_currency, wsmaStorageObjectsFileName);
         }
 
         private void AddRsiToRepository(DateTime newTime)
         {
             decimal newRsi = CalculateNewRsi(newTime);
             RsiStorageObject rsiStorageObject = new RsiStorageObject(newRsi, newTime);
-            m_rsiRepository.Add(m_symbol, newTime, rsiStorageObject);
+            m_rsiRepository.Add(m_currency, newTime, rsiStorageObject);
         }
 
         private void AddWsmaToRepository(CandleStorageObject candle, DateTime previousWsmTime, DateTime newWsmaTime)
         {
             WsmaStorageObject newWsma = CalculateNewWsma(previousWsmTime, candle, newWsmaTime);
-            m_wsmaRepository.Add(m_symbol, newWsmaTime, newWsma);
+            m_wsmaRepository.Add(m_currency, newWsmaTime, newWsma);
         }
 
         private decimal CalculateNewRsi(DateTime newRsiTime)
         {
-            WsmaStorageObject wsma = m_wsmaRepository.Get(m_symbol, newRsiTime);
+            WsmaStorageObject wsma = m_wsmaRepository.Get(m_currency, newRsiTime);
             return RsiCalculator.Calculate(wsma.UpAverage, wsma.DownAverage);
         }
 
         private WsmaStorageObject CalculateNewWsma(DateTime previousWsmaTime, CandleStorageObject candle, DateTime newTime)
         {
             (decimal upValue, decimal downValue) = GetLastCandleUpAndDownValue(candle);
-            if (m_wsmaRepository.TryGet(m_symbol,previousWsmaTime, out WsmaStorageObject previousWsma))
+            if (m_wsmaRepository.TryGet(m_currency,previousWsmaTime, out WsmaStorageObject previousWsma))
             {
                 return CalculateWsmaUsingPreviousWsma(upValue, previousWsma, downValue, newTime);
             }
 
-            s_logger.LogInformation($"{m_symbol}: CalculateFirstWsma {previousWsmaTime}");
+            s_logger.LogInformation($"{m_currency}: CalculateFirstWsma {previousWsmaTime}");
             return CalculateFirstWsma(candle, newTime);
         }
 

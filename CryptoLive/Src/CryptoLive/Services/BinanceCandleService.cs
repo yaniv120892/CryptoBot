@@ -20,14 +20,14 @@ namespace Services
             m_currencyClientFactory = currencyClientFactory;
         }
 
-        public async Task<Memory<MyCandle>> GetOneMinuteCandles(string desiredSymbol, int candlesAmount, DateTime currentTime)
+        public async Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             BinanceClient client = m_currencyClientFactory.Create();
-            string symbol = desiredSymbol;
+            string currency = currency;
             KlineInterval interval = KlineInterval.OneMinute;
             try
             {
-                var response = await client.Spot.Market.GetKlinesAsync(symbol, interval, limit: candlesAmount);
+                var response = await client.Spot.Market.GetKlinesAsync(currency, interval, limit: candlesAmount);
                 IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
                 Memory<MyCandle> candlesDescription =
                     BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);

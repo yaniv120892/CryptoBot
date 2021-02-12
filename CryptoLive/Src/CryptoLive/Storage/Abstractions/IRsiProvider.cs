@@ -4,6 +4,6 @@ namespace Storage.Abstractions
 {
     public interface IRsiProvider
     {
-        decimal Get(string symbol, DateTime dateTime);
+        decimal Get(string currency, DateTime dateTime);
     }
 }

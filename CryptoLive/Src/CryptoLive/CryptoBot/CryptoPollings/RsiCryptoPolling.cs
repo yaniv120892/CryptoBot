@@ -32,19 +32,19 @@ namespace CryptoBot.CryptoPollings
             m_maxRsiToNotify = maxRsiToNotify;
         }
 
-        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
-            s_logger.LogDebug($"{symbol}: {nameof(RsiCryptoPolling)}, " +
+            s_logger.LogDebug($"{currency}: {nameof(RsiCryptoPolling)}, " +
                               $"Get update every {s_timeToWaitInSeconds / 60} minutes");
-            decimal rsi = m_currencyDataProvider.GetRsi(symbol, currentTime);
+            decimal rsi = m_currencyDataProvider.GetRsi(currency, currentTime);
             while (rsi >= m_maxRsiToNotify)
             {
-                currentTime = await m_systemClock.Wait(cancellationToken, symbol, s_timeToWaitInSeconds, "RSI", currentTime);
-                rsi = m_currencyDataProvider.GetRsi(symbol, currentTime);
+                currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, "RSI", currentTime);
+                rsi = m_currencyDataProvider.GetRsi(currency, currentTime);
             }
             
             var rsiPollingResponse = new RsiPollingResponse(currentTime, rsi);
-            string message = $"{symbol}: {nameof(RsiCryptoPolling)} done, {rsiPollingResponse}";
+            string message = $"{currency}: {nameof(RsiCryptoPolling)} done, {rsiPollingResponse}";
             m_notificationService.Notify(message);
             s_logger.LogDebug(message);
             return rsiPollingResponse;
