@@ -6,7 +6,6 @@ using Binance.Net.Enums;
 using Binance.Net.Interfaces;
 using Common;
 using Services.Abstractions;
-using Utils.Abstractions;
 using Utils.Converters;
 
 namespace Services
@@ -23,7 +22,6 @@ namespace Services
         public async Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             BinanceClient client = m_currencyClientFactory.Create();
-            string currency = currency;
             KlineInterval interval = KlineInterval.OneMinute;
             try
             {
