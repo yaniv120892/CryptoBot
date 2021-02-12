@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -15,13 +16,21 @@ namespace Infra
 
         private static void AddNLog(ILoggingBuilder builder)
         {
-            var configJson = new ConfigurationBuilder()
-                .SetBasePath(System.IO.Directory.GetCurrentDirectory())
-                .AddJsonFile(s_nlogSettingsFile)
-                .Build();
-            var nlogConfig = new NLogLoggingConfiguration(configJson.GetSection("NLog"));
-            builder.SetMinimumLevel(LogLevel.Trace);
-            builder.AddNLog(nlogConfig);
+            try
+            {
+                var configJson = new ConfigurationBuilder()
+                    .SetBasePath(System.IO.Directory.GetCurrentDirectory())
+                    .AddJsonFile(s_nlogSettingsFile)
+                    .Build();
+                var nlogConfig = new NLogLoggingConfiguration(configJson.GetSection("NLog"));
+                builder.SetMinimumLevel(LogLevel.Trace);
+                builder.AddNLog(nlogConfig);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Logging is disabled");
+            }
+            
         }
     }
 }
