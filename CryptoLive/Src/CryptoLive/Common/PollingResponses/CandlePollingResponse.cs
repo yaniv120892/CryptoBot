@@ -3,7 +3,7 @@ using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
-    public class CandlePollingResponse : IPollingResponse
+    public class CandlePollingResponse : IPollingResponse, IEquatable<CandlePollingResponse>
     {
         public bool IsBelow { get; }
         public bool IsAbove { get; }
@@ -27,6 +27,28 @@ namespace Common.PollingResponses
         public override string ToString()
         {
             return $"IsAbove {IsAbove}, IsBelow {IsBelow}, Time {Time}";
+        }
+
+        public bool Equals(CandlePollingResponse other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+            return IsBelow == other.IsBelow &&
+                   IsAbove == other.IsAbove &&
+                   Time.Equals(other.Time) &&
+                   Equals(Candle, other.Candle);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as CandlePollingResponse);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(IsBelow, IsAbove, Time, Candle);
         }
     }
 }

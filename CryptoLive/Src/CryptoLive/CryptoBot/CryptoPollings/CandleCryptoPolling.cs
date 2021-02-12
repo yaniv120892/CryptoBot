@@ -7,7 +7,6 @@ using Common.PollingResponses;
 using CryptoBot.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -57,7 +56,7 @@ namespace CryptoBot.CryptoPollings
             while (isBelow == false && isAbove == false)
             {
                 currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds, "Price range", currentTime);
-                currCandle = m_currencyDataProvider.GetLastCandle(currency, 1, currentTime);
+                currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
                 (isBelow, isAbove) = IsCandleInRange(currCandle);
             }
 
@@ -68,16 +67,6 @@ namespace CryptoBot.CryptoPollings
             return candlePollingResponse;
         }
 
-        private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle)
-        {
-            if (currCandle.Low < m_minPrice)
-            {
-                return (true, false);
-            }
-            
-            return currCandle.High > m_maxPrice ? 
-                (false, true) : 
-                (false, false);
-        }
+        private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) => (currCandle.Low < m_minPrice, currCandle.High > m_maxPrice);
     }
 }
