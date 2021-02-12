@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Common.DataStorageObjects;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Storage.Abstractions;
 using Storage.Abstractions.Repository;
 using Utils;
 
@@ -122,7 +121,7 @@ namespace Storage.Repository
                 newCalculated = mergedCalculated;
             }
 
-            newCalculated.ToList().Sort();
+            newCalculated.ToList().Sort((x, y) => x.Time.CompareTo(y.Time));
             await CsvFileAccess.WriteCsvAsync(fileName, newCalculated);
             s_logger.LogInformation($"Done create {fileName}");        
         }
