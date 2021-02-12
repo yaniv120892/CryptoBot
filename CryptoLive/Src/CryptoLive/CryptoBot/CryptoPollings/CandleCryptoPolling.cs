@@ -52,12 +52,12 @@ namespace CryptoBot.CryptoPollings
         {
             s_logger.LogDebug($"{currency}: {nameof(CandleCryptoPolling)}, " +
                               $"Get update every {m_delayTimeInSeconds / 60} minutes");
-            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, m_candleSize, currentTime);
+            MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
             (bool isBelow, bool isAbove) = IsCandleInRange(currCandle);
             while (isBelow == false && isAbove == false)
             {
                 currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds, "Price range", currentTime);
-                (_, currCandle) = m_currencyDataProvider.GetLastCandles(currency, 1, currentTime);
+                currCandle = m_currencyDataProvider.GetLastCandle(currency, 1, currentTime);
                 (isBelow, isAbove) = IsCandleInRange(currCandle);
             }
 
