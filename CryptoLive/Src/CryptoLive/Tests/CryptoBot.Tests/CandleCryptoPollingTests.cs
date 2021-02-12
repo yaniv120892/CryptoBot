@@ -33,11 +33,9 @@ namespace CryptoBot.Tests
         public async Task When_StartAsync_Given_CandleReachHighPrice_Return_IsAboveTrue()
         {
             // Arrange
-            DateTime openTime = new DateTime(2020,1,1,10,10,0);
-            DateTime closeTime = openTime.Add(TimeSpan.FromMinutes(s_candleSize));
-            DateTime pollingStartTime = closeTime;
-            var candle = new MyCandle(s_maxPrice, s_maxPrice, openTime, closeTime, s_higherThanMinPrice, s_higherThanMaxPrice);
-            var expectedCandlePollingResponse = new CandlePollingResponse(false, true, closeTime, candle);
+            MyCandle candle = CreateCandle(s_higherThanMinPrice, s_higherThanMaxPrice);
+            DateTime pollingStartTime = candle.CloseTime;
+            var expectedCandlePollingResponse = new CandlePollingResponse(false, true, candle.CloseTime, candle);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
                 .Returns(candle);
@@ -65,11 +63,9 @@ namespace CryptoBot.Tests
         public async Task When_StartAsync_Given_CandleReachLowerPrice_Return_IsBelowTrue()
         {
             // Arrange
-            DateTime openTime = new DateTime(2020,1,1,10,10,0);
-            DateTime closeTime = openTime.Add(TimeSpan.FromMinutes(s_candleSize));
-            DateTime pollingStartTime = closeTime;
-            var candle = new MyCandle(s_maxPrice, s_maxPrice, openTime, closeTime, s_lowerThanMinPrice, s_lowerThanMaxPrice);
-            var expectedCandlePollingResponse = new CandlePollingResponse(true, false, closeTime, candle);
+            MyCandle candle = CreateCandle(s_lowerThanMinPrice, s_lowerThanMaxPrice);
+            DateTime pollingStartTime = candle.CloseTime;
+            var expectedCandlePollingResponse = new CandlePollingResponse(true, false, candle.CloseTime, candle);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
                 .Returns(candle);
@@ -97,11 +93,9 @@ namespace CryptoBot.Tests
         public async Task When_StartAsync_Given_CandleReachLowerPriceAndHigherPrice_Return_IsBelowTrueAndIsAboveTrue()
         {
             // Arrange
-            DateTime openTime = new DateTime(2020,1,1,10,10,0);
-            DateTime closeTime = openTime.Add(TimeSpan.FromMinutes(s_candleSize));
-            DateTime pollingStartTime = closeTime;
-            var candle = new MyCandle(s_maxPrice, s_maxPrice, openTime, closeTime, s_lowerThanMinPrice, s_higherThanMaxPrice);
-            var expectedCandlePollingResponse = new CandlePollingResponse(true, true, closeTime, candle);
+            MyCandle candle = CreateCandle(s_lowerThanMinPrice, s_higherThanMaxPrice);
+            DateTime pollingStartTime = candle.CloseTime;
+            var expectedCandlePollingResponse = new CandlePollingResponse(true, true, candle.CloseTime, candle);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
                 .Returns(candle);
@@ -161,6 +155,44 @@ namespace CryptoBot.Tests
                         It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Exactly(2));
+        }
+        
+        [TestMethod]
+        public async Task When_StartAsync_Given_GotCancellationRequest_Should_StopExecution()
+        {
+            // Arrange
+            MyCandle candle = CreateCandle(s_higherThanMinPrice, s_higherThanMaxPrice);
+            DateTime pollingStartTime = candle.CloseTime;
+            var expectedCandlePollingResponse = new CandlePollingResponse(false, true, candle.CloseTime, candle);
+            m_currencyDataProviderMock
+                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Returns(candle);
+            
+            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
+                m_currencyDataProviderMock.Object,
+                m_systemClock, s_delayTimeInSeconds,
+                s_candleSize,
+                s_minPrice,
+                s_maxPrice);
+            
+            // Act
+            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, CancellationToken.None, pollingStartTime);
+
+            // Assert
+            Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
+            m_currencyDataProviderMock.Verify(m=>
+                    m.GetLastCandle(It.IsAny<string>(), 
+                        It.IsAny<int>(), 
+                        It.IsAny<DateTime>()),
+                Times.Once);
+        }
+
+        private static MyCandle CreateCandle(decimal low, decimal high)
+        {
+            DateTime openTime = new DateTime(2020, 1, 1, 10, 10, 0);
+            DateTime closeTime = openTime.Add(TimeSpan.FromMinutes(s_candleSize));
+            var candle = new MyCandle(s_maxPrice, s_maxPrice, openTime, closeTime, low, high);
+            return candle;
         }
     }
 }
