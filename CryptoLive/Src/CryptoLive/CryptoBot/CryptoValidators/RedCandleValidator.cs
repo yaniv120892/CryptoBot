@@ -28,7 +28,7 @@ namespace CryptoBot.CryptoValidators
 
         public bool Validate(string currency, DateTime time)
         {
-            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, m_candleSizeInMinutes, time);
+            MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSizeInMinutes, time);
             if (currCandle.Close < currCandle.Open)
             {
                 string message = $"{currency}: Candle is red, {currCandle} ,{time}";

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Common;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 
 namespace Storage.Providers
@@ -36,6 +35,12 @@ namespace Storage.Providers
 
         public (MyCandle prevCandle, MyCandle currCandle) GetLastCandles(string currency, int candleSizeInMinutes, DateTime currentTime) => 
             GetLastCandlesImpl(currency, candleSizeInMinutes, currentTime);
+
+        public MyCandle GetLastCandle(string currency, int candleSizeInMinutes, DateTime currentTime)
+        {
+            (MyCandle _, MyCandle currCandle) = GetLastCandles(currency, candleSizeInMinutes, currentTime);
+            return currCandle;
+        }
 
         public decimal GetMacdHistogram(string currency, int candleSizeInMinutes, DateTime currentTime) => 
             m_macdProvider.Get(currency, currentTime);
