@@ -4,6 +4,6 @@ namespace Storage.Abstractions
 {
     public interface IMacdProvider
     {
-        decimal Get(string symbol, DateTime currentTime);
+        decimal Get(string currency, DateTime currentTime);
     }
 }

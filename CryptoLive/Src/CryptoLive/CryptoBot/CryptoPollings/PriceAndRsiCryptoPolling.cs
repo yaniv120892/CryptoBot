@@ -39,26 +39,26 @@ namespace CryptoBot.CryptoPollings
             m_cryptoFixedSizeQueueImpl = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
         }
 
-        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken,
+        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken,
             DateTime currentTime)
         {
-            s_logger.LogDebug($"{symbol}: {nameof(PriceAndRsiCryptoPolling)} start, " +
+            s_logger.LogDebug($"{currency}: {nameof(PriceAndRsiCryptoPolling)} start, " +
                               $"Get update every  {s_timeToWaitInSeconds / 60} minutes");
             
             PriceAndRsi currentPriceAndRsi =
-                m_currencyDataProvider.GetRsiAndClosePrice(symbol, m_candleSizeInMinutes, currentTime);
+                m_currencyDataProvider.GetRsiAndClosePrice(currency, m_candleSizeInMinutes, currentTime);
             PriceAndRsi oldPriceAndRsi;
             while (ShouldContinuePolling(currentPriceAndRsi, out oldPriceAndRsi))
             {
                 m_cryptoFixedSizeQueueImpl.Enqueue(currentPriceAndRsi);
-                currentTime = await m_systemClock.Wait(cancellationToken, symbol, s_timeToWaitInSeconds, "RSI And Price",
+                currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, "RSI And Price",
                     currentTime);
-                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(symbol, m_candleSizeInMinutes, currentTime);
+                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(currency, m_candleSizeInMinutes, currentTime);
             }
 
             var rsiAndPricePollingResponse = new RsiAndPricePollingResponse(currentTime, oldPriceAndRsi ,currentPriceAndRsi);
             string message =
-                $"{symbol}: {nameof(PriceAndRsiCryptoPolling)} done, {rsiAndPricePollingResponse}";
+                $"{currency}: {nameof(PriceAndRsiCryptoPolling)} done, {rsiAndPricePollingResponse}";
             m_notificationService.Notify(message);
             s_logger.LogDebug(message);
             return rsiAndPricePollingResponse;

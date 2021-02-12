@@ -14,7 +14,7 @@ namespace Storage.Updaters
 
         private readonly IRepository<MacdStorageObject> m_macdRepository;
         private readonly IRepository<EmaAndSignalStorageObject> m_emaAndSignalStorageObject;
-        private readonly string m_symbol;
+        private readonly string m_currency;
         private readonly int m_fastEmaSize;
         private readonly int m_slowEmaSize;
         private readonly int m_signalSize;
@@ -22,14 +22,14 @@ namespace Storage.Updaters
 
         public MacdRepositoryUpdater(IRepository<MacdStorageObject> macdRepository, 
             IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject, 
-            string symbol,
+            string currency,
             int fastEmaSize, 
             int slowEmaSize,
             int signalSize, 
             string calculatedDataFolder)
         {
             m_macdRepository = macdRepository;
-            m_symbol = symbol;
+            m_currency = currency;
             m_fastEmaSize = fastEmaSize;
             m_slowEmaSize = slowEmaSize;
             m_signalSize = signalSize;
@@ -47,24 +47,24 @@ namespace Storage.Updaters
         {
             decimal newMacdHistogram = CalculateNewMacdHistogram(newTime);
             MacdStorageObject macdStorageObject = new MacdStorageObject(newMacdHistogram, newTime);
-            m_macdRepository.Add(m_symbol, newTime, macdStorageObject);
+            m_macdRepository.Add(m_currency, newTime, macdStorageObject);
         }
 
         private void AddEmaAndSignalToRepository(CandleStorageObject candle, DateTime previousMacdTime, DateTime newMacdTime)
         {
             EmaAndSignalStorageObject emaAndSignalStorageObject = CalculateNewEmaAndSignal(previousMacdTime, candle, newMacdTime);
-            m_emaAndSignalStorageObject.Add(m_symbol, newMacdTime, emaAndSignalStorageObject);        
+            m_emaAndSignalStorageObject.Add(m_currency, newMacdTime, emaAndSignalStorageObject);        
         }
 
         private EmaAndSignalStorageObject CalculateNewEmaAndSignal(DateTime previousMacdTime, CandleStorageObject candle,
             DateTime newTime)
         {
-            if (m_emaAndSignalStorageObject.TryGet(m_symbol, previousMacdTime, out EmaAndSignalStorageObject previousEmaAndSignalStorageObject))
+            if (m_emaAndSignalStorageObject.TryGet(m_currency, previousMacdTime, out EmaAndSignalStorageObject previousEmaAndSignalStorageObject))
             {
                 return CalculateEmaAndSignalUsingPreviousEmaAndSignal(previousEmaAndSignalStorageObject, candle.Candle.Close, newTime);
             }
 
-            s_logger.LogInformation($"{m_symbol}: CalculateFirstEmaAndSignal {previousMacdTime}");
+            s_logger.LogInformation($"{m_currency}: CalculateFirstEmaAndSignal {previousMacdTime}");
             return CalculateFirstEmaAndSignal(candle, newTime);
 
         }
@@ -86,7 +86,7 @@ namespace Storage.Updaters
 
         private decimal CalculateNewMacdHistogram(DateTime newMacdTime)
         {
-            EmaAndSignalStorageObject emaAndSignalStorageObject = m_emaAndSignalStorageObject.Get(m_symbol, newMacdTime);
+            EmaAndSignalStorageObject emaAndSignalStorageObject = m_emaAndSignalStorageObject.Get(m_currency, newMacdTime);
             return MacdHistogramCalculator.Calculate(emaAndSignalStorageObject.FastEma, emaAndSignalStorageObject.SlowEma, 
                 emaAndSignalStorageObject.Signal);
         }
@@ -94,14 +94,14 @@ namespace Storage.Updaters
         public async Task PersistDataToFileAsync()
         {
             string macdStorageObjectFileName = 
-                CalculatedFileProvider.GetCalculatedMacdFile(m_symbol, 
+                CalculatedFileProvider.GetCalculatedMacdFile(m_currency, 
                     m_slowEmaSize, m_fastEmaSize,
                     m_signalSize, m_calculatedDataFolder);
-            await m_macdRepository.SaveDataToFileAsync(m_symbol, macdStorageObjectFileName);
-            string emaAndSignalStorageObjectFileName = CalculatedFileProvider.GetCalculatedEmaAndSignalFile(m_symbol,
+            await m_macdRepository.SaveDataToFileAsync(m_currency, macdStorageObjectFileName);
+            string emaAndSignalStorageObjectFileName = CalculatedFileProvider.GetCalculatedEmaAndSignalFile(m_currency,
                 m_slowEmaSize, m_fastEmaSize,
                 m_signalSize, m_calculatedDataFolder);
-            await m_emaAndSignalStorageObject.SaveDataToFileAsync(m_symbol, emaAndSignalStorageObjectFileName);
+            await m_emaAndSignalStorageObject.SaveDataToFileAsync(m_currency, emaAndSignalStorageObjectFileName);
         }
     }
 }

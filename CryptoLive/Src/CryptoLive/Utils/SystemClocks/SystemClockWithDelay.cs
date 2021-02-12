@@ -16,10 +16,10 @@ namespace Utils.SystemClocks
             m_delayTime = delayTime;
         }
 
-        public async Task<DateTime> Wait(CancellationToken cancellationToken, string desiredSymbol, int timeToWaitInSeconds, string action,
+        public async Task<DateTime> Wait(CancellationToken cancellationToken, string currency, int timeToWaitInSeconds, string action,
             DateTime currentTime)
         {
-            DateTime time = await m_systemClock.Wait(cancellationToken, desiredSymbol, timeToWaitInSeconds, action, currentTime);
+            DateTime time = await m_systemClock.Wait(cancellationToken, currency, timeToWaitInSeconds, action, currentTime);
             return time.Subtract(TimeSpan.FromMinutes(m_delayTime));
         }
     }

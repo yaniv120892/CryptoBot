@@ -15,10 +15,10 @@ namespace Services
             m_currencyClientFactory = currencyClientFactory;
         }
 
-        public async Task<decimal> GetPrice(string symbol, DateTime currentTime)
+        public async Task<decimal> GetPrice(string currency, DateTime currentTime)
         {
             BinanceClient client = m_currencyClientFactory.Create();
-            var response = await client.Spot.Market.GetPriceAsync(symbol);
+            var response = await client.Spot.Market.GetPriceAsync(currency);
             decimal currentPrice = response.Data.Price;
             return currentPrice;        
         }

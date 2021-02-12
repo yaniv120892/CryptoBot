@@ -14,9 +14,9 @@ namespace Storage.Providers
             m_priceService = priceService;
         }
 
-        public Task<decimal> GetPrice(string symbol, DateTime currentTime)
+        public Task<decimal> GetPrice(string currency, DateTime currentTime)
         {
-            return m_priceService.GetPrice(symbol, currentTime);
+            return m_priceService.GetPrice(currency, currentTime);
         }
     }
 }

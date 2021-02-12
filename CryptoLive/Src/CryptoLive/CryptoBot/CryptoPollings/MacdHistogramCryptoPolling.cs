@@ -34,9 +34,9 @@ namespace CryptoBot.CryptoPollings
             m_maxMacdPollingTime = maxMacdPollingTime;
         }
 
-        public async Task<IPollingResponse> StartAsync(string symbol, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
-            s_logger.LogDebug($"{symbol}: {nameof(MacdHistogramCryptoPolling)} start, " +
+            s_logger.LogDebug($"{currency}: {nameof(MacdHistogramCryptoPolling)} start, " +
                               $"Get update every 1 minute," +
                               $"Max iteration {m_maxMacdPollingTime}");
 
@@ -44,21 +44,21 @@ namespace CryptoBot.CryptoPollings
             
             for(int i = 0; i < m_maxMacdPollingTime; i++)
             {
-                decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(symbol, m_candleSizeInMinutes, currentTime);
+                decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, currentTime);
                 if (macdHistogram > 0)
                 {
                     macdHistogramPollingResponse = new MacdHistogramPollingResponse(currentTime, macdHistogram);
                     string message =
-                        $"{symbol}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
+                        $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
                     m_notificationService.Notify(message);
                     s_logger.LogDebug(message);
                     return macdHistogramPollingResponse;
                 }
-                currentTime = await m_systemClock.Wait(cancellationToken, symbol, 60, "MACD", currentTime);
+                currentTime = await m_systemClock.Wait(cancellationToken, currency, 60, "MACD", currentTime);
             }
             
             macdHistogramPollingResponse = new MacdHistogramPollingResponse(currentTime, 0);
-            s_logger.LogDebug($"{symbol}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}");
+            s_logger.LogDebug($"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}");
             return macdHistogramPollingResponse;
         }
     }

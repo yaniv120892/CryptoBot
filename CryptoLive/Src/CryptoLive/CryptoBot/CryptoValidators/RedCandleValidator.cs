@@ -25,18 +25,18 @@ namespace CryptoBot.CryptoValidators
             m_notificationService = notificationService;
         }
 
-        public bool Validate(string symbol, DateTime time )
+        public bool Validate(string currency, DateTime time)
         {
-            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(symbol, m_candleSizeInMinutes, time);
+            (MyCandle _, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, m_candleSizeInMinutes, time);
             if (currCandle.Close < currCandle.Open)
             {
-                string message = $"{symbol}: Candle is red, {currCandle} ,{time}";
+                string message = $"{currency}: Candle is red, {currCandle} ,{time}";
                 m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }
 
-            s_logger.LogDebug($"{symbol}: Candle is green, {currCandle} ,{time}");
+            s_logger.LogDebug($"{currency}: Candle is green, {currCandle} ,{time}");
             return false;
         }
     }

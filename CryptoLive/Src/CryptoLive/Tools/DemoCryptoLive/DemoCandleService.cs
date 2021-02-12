@@ -11,7 +11,7 @@ namespace DemoCryptoLive
 {
     internal class DemoCandleService : ICandlesService, IPriceService
     {
-        private Dictionary<string, Dictionary<DateTime, MyCandle>> m_mapSymbolToCandle;
+        private Dictionary<string, Dictionary<DateTime, MyCandle>> m_mapCurrencyToCandle;
         
         public DemoCandleService(IEnumerable<string> currencies, string folderName)
         {
@@ -20,7 +20,7 @@ namespace DemoCryptoLive
 
         public void Initialize(IEnumerable<string> currencies, string folderName)
         {
-            m_mapSymbolToCandle = new Dictionary<string, Dictionary<DateTime, MyCandle>>();
+            m_mapCurrencyToCandle = new Dictionary<string, Dictionary<DateTime, MyCandle>>();
             foreach (string currency in currencies)
             {
                 string fileName = GetFileName(folderName, currency);
@@ -36,7 +36,7 @@ namespace DemoCryptoLive
                             dateTimeToCandle[candle.OpenTime] = candle;
                         }
 
-                        m_mapSymbolToCandle[currency] = dateTimeToCandle;
+                        m_mapCurrencyToCandle[currency] = dateTimeToCandle;
                     }
                 }
             }
@@ -44,18 +44,18 @@ namespace DemoCryptoLive
 
         private static string GetFileName(string folderName, string currency) => Path.Combine(folderName, $"{currency}.csv");
 
-        public Task<Memory<MyCandle>> GetOneMinuteCandles(string symbol, int candlesAmount, DateTime currentTime)
+        public Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[candlesAmount];
             DateTime time = currentTime;
             for (int i = ans.Length-1; i >= 0; i-- , time = time.Subtract(TimeSpan.FromMinutes(1)))
             {
-                ans.Span[i] = m_mapSymbolToCandle[symbol][time];
+                ans.Span[i] = m_mapCurrencyToCandle[currency][time];
             }
 
             return Task.FromResult(ans);        
         }
 
-        public Task<decimal> GetPrice(string symbol, DateTime currentTime) => Task.FromResult(m_mapSymbolToCandle[symbol][currentTime].Close);
+        public Task<decimal> GetPrice(string currency, DateTime currentTime) => Task.FromResult(m_mapCurrencyToCandle[currency][currentTime].Close);
     }
 }

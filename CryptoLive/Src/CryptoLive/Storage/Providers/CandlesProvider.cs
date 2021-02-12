@@ -14,7 +14,7 @@ namespace Storage.Providers
             m_repository = repository;
         }
 
-        public Memory<MyCandle> GetCandles(string desiredSymbol, 
+        public Memory<MyCandle> GetCandles(string currency, 
             int amountOfCandles, 
             int candleSize,
             DateTime currentTime)
@@ -23,15 +23,15 @@ namespace Storage.Providers
             DateTime time = currentTime;
             for (int i = ans.Length-1; i >= 0; i-- , time = time.Subtract(TimeSpan.FromMinutes(candleSize)))
             {
-                ans.Span[i] = m_repository.Get(desiredSymbol, time).Candle;
+                ans.Span[i] = m_repository.Get(currency, time).Candle;
             }
 
             return ans;
         }
         
-        public MyCandle GetLastCandle(string desiredSymbol, int candleSize, DateTime currentTime)
+        public MyCandle GetLastCandle(string currency, int candleSize, DateTime currentTime)
         {
-            Memory<MyCandle> candles = GetCandles(desiredSymbol, 1, candleSize, currentTime);
+            Memory<MyCandle> candles = GetCandles(currency, 1, candleSize, currentTime);
             return candles.Span[0];
         }
     }

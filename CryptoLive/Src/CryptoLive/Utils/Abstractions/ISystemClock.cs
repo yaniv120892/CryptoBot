@@ -6,6 +6,6 @@ namespace Utils.Abstractions
 {
     public interface ISystemClock
     {
-        Task<DateTime> Wait(CancellationToken cancellationToken, string desiredSymbol, int timeToWaitInSeconds, string action, DateTime currentTime);
+        Task<DateTime> Wait(CancellationToken cancellationToken, string currency, int timeToWaitInSeconds, string action, DateTime currentTime);
     }
 }

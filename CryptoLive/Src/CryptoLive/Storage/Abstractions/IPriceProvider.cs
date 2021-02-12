@@ -5,6 +5,6 @@ namespace Storage.Abstractions
 {
     public interface IPriceProvider
     {
-        Task<decimal> GetPrice(string symbol, DateTime currentTime);
+        Task<decimal> GetPrice(string currency, DateTime currentTime);
     }
 }
