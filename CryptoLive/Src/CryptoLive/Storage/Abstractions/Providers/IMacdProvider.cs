@@ -1,6 +1,6 @@
 using System;
 
-namespace Storage.Abstractions
+namespace Storage.Abstractions.Providers
 {
     public interface IMacdProvider
     {

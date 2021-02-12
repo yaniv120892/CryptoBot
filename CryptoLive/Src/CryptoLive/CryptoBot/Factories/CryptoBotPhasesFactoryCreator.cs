@@ -1,6 +1,7 @@
 using CryptoBot.Abstractions;
 using Infra;
 using Storage.Abstractions;
+using Storage.Abstractions.Providers;
 using Storage.Providers;
 using Utils.Abstractions;
 

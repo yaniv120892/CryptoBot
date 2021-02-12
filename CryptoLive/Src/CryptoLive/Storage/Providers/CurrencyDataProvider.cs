@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Common;
 using Storage.Abstractions;
+using Storage.Abstractions.Providers;
 
 namespace Storage.Providers
 {

@@ -8,6 +8,7 @@ using Infra;
 using Microsoft.Extensions.Logging;
 using Services.Abstractions;
 using Storage.Abstractions;
+using Storage.Abstractions.Repository;
 using Utils.Abstractions;
 using Utils.Converters;
 

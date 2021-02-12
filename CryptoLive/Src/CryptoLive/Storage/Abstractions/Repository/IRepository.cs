@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Storage.Abstractions
+namespace Storage.Abstractions.Repository
 {
     public interface IRepository<T>
     {
