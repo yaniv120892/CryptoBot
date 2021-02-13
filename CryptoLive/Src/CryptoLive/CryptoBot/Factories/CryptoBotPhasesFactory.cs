@@ -1,8 +1,9 @@
-﻿using CryptoBot.Abstractions;
+﻿using Common;
+using Common.CryptoQueue;
+using CryptoBot.Abstractions;
 using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
 using Infra;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -32,11 +33,14 @@ namespace CryptoBot.Factories
             decimal maxPrice = basePrice * (100 + priceChangeToNotify) / 100;
             return new CandleCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, delayTimeIterationsInSeconds, candleSize, minPrice, maxPrice);
         }
-        
-        public PriceAndRsiCryptoPolling CreatePriceAndRsiPolling(int candleSize, 
-            decimal maxRsiToNotify, 
-            int rsiMemorySize) =>
-            new PriceAndRsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, candleSize, maxRsiToNotify, rsiMemorySize);
+
+        public PriceAndRsiCryptoPolling CreatePriceAndRsiPolling(int candleSize,
+            decimal maxRsiToNotify,
+            int rsiMemorySize)
+        {
+            var cryptoPriceAndRsiQueue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
+            return new PriceAndRsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, candleSize, maxRsiToNotify);
+        }
 
         public MacdHistogramCryptoPolling CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
             new MacdHistogramCryptoPolling(null, CurrencyDataProvider, SystemClock, macdCandleSize, maxMacdPollingTime);

@@ -2,7 +2,7 @@
 
 namespace Common.Abstractions
 {
-    public abstract class PollingResponseBase
+    public abstract class PollingResponseBase : IEquatable<PollingResponseBase>
     {
         protected PollingResponseBase(DateTime time, bool isCancelled, Exception exception)
         {
@@ -14,5 +14,27 @@ namespace Common.Abstractions
         public DateTime Time { get; }
         public bool IsCancelled { get; }
         public Exception Exception { get; }
+
+        public bool Equals(PollingResponseBase other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+            
+            return Time.Equals(other.Time) &&
+                   IsCancelled == other.IsCancelled &&
+                   Equals(Exception, other.Exception);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as PollingResponseBase);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Time, IsCancelled, Exception);
+        }
     }
 }

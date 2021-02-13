@@ -22,6 +22,7 @@ namespace CryptoBot.CryptoPollings
         private readonly INotificationService m_notificationService;
         private readonly int m_candleSizeInMinutes;
         private readonly int m_maxMacdPollingTimeInMinutes;
+        private DateTime m_currentTime;
 
         public MacdHistogramCryptoPolling(INotificationService notificationService,
             ICurrencyDataProvider currencyDataProvider, 
@@ -38,46 +39,71 @@ namespace CryptoBot.CryptoPollings
 
         public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
-            s_logger.LogDebug($"{currency}: {nameof(MacdHistogramCryptoPolling)} start, " +
-                              $"Get update every 1 minute," +
-                              $"Max iteration {m_maxMacdPollingTimeInMinutes}");
+            PollingResponseBase pollingResponse;
+            m_currentTime = currentTime;
+            s_logger.LogDebug(StartPollingDescription(currency));
 
-            MacdHistogramPollingResponse macdHistogramPollingResponse =  await StartAsyncImpl(currency, cancellationToken, currentTime);
-            s_logger.LogDebug($"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}");
-            return macdHistogramPollingResponse;
-        }
-
-        private async Task<MacdHistogramPollingResponse> StartAsyncImpl(string currency, CancellationToken cancellationToken, DateTime currentTime)
-        {
             try
             {
-                for (int i = 0; i < m_maxMacdPollingTimeInMinutes; i++)
-                {
-                    currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, s_actionName,
-                        currentTime);
-                    decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, currentTime);
-                    if (macdHistogram > 0)
-                    {
-                        MacdHistogramPollingResponse macdHistogramPollingResponse = new MacdHistogramPollingResponse(currentTime, macdHistogram);
-                        string message =
-                            $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
-                        m_notificationService.Notify(message);
-                        return macdHistogramPollingResponse;
-                    }
-                }
-
-                return new MacdHistogramPollingResponse(currentTime, 0, true);
+                pollingResponse =  await StartAsyncImpl(currency, cancellationToken);
             }
             catch (OperationCanceledException)
             {
                 s_logger.LogWarning("got cancellation request");
-                return new MacdHistogramPollingResponse(currentTime, 0, false, true);
+                pollingResponse = CreateGotCancelledPollingResponse();
             }
             catch (Exception e)
             {
                 s_logger.LogWarning(e, $"Failed, {e.Message}");
-                return new MacdHistogramPollingResponse(currentTime, 0, false, false, e);
+                pollingResponse = CreateExceptionPollingResponse(e);
             }
+            s_logger.LogDebug(EndPollingDescription(currency, pollingResponse));
+            return pollingResponse;
         }
+
+        private static string EndPollingDescription(string currency, PollingResponseBase pollingResponse)
+        {
+            return $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {pollingResponse}";
+        }
+
+        private string StartPollingDescription(string currency)
+        {
+            return $"{currency}: {nameof(MacdHistogramCryptoPolling)} start, " +
+                   $"Get update every 1 minute," +
+                   $"Max iteration {m_maxMacdPollingTimeInMinutes}";
+        }
+
+        private async Task<MacdHistogramPollingResponse> StartAsyncImpl(string currency,
+            CancellationToken cancellationToken)
+        {
+            for (int i = 0; i < m_maxMacdPollingTimeInMinutes; i++)
+            {
+                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds,
+                    s_actionName,
+                    m_currentTime);
+                decimal macdHistogram =
+                    m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, m_currentTime);
+                if (macdHistogram > 0)
+                {
+                    MacdHistogramPollingResponse macdHistogramPollingResponse =
+                        new MacdHistogramPollingResponse(m_currentTime, macdHistogram);
+                    string message =
+                        $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
+                    m_notificationService.Notify(message);
+                    return macdHistogramPollingResponse;
+                }
+            }
+
+            return CreateReachedMaxTimeMacdHistogramPollingResponse();
+        }
+
+        private MacdHistogramPollingResponse CreateReachedMaxTimeMacdHistogramPollingResponse() => 
+            new MacdHistogramPollingResponse(m_currentTime, 0, true);
+
+        private MacdHistogramPollingResponse CreateGotCancelledPollingResponse() => 
+            new MacdHistogramPollingResponse(m_currentTime, 0, false, true);
+
+        private MacdHistogramPollingResponse CreateExceptionPollingResponse(Exception e) => 
+            new MacdHistogramPollingResponse(m_currentTime, 0, false, false, e);
     }
 }
