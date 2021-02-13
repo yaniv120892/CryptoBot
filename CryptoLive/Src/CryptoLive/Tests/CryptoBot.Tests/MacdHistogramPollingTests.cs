@@ -27,12 +27,11 @@ namespace CryptoBot.Tests
         {
             // Arrange
             DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
-            DateTime pollingEndTime = pollingStartTime.AddMinutes(1);
             const decimal positiveMacdHistogram = 1;
             const int maxMacdPollingTimeInMinutes = 1;
-            var expectedResponse = new MacdHistogramPollingResponse(pollingEndTime, positiveMacdHistogram);
+            var expectedResponse = new MacdHistogramPollingResponse(pollingStartTime, positiveMacdHistogram);
             m_currencyDataProviderMock
-                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingEndTime))
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingStartTime))
                 .Returns(positiveMacdHistogram);
             
             var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
@@ -63,44 +62,11 @@ namespace CryptoBot.Tests
             const int maxMacdPollingTimeInMinutes = 1;
             var expectedResponse = new MacdHistogramPollingResponse(pollingEndTime, 0, true);
             m_currencyDataProviderMock
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingStartTime))
+                .Returns(negativeMacdHistogram);
+            m_currencyDataProviderMock
                 .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingEndTime))
                 .Returns(negativeMacdHistogram);
-            
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
-                m_systemClock, 
-                s_candleSize,
-                maxMacdPollingTimeInMinutes);
-            
-            // Act
-            MacdHistogramPollingResponse actualResponse = (MacdHistogramPollingResponse)await macdHistogramCryptoPolling.StartAsync(s_currency, CancellationToken.None, pollingStartTime);
-
-            // Assert
-            Assert.AreEqual(expectedResponse, actualResponse);
-            m_currencyDataProviderMock.Verify(m=>
-                    m.GetMacdHistogram(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
-                        It.IsAny<DateTime>()),
-                Times.Once);
-        }
-        
-        [TestMethod]
-        public async Task When_StartAsync_Given_MacdReachedPositiveValueInSecondIteration_Return_PositiveMacdValue()
-        {
-            // Arrange
-            DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
-            DateTime getMacdHistogramFirstTime = pollingStartTime.AddMinutes(1);
-            DateTime getMacdHistogramSecondTime = getMacdHistogramFirstTime.AddMinutes(1);
-            const decimal positiveMacdHistogram = 1;
-            const decimal negativeMacdHistogram = -1;
-            const int maxMacdPollingTimeInMinutes = 2;
-            var expectedResponse = new MacdHistogramPollingResponse(getMacdHistogramSecondTime, positiveMacdHistogram);
-            m_currencyDataProviderMock
-                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, getMacdHistogramFirstTime))
-                .Returns(negativeMacdHistogram);
-            m_currencyDataProviderMock
-                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, getMacdHistogramSecondTime))
-                .Returns(positiveMacdHistogram);
             
             var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
                 m_currencyDataProviderMock.Object,
@@ -119,6 +85,45 @@ namespace CryptoBot.Tests
                         It.IsAny<DateTime>()),
                 Times.Exactly(2));
         }
+        
+        [TestMethod]
+        public async Task When_StartAsync_Given_MacdReachedPositiveValueInSecondIteration_Return_PositiveMacdValue()
+        {
+            // Arrange
+            DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
+            DateTime getMacdHistogramAfter1Minute = pollingStartTime.AddMinutes(1);
+            DateTime getMacdHistogramAfter2Minute = getMacdHistogramAfter1Minute.AddMinutes(1);
+            const decimal positiveMacdHistogram = 1;
+            const decimal negativeMacdHistogram = -1;
+            const int maxMacdPollingTimeInMinutes = 2;
+            var expectedResponse = new MacdHistogramPollingResponse(getMacdHistogramAfter2Minute, positiveMacdHistogram);
+            m_currencyDataProviderMock
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingStartTime))
+                .Returns(negativeMacdHistogram);
+            m_currencyDataProviderMock
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, getMacdHistogramAfter1Minute))
+                .Returns(negativeMacdHistogram);
+            m_currencyDataProviderMock
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, getMacdHistogramAfter2Minute))
+                .Returns(positiveMacdHistogram);
+            
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
+                m_currencyDataProviderMock.Object,
+                m_systemClock, 
+                s_candleSize,
+                maxMacdPollingTimeInMinutes);
+            
+            // Act
+            MacdHistogramPollingResponse actualResponse = (MacdHistogramPollingResponse)await macdHistogramCryptoPolling.StartAsync(s_currency, CancellationToken.None, pollingStartTime);
+
+            // Assert
+            Assert.AreEqual(expectedResponse, actualResponse);
+            m_currencyDataProviderMock.Verify(m=>
+                    m.GetMacdHistogram(It.IsAny<string>(), 
+                        It.IsAny<int>(), 
+                        It.IsAny<DateTime>()),
+                Times.Exactly(3));
+        }
 
         [TestMethod]
         public async Task When_StartAsync_Given_GotCancellationRequest_Should_PollingResponse_IsCancelled_EqualsTrue()
@@ -126,11 +131,10 @@ namespace CryptoBot.Tests
             // Arrange
             var cancellationTokenSource = new CancellationTokenSource();
             DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
-            DateTime pollingEndTime = pollingStartTime.AddMinutes(1);
             const decimal negativeMacdHistogram = -1;
-            const int maxMacdPollingTimeInMinutes = 2;
+            const int maxMacdPollingTimeInMinutes = 1;
             m_currencyDataProviderMock
-                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingEndTime))
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingStartTime))
                 .Returns(negativeMacdHistogram)
                 .Callback(()=>cancellationTokenSource.Cancel());
 
@@ -147,7 +151,7 @@ namespace CryptoBot.Tests
             Assert.IsTrue(actualResponse.IsCancelled);
             Assert.IsNull(actualResponse.Exception);
             Assert.IsFalse(actualResponse.IsReachMaxTimeInMinutes);
-            Assert.AreEqual(pollingEndTime, actualResponse.Time);
+            Assert.AreEqual(pollingStartTime, actualResponse.Time);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetMacdHistogram(It.IsAny<string>(), 
                         It.IsAny<int>(), 
@@ -161,13 +165,10 @@ namespace CryptoBot.Tests
             // Arrange
             Exception expectedException = new Exception();
             DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
-            DateTime pollingEndTime = pollingStartTime.AddMinutes(1);
             const int maxMacdPollingTimeInMinutes = 1;
             m_currencyDataProviderMock
-                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingEndTime))
+                .Setup(m => m.GetMacdHistogram(s_currency, s_candleSize, pollingStartTime))
                 .Throws(expectedException);
-
-
             var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
                 m_currencyDataProviderMock.Object,
                 m_systemClock,
@@ -183,7 +184,7 @@ namespace CryptoBot.Tests
             Assert.AreEqual(expectedException, actualResponse.Exception);
             Assert.IsFalse(actualResponse.IsCancelled);
             Assert.IsFalse(actualResponse.IsReachMaxTimeInMinutes);
-            Assert.AreEqual(pollingEndTime, actualResponse.Time);
+            Assert.AreEqual(pollingStartTime, actualResponse.Time);
             m_currencyDataProviderMock.Verify(m =>
                     m.GetMacdHistogram(It.IsAny<string>(),
                         It.IsAny<int>(),

@@ -16,6 +16,7 @@ namespace CryptoBot.CryptoPollings
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<PriceAndRsiCryptoPolling>();
         private static readonly int s_timeToWaitInSeconds = 60;
+        private static string s_actionName = "RSI And Price";
 
         private readonly INotificationService m_notificationService;
         private readonly ICurrencyDataProvider m_currencyDataProvider;
@@ -23,6 +24,7 @@ namespace CryptoBot.CryptoPollings
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
         private readonly int m_candleSizeInMinutes;
         private readonly decimal m_maxRsiToNotify;
+        
         private DateTime m_currentTime;
 
         public PriceAndRsiCryptoPolling(INotificationService notificationService,
@@ -73,7 +75,7 @@ namespace CryptoBot.CryptoPollings
             while (ShouldContinuePolling(currentPriceAndRsi, out oldPriceAndRsi))
             {
                 m_cryptoPriceAndRsiQueue.Enqueue(currentPriceAndRsi);
-                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, "RSI And Price",
+                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, s_actionName,
                     m_currentTime);
                 currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(currency, m_candleSizeInMinutes, m_currentTime);
             }
