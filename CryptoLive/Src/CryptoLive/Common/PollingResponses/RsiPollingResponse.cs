@@ -7,8 +7,9 @@ namespace Common.PollingResponses
     {
         public RsiPollingResponse(DateTime time,
             decimal rsi,
-            bool isCancelled=false) 
-            : base(time, isCancelled)
+            bool isCancelled=false,
+            Exception gotException=null)
+            : base(time, isCancelled, gotException)
         {
             Rsi = rsi;
         }
