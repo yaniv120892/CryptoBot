@@ -3,15 +3,16 @@ using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
-    public class RsiPollingResponse : IPollingResponse
+    public class RsiPollingResponse : PollingResponseBase
     {
-        public RsiPollingResponse(DateTime time, decimal rsi)
+        public RsiPollingResponse(DateTime time,
+            decimal rsi,
+            bool isCancelled=false) 
+            : base(time, isCancelled)
         {
-            Time = time;
             Rsi = rsi;
         }
 
-        public DateTime Time { get; }
         public decimal Rsi { get; }
 
         public override string ToString()

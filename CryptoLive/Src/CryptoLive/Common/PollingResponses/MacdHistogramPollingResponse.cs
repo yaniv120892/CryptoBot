@@ -3,15 +3,16 @@ using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
-    public class MacdHistogramPollingResponse : IPollingResponse
+    public class MacdHistogramPollingResponse : PollingResponseBase
     {
-        public MacdHistogramPollingResponse(DateTime time, decimal macdHistogram)
+        public MacdHistogramPollingResponse(DateTime time,
+            decimal macdHistogram,
+            bool isCancelled=false) 
+            : base(time, isCancelled)
         {
-            Time = time;
             MacdHistogram = macdHistogram;
         }
 
-        public DateTime Time { get; }
         public decimal MacdHistogram { get; }
 
         public override string ToString()
