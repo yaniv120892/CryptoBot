@@ -33,7 +33,7 @@ namespace CryptoBot.CryptoPollings
             m_maxRsiToNotify = maxRsiToNotify;
         }
 
-        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
             s_logger.LogDebug($"{currency}: {nameof(RsiCryptoPolling)}, " +
                               $"Get update every {s_timeToWaitInSeconds / 60} minutes");

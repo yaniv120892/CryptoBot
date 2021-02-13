@@ -47,7 +47,7 @@ namespace CryptoBot.CryptoPollings
             m_maxPrice = maxPrice;
         }
 
-        public async Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
+        public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
         {
             s_logger.LogDebug($"{currency}: {nameof(CandleCryptoPolling)}, " +
                               $"Get update every {m_delayTimeInSeconds / 60} minutes");

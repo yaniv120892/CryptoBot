@@ -3,21 +3,21 @@ using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
-    public class CandlePollingResponse : IPollingResponse, IEquatable<CandlePollingResponse>
+    public class CandlePollingResponse : PollingResponseBase, IEquatable<CandlePollingResponse>
     {
         public bool IsBelow { get; }
         public bool IsAbove { get; }
-        public DateTime Time { get; }
         public MyCandle Candle { get; }
 
         public CandlePollingResponse(bool isBelow, 
             bool isAbove, 
             DateTime time, 
-            MyCandle candle)
+            MyCandle candle, 
+            bool isCancelled=false) 
+            : base(time, isCancelled)
         {
             IsBelow = isBelow;
             IsAbove = isAbove;
-            Time = time;
             Candle = candle;
         }
         
@@ -37,6 +37,7 @@ namespace Common.PollingResponses
             return IsBelow == other.IsBelow &&
                    IsAbove == other.IsAbove &&
                    Time.Equals(other.Time) &&
+                   IsCancelled == other.IsCancelled &&
                    Equals(Candle, other.Candle);
         }
 

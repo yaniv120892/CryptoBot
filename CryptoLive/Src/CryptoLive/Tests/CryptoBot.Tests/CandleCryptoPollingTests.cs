@@ -161,6 +161,7 @@ namespace CryptoBot.Tests
         public async Task When_StartAsync_Given_GotCancellationRequest_Should_StopExecution()
         {
             // Arrange
+            var cancellationToken = new CancellationTokenSource();
             MyCandle candle = CreateCandle(s_higherThanMinPrice, s_higherThanMaxPrice);
             DateTime pollingStartTime = candle.CloseTime;
             var expectedCandlePollingResponse = new CandlePollingResponse(false, true, candle.CloseTime, candle);
@@ -176,7 +177,7 @@ namespace CryptoBot.Tests
                 s_maxPrice);
             
             // Act
-            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, CancellationToken.None, pollingStartTime);
+            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, cancellationToken.Token, pollingStartTime);
 
             // Assert
             Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);

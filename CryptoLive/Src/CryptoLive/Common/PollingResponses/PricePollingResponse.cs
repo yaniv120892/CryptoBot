@@ -3,18 +3,20 @@ using Common.Abstractions;
 
 namespace Common.PollingResponses
 {
-    public class PricePollingResponse : IPollingResponse
+    public class PricePollingResponse : PollingResponseBase
     {
-        public PricePollingResponse(decimal initialPrice, decimal currentPrice, DateTime time)
+        public PricePollingResponse(decimal initialPrice, 
+            decimal currentPrice, 
+            DateTime time,
+            bool isCancelled=false) 
+            : base(time, isCancelled)
         {
             InitialPrice = initialPrice;
             CurrentPrice = currentPrice;
-            Time = time;
         }
 
         public decimal InitialPrice { get; }
         public decimal CurrentPrice { get; }
-        public DateTime Time { get; }
 
         public override string ToString()
         {

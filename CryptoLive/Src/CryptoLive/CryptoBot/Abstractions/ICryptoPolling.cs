@@ -7,6 +7,6 @@ namespace CryptoBot.Abstractions
 {
     public interface ICryptoPolling
     {
-        Task<IPollingResponse> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime);
+        Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime);
     }
 }
