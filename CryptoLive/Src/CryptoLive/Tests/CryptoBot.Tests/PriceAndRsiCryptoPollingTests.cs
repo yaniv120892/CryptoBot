@@ -106,7 +106,6 @@ namespace CryptoBot.Tests
             // Arrange
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
-            DateTime pollingEndTime = pollingStartTime.AddMinutes(1);
             PriceAndRsi priceAndRsi = new PriceAndRsi(2, 30, pollingStartTime);
 
             var expectedResponse = new PriceAndRsiPollingResponse(pollingStartTime, null, null, true);

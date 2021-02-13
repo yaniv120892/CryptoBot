@@ -76,22 +76,25 @@ namespace CryptoBot.CryptoPollings
         private async Task<MacdHistogramPollingResponse> StartAsyncImpl(string currency,
             CancellationToken cancellationToken)
         {
-            for (int i = 0; i < m_maxMacdPollingTimeInMinutes; i++)
+            decimal macdHistogram =
+                m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, m_currentTime);
+            for (int i = 0; i < m_maxMacdPollingTimeInMinutes && macdHistogram < 0; i++)
             {
                 m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds,
                     s_actionName,
                     m_currentTime);
-                decimal macdHistogram =
+                macdHistogram =
                     m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, m_currentTime);
-                if (macdHistogram > 0)
-                {
-                    MacdHistogramPollingResponse macdHistogramPollingResponse =
+            }
+
+            if (macdHistogram >= 0)
+            {
+                MacdHistogramPollingResponse macdHistogramPollingResponse =
                         new MacdHistogramPollingResponse(m_currentTime, macdHistogram);
                     string message =
                         $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
                     m_notificationService.Notify(message);
                     return macdHistogramPollingResponse;
-                }
             }
 
             return CreateReachedMaxTimeMacdHistogramPollingResponse();
