@@ -25,6 +25,7 @@ namespace CryptoBot.Tests
         private static readonly decimal s_higherThanMaxPrice = s_maxPrice + 1;
         private static readonly decimal s_lowerThanMinPrice = s_minPrice - 1;
         private static readonly decimal s_lowerThanMaxPrice = s_maxPrice - 1;
+        
         private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
         private readonly Mock<ICurrencyDataProvider> m_currencyDataProviderMock = new Mock<ICurrencyDataProvider>();
         private readonly ISystemClock m_systemClock = new DummySystemClock();
@@ -210,6 +211,7 @@ namespace CryptoBot.Tests
 
             // Assert
             Assert.AreEqual(expectedException, actualCandlePollingResponse.Exception);
+            Assert.IsFalse(actualCandlePollingResponse.IsCancelled);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
                         It.IsAny<int>(), 

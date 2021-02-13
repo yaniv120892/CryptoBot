@@ -87,7 +87,6 @@ namespace CryptoBot.CryptoPollings
                 s_logger.LogWarning(e, $"Failed, {e.Message}");
                 return new CandlePollingResponse(false, false, currentTime, currCandle, false, e);
             }
-
         }
 
         private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) =>

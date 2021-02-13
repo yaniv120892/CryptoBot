@@ -50,7 +50,7 @@ namespace Common.PollingResponses
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(IsBelow, IsAbove, Time, Candle, IsCancelled, Exception);
+            return HashCode.Combine(IsBelow, IsAbove, Candle, IsCancelled, Exception);
         }
     }
 }
