@@ -11,8 +11,9 @@ namespace Common.PollingResponses
         public RsiAndPricePollingResponse(DateTime time, 
             PriceAndRsi oldPriceAndRsi,
             PriceAndRsi newPriceAndRsi,
-            bool isCancelled=false) 
-            : base(time, isCancelled)
+            bool isCancelled=false,
+            Exception gotException=null)
+            : base(time, isCancelled, gotException)
         {
             NewPriceAndRsi = newPriceAndRsi;
             OldPriceAndRsi = oldPriceAndRsi;

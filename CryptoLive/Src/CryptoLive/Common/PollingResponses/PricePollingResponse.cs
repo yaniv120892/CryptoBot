@@ -8,8 +8,9 @@ namespace Common.PollingResponses
         public PricePollingResponse(decimal initialPrice, 
             decimal currentPrice, 
             DateTime time,
-            bool isCancelled=false) 
-            : base(time, isCancelled)
+            bool isCancelled=false,
+            Exception gotException=null)
+            : base(time, isCancelled, gotException)
         {
             InitialPrice = initialPrice;
             CurrentPrice = currentPrice;

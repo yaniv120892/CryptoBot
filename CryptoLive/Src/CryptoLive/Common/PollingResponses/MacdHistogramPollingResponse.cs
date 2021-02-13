@@ -7,8 +7,9 @@ namespace Common.PollingResponses
     {
         public MacdHistogramPollingResponse(DateTime time,
             decimal macdHistogram,
-            bool isCancelled=false) 
-            : base(time, isCancelled)
+            bool isCancelled=false,
+            Exception gotException=null)
+            : base(time, isCancelled, gotException)
         {
             MacdHistogram = macdHistogram;
         }

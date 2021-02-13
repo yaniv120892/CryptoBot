@@ -158,13 +158,12 @@ namespace CryptoBot.Tests
         }
         
         [TestMethod]
-        public async Task When_StartAsync_Given_GotCancellationRequest_Should_StopExecution()
+        public async Task When_StartAsync_Given_GotCancellationRequest_Should_CandlePollingResponse_IsCancelled_EqualsTrue()
         {
             // Arrange
-            var cancellationToken = new CancellationTokenSource();
-            MyCandle candle = CreateCandle(s_higherThanMinPrice, s_higherThanMaxPrice);
+            var cancellationTokenSource = new CancellationTokenSource();
+            MyCandle candle = CreateCandle(s_higherThanMinPrice, s_lowerThanMaxPrice);
             DateTime pollingStartTime = candle.CloseTime;
-            var expectedCandlePollingResponse = new CandlePollingResponse(false, true, candle.CloseTime, candle);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
                 .Returns(candle);
@@ -177,10 +176,40 @@ namespace CryptoBot.Tests
                 s_maxPrice);
             
             // Act
-            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, cancellationToken.Token, pollingStartTime);
+            cancellationTokenSource.CancelAfter(100);
+            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, cancellationTokenSource.Token, pollingStartTime);
 
             // Assert
-            Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
+            Assert.IsTrue(actualCandlePollingResponse.IsCancelled);
+            Assert.IsNull(actualCandlePollingResponse.Exception);
+            m_currencyDataProviderMock.Verify(m=>
+                    m.GetLastCandle(It.IsAny<string>(), 
+                        It.IsAny<int>(), 
+                        It.IsAny<DateTime>()),
+                Times.AtLeastOnce);
+        }
+        
+        [TestMethod]
+        public async Task When_StartAsync_Given_GotException_Should_CandlePollingResponse_Exception_NotEqualNull()
+        {
+            // Arrange
+            Exception expectedException = new Exception();
+            m_currencyDataProviderMock
+                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, It.IsAny<DateTime>()))
+                .Throws(expectedException);
+            
+            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
+                m_currencyDataProviderMock.Object,
+                m_systemClock, s_delayTimeInSeconds,
+                s_candleSize,
+                s_minPrice,
+                s_maxPrice);
+            
+            // Act
+            CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, CancellationToken.None, DateTime.Now);
+
+            // Assert
+            Assert.AreEqual(expectedException, actualCandlePollingResponse.Exception);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
                         It.IsAny<int>(), 

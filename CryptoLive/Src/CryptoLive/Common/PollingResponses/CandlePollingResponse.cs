@@ -13,8 +13,9 @@ namespace Common.PollingResponses
             bool isAbove, 
             DateTime time, 
             MyCandle candle, 
-            bool isCancelled=false) 
-            : base(time, isCancelled)
+            bool isCancelled=false,
+            Exception gotException=null)
+            : base(time, isCancelled, gotException)
         {
             IsBelow = isBelow;
             IsAbove = isAbove;
@@ -38,6 +39,7 @@ namespace Common.PollingResponses
                    IsAbove == other.IsAbove &&
                    Time.Equals(other.Time) &&
                    IsCancelled == other.IsCancelled &&
+                   Exception == other.Exception &&
                    Equals(Candle, other.Candle);
         }
 
@@ -48,7 +50,7 @@ namespace Common.PollingResponses
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(IsBelow, IsAbove, Time, Candle);
+            return HashCode.Combine(IsBelow, IsAbove, Time, Candle, IsCancelled, Exception);
         }
     }
 }

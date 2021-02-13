@@ -51,22 +51,46 @@ namespace CryptoBot.CryptoPollings
         {
             s_logger.LogDebug($"{currency}: {nameof(CandleCryptoPolling)}, " +
                               $"Get update every {m_delayTimeInSeconds / 60} minutes");
-            MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
-            (bool isBelow, bool isAbove) = IsCandleInRange(currCandle);
-            while (isBelow == false && isAbove == false)
-            {
-                currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds, "Price range", currentTime);
-                currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
-                (isBelow, isAbove) = IsCandleInRange(currCandle);
-            }
-
-            var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, currentTime, currCandle);
+            CandlePollingResponse candlePollingResponse = await StartAsyncImpl(currency, cancellationToken, currentTime);
             string message = $"{currency}: {nameof(CandleCryptoPolling)} done, {candlePollingResponse}";
             m_notificationService.Notify(message);
             s_logger.LogDebug(message);
             return candlePollingResponse;
         }
 
-        private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) => (currCandle.Low < m_minPrice, currCandle.High > m_maxPrice);
+        private async Task<CandlePollingResponse> StartAsyncImpl(string currency,
+            CancellationToken cancellationToken,
+            DateTime currentTime)
+        {
+            MyCandle currCandle = null;
+            try
+            {
+                currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
+                (bool isBelow, bool isAbove) = IsCandleInRange(currCandle);
+                while (isBelow == false && isAbove == false)
+                {
+                    currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds,
+                        "Price range", currentTime);
+                    currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, currentTime);
+                    (isBelow, isAbove) = IsCandleInRange(currCandle);
+                }
+
+                return new CandlePollingResponse(isBelow, isAbove, currentTime, currCandle);
+            }
+            catch (OperationCanceledException)
+            {
+                s_logger.LogWarning("got cancellation request");
+                return new CandlePollingResponse(false, false, currentTime, currCandle, true);
+            }
+            catch (Exception e)
+            {
+                s_logger.LogWarning(e, $"Failed, {e.Message}");
+                return new CandlePollingResponse(false, false, currentTime, currCandle, false, e);
+            }
+
+        }
+
+        private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) =>
+            (currCandle.Low < m_minPrice, currCandle.High > m_maxPrice);
     }
 }
