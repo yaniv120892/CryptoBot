@@ -219,7 +219,7 @@ namespace CryptoBot.Tests
 
         private static MyCandle CreateCandle(decimal low, decimal high)
         {
-            DateTime openTime = new DateTime(2020, 1, 1, 10, 10, 0);
+            var openTime = new DateTime(2020, 1, 1, 10, 10, 0);
             DateTime closeTime = openTime.Add(TimeSpan.FromMinutes(s_candleSize));
             var candle = new MyCandle(s_maxPrice, s_maxPrice, openTime, closeTime, low, high);
             return candle;
