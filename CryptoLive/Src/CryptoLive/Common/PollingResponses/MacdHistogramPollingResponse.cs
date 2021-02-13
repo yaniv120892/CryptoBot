@@ -31,9 +31,7 @@ namespace Common.PollingResponses
                 return false;
             }
 
-            return Time.Equals(other.Time) &&
-                   IsCancelled == other.IsCancelled &&
-                   Exception == other.Exception &&
+            return base.Equals(other) &&
                    MacdHistogram == other.MacdHistogram &&
                    IsReachMaxTimeInMinutes == other.IsReachMaxTimeInMinutes;
         }
@@ -45,7 +43,7 @@ namespace Common.PollingResponses
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Time, IsCancelled, Exception, MacdHistogram, IsReachMaxTimeInMinutes);
+            return HashCode.Combine(base.GetHashCode(), MacdHistogram, IsReachMaxTimeInMinutes);
         }
     }
 }

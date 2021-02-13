@@ -35,11 +35,10 @@ namespace Common.PollingResponses
             {
                 return false;
             }
-            return IsBelow == other.IsBelow &&
+
+            return base.Equals(other) &&
+                   IsBelow == other.IsBelow &&
                    IsAbove == other.IsAbove &&
-                   Time.Equals(other.Time) &&
-                   IsCancelled == other.IsCancelled &&
-                   Exception == other.Exception &&
                    Equals(Candle, other.Candle);
         }
 
@@ -50,7 +49,7 @@ namespace Common.PollingResponses
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(IsBelow, IsAbove, Candle, IsCancelled, Exception);
+            return HashCode.Combine(base.GetHashCode(), IsBelow, IsAbove, Candle);
         }
     }
 }

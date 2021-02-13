@@ -4,7 +4,7 @@ namespace Common
 {
     public class FixedSizeQueue<T>
     {
-        protected ConcurrentQueue<T> MyQueue = new ConcurrentQueue<T>();
+        public ConcurrentQueue<T> MyQueue = new ConcurrentQueue<T>();
 
         public int Size { get; }
 
