@@ -10,7 +10,7 @@ using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 using Utils.SystemClocks;
 
-namespace CryptoBot.Tests
+namespace CryptoBot.Tests.CryptoPollings
 {
     [TestClass]
     public class RsiCryptoPollingTests
