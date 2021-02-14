@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Globalization;
 
-// ReSharper disable NonReadonlyMemberInGetHashCode - needed for CsvHelper
-// ReSharper disable UnusedMember.Global -  needed for CsvHelper
-
 namespace Common
 {
     public class MyCandle : IEquatable<MyCandle>
