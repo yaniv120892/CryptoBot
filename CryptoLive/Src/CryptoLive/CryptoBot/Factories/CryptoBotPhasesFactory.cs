@@ -1,6 +1,7 @@
 ﻿using Common;
 using Common.CryptoQueue;
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
 using Infra;

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 
 namespace CryptoBot.Factories
 {
@@ -13,9 +14,14 @@ namespace CryptoBot.Factories
             m_currencyBotPhasesExecutor = currencyBotPhasesExecutor;
         }
 
-        public CurrencyBot Create(string currency,
+        public ICurrencyBot Create(string currency,
             CancellationTokenSource cancellationTokenSource,
-            DateTime botStartTime) =>
-            new CurrencyBot(m_currencyBotPhasesExecutor, currency, cancellationTokenSource, botStartTime);
+            DateTime botStartTime, 
+            int age=0) 
+            => new CurrencyBot(this, 
+                m_currencyBotPhasesExecutor, 
+                currency, 
+                cancellationTokenSource, 
+                botStartTime);
     }
 }

@@ -3,98 +3,105 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 using Infra;
 using Microsoft.Extensions.Logging;
 using Utils.Converters;
 
 namespace CryptoBot
 {
-    public class CurrencyBot
+    public class CurrencyBot : ICurrencyBot
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CurrencyBot>();
         
         private readonly ICurrencyBotPhasesExecutor m_currencyBotPhasesExecutor;
+        private readonly ICurrencyBotFactory m_currencyBotFactory;
         private readonly CancellationTokenSource m_cancellationTokenSource;
+        private readonly List<string> m_phasesDescription;
         private readonly int m_age;
+        private readonly string m_currency;
+
         private DateTime m_currentTime;
-        public string Currency { get; }
 
         public CurrencyBot(
+            ICurrencyBotFactory currencyBotFactory,
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor,
             string currency,
             CancellationTokenSource cancellationTokenSource,
             DateTime botStartTime,
             int age = 0)
         {
-            Currency = currency;
+            m_currency = currency;
+            m_currencyBotFactory = currencyBotFactory;
             m_cancellationTokenSource = cancellationTokenSource;
             m_currentTime = botStartTime;
             m_age = age;
             m_currencyBotPhasesExecutor = currencyBotPhasesExecutor;
+            m_phasesDescription = new List<string>();
         }
         
         public async Task<(BotResultDetails, DateTime)> StartAsync()
         {
-            int res;
-            List<string> phasesDescription;
-            (res, phasesDescription) = await StartAsyncImpl();
-            BotResult botResult = BotResultConverter.ConvertIntToBotResult(res);
-            var botResultDetails = new BotResultDetails(botResult, phasesDescription);
-            return (botResultDetails, m_currentTime);
+            return await StartAsyncImpl();
         }
 
-        private async Task<(int, List<string>)> StartAsyncImpl()
+        private BotResultDetails CreateBotResultDetails(int res)
         {
-            List<string> phasesDescription = new List<string>();
+            BotResult botResult = BotResultConverter.ConvertIntToBotResult(res);
+            return new BotResultDetails(botResult, m_phasesDescription);
+        }
+
+        private async Task<(BotResultDetails, DateTime)> StartAsyncImpl()
+        {
             int phaseNumber = 0;
-            s_logger.LogInformation($"{Currency}_{m_age}: Start iteration");
+            s_logger.LogInformation($"{m_currency}_{m_age}: Start iteration");
             
             //currentTime = await m_currencyBotPhasesExecutor.WaitUntilRsiIsBelowMaxValueAsync(currentTime, cancellationTokenSource.Token, Currency , age, ++phaseNumber, phasesDescription);
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, Currency , m_age, ++phaseNumber, phasesDescription);
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
 
             // Validator
-            bool isCandleRed = m_currencyBotPhasesExecutor.ValidateCandleIsRed(m_currentTime, Currency, m_age, ++phaseNumber, phasesDescription);
+            bool isCandleRed = m_currencyBotPhasesExecutor.ValidateCandleIsRed(m_currentTime, m_currency, m_age, ++phaseNumber, m_phasesDescription);
             if(!isCandleRed)
             {
-                s_logger.LogInformation($"{Currency}_{m_age}: Done iteration - candle is not red");
-                m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, Currency,1*60, "FullMode_WaitAfterCandleNotRed");
-                return (0, phasesDescription);
+                s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is not red");
+                m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,1*60, "FullMode_WaitAfterCandleNotRed");
+                return (CreateBotResultDetails(0), m_currentTime);
             }
-            Task<(int,List<string>)> child = StartChildAsync();
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, Currency,15*60, "FullMode_WaitAfterCandleIsRed");
+            Task<(BotResultDetails, DateTime)> child = StartChildAsync();
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,15*60, "FullMode_WaitAfterCandleIsRed");
             
-            bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, Currency, m_age, ++phaseNumber, phasesDescription);
+            bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age, ++phaseNumber, m_phasesDescription);
             if(!isCandleGreen)
             {
-                s_logger.LogInformation($"{Currency}_{m_age}: Done iteration - candle is not green");
+                s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is not green");
                 return await child;
             }
 
             m_cancellationTokenSource.Cancel();
             // Enter
-            decimal basePrice = await m_currencyBotPhasesExecutor.GetPriceAsync(Currency, m_currentTime);
+            decimal basePrice = await m_currencyBotPhasesExecutor.GetPriceAsync(m_currency, m_currentTime);
             bool isWin;
             (isWin, m_currentTime) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
-                Currency, basePrice, m_age, ++phaseNumber, phasesDescription);
+                m_currency, basePrice, m_age, ++phaseNumber, m_phasesDescription);
             if (isWin)
             {
-                s_logger.LogInformation($"{Currency}_{m_age}: Done iteration - Win {m_currentTime}");
-                return (1, phasesDescription);
+                s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - Win {m_currentTime}");
+                return (CreateBotResultDetails(1), m_currentTime);
             }
 
-            s_logger.LogInformation($"{Currency}_{m_age}: Done iteration - Loss {m_currentTime}");
-            return (-1, phasesDescription);
+            s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - Loss {m_currentTime}");
+            return (CreateBotResultDetails(-1), m_currentTime);
         }
         
-
-        private async Task<(int, List<string>)> StartChildAsync()
+        private async Task<(BotResultDetails, DateTime)> StartChildAsync()
         {
             const int timeToWaitInSeconds = 1 * 60;
-            s_logger.LogDebug($"{Currency}_{m_age}: Start child {m_currentTime}");
+            s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");
             m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token,
-                Currency, timeToWaitInSeconds, "FullMode_WaitBeforeStartChild");
-            var childCurrencyBot = new CurrencyBot(m_currencyBotPhasesExecutor, Currency, m_cancellationTokenSource, m_currentTime, m_age+1);
-            return await childCurrencyBot.StartAsyncImpl();
+                m_currency, timeToWaitInSeconds, "FullMode_WaitBeforeStartChild");
+            ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(m_currency, m_cancellationTokenSource, m_currentTime, m_age+1);
+            return await childCurrencyBot.StartAsync();
         }
     }
 }

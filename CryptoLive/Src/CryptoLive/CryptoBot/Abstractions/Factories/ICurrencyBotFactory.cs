@@ -1,12 +1,13 @@
 using System;
 using System.Threading;
 
-namespace CryptoBot.Abstractions
+namespace CryptoBot.Abstractions.Factories
 {
     public interface ICurrencyBotFactory
     {
-        CurrencyBot Create(string currency,
+        ICurrencyBot Create(string currency,
             CancellationTokenSource cancellationTokenSource,
-            DateTime botStartTime);
+            DateTime botStartTime,
+            int age = 0);
     }
 }

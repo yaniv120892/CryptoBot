@@ -1,4 +1,4 @@
-namespace CryptoBot.Abstractions
+namespace CryptoBot.Abstractions.Factories
 {
     public interface ICryptoBotPhasesFactoryCreator
     {

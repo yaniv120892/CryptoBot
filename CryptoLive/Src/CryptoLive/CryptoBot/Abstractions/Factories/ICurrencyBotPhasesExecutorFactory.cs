@@ -1,6 +1,6 @@
 using Common.Abstractions;
 
-namespace CryptoBot.Abstractions
+namespace CryptoBot.Abstractions.Factories
 {
     public interface ICurrencyBotPhasesExecutorFactory
     {

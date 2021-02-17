@@ -1,5 +1,6 @@
 using Common.Abstractions;
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 
 namespace CryptoBot.Factories
 {
