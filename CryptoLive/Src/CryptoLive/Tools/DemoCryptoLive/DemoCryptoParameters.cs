@@ -1,18 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Common.Abstractions;
+using Microsoft.Extensions.Configuration;
 
 namespace DemoCryptoLive
 {
-    public class DemoCryptoParameters
+    public class DemoCryptoParameters : CryptoParametersBase
     {
-        public int PriceChangeToNotify { get; }
         public string BinanceApiKey { get; }
         public string BinanceApiSecretKey { get; }
-        public int DelayTimeIterationsInSeconds { get; set; }
-        public int CandleSize { get; set; }
         public string[] Currencies { get; }
-        public decimal MaxRsiToNotify { get; }
         public string CandlesDataFolder { get; set; }
-        public int RsiMemorySize { get; set; }
         public int RsiSize { get; set; }
         public int FastEmaSize { get; set; }
         public int SlowEmaSize { get; set; }
@@ -21,18 +17,13 @@ namespace DemoCryptoLive
         public string CalculatedDataFolder { get; set; }
 
 
-        public DemoCryptoParameters(IConfigurationSection applicationSection)
+        public DemoCryptoParameters(IConfigurationSection applicationSection):base(applicationSection)
         {
-            CandleSize = int.Parse(applicationSection[nameof(CandleSize)]);
-            PriceChangeToNotify = int.Parse(applicationSection[nameof(PriceChangeToNotify)]);
-            MaxRsiToNotify = int.Parse(applicationSection[nameof(MaxRsiToNotify)]);
             BinanceApiKey = applicationSection[nameof(BinanceApiKey)];
             BinanceApiSecretKey = applicationSection[nameof(BinanceApiSecretKey)];
-            DelayTimeIterationsInSeconds = int.Parse(applicationSection[nameof(DelayTimeIterationsInSeconds)]);
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             CandlesDataFolder = applicationSection[nameof(CandlesDataFolder)];
             CalculatedDataFolder = applicationSection[nameof(CalculatedDataFolder)];
-            RsiMemorySize = int.Parse(applicationSection[nameof(RsiMemorySize)]);
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
             FastEmaSize = int.Parse(applicationSection[nameof(FastEmaSize)]);
             SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
