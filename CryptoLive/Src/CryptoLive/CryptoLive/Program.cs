@@ -12,7 +12,6 @@ using Infra.NotificationServices;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Abstractions;
-using Storage.Abstractions;
 using Storage.Abstractions.Repository;
 using Storage.Providers;
 using Storage.Repository;
@@ -36,7 +35,7 @@ namespace CryptoLive
         }
 
         private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
-        {               
+        {
             var systemClock = new SystemClock();
             var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
             var cancellationTokenSource = new CancellationTokenSource();
@@ -58,6 +57,9 @@ namespace CryptoLive
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
                 macdRepository, systemClockWithDelay, currencyClientFactory);
+            ICurrencyBotPhasesExecutorFactory currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
+            ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
+            ICurrencyBotFactory currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
             
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
@@ -68,11 +70,11 @@ namespace CryptoLive
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
                     systemClock, cancellationTokenSource, candleSize);
-                CurrencyBot currencyBot = CurrencyBotFactory.Create(cryptoLiveParameters, cryptoBotPhasesFactory, currency);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, 120, "Init2",storageStartTime);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, storageStartTime);
+                CurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, storageStartTime);
+                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, cancellationTokenSource);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -101,29 +103,15 @@ namespace CryptoLive
             return storageWorker;
         }
 
-        private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot, DateTime timeToStartBot)
+        private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot,
+            CancellationTokenSource cancellationTokenSource)
         {
-            int winCounter = 0;
-            int lossCounter = 0;
-            int noChangeCounter = 0;
-            while(winCounter + lossCounter < 10)
+            while(!cancellationTokenSource.IsCancellationRequested)
             {
-                (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync(timeToStartBot);
-                switch (botResultDetails.BotResult)
-                {
-                    case BotResult.Win:
-                        winCounter++;
-                        break;
-                    case BotResult.Even:
-                        noChangeCounter++;
-                        break;
-                    case BotResult.Loss:
-                        lossCounter++;
-                        break;
-                }
+                (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync();
+                Console.WriteLine(botResultDetails);
             }
-
-            s_logger.LogInformation($"{currencyBot.Currency}: Win - {winCounter}, Loss - {lossCounter}, NoChange: {noChangeCounter}");
+            s_logger.LogInformation("Got cancellation request");
         }
         
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
