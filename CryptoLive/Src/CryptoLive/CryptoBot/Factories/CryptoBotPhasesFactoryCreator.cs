@@ -1,4 +1,5 @@
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 using Infra;
 using Storage.Abstractions;
 using Storage.Abstractions.Providers;

@@ -1,10 +1,9 @@
 ﻿using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
-namespace CryptoBot.Abstractions
+namespace CryptoBot.Abstractions.Factories
 {
     public interface ICryptoBotPhasesFactory
     {

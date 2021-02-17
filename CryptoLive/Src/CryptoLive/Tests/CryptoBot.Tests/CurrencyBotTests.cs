@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
+using Common;
+using CryptoBot.Abstractions.Factories;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -10,16 +14,32 @@ namespace CryptoBot.Tests
     {
         private static readonly string s_currency = "CurrencyName";
         [TestMethod]
-        public void When_StartAsync_Given_ParentWin_And_ChildLoss_Return_Win()
+        public async Task When_StartAsync_Given_ParentWin_And_ChildLoss_Return_Win()
         {
             // Arrange
+            var cancellationTokenSource = new CancellationTokenSource();
             var botStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
-            var sut = new CurrencyBot(currencyBotPhasesExecutorMock.Object, s_currency, new CancellationTokenSource(), botStartTime, 0);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>());
+            var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
+            var childCurrencyBotMock = new Mock<CurrencyBot>();
+            childCurrencyBotMock
+                .Setup(m => m.StartAsync())
+                .Returns(Task.FromResult<(BotResultDetails, DateTime)>((childBotDetailsResult, childBotEndTime)));
+
+            var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
+            currencyBotFactoryMock
+                .Setup(m => m.Create(s_currency, cancellationTokenSource, botStartTime, 1))
+                .Returns(childCurrencyBotMock.Object);
             
+            
+            var sut = new CurrencyBot(currencyBotFactoryMock.Object, currencyBotPhasesExecutorMock.Object, s_currency, new CancellationTokenSource(), botStartTime);
+
             // Act
-            sut.StartAsync();
+           (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+            
             // Assert
+            Assert.AreEqual(botResult.BotResult, BotResult.Win);
         }
         
         [TestMethod]

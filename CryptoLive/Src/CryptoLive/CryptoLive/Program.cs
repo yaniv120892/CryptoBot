@@ -6,6 +6,7 @@ using Common;
 using Common.DataStorageObjects;
 using CryptoBot;
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 using CryptoBot.Factories;
 using Infra;
 using Infra.NotificationServices;
@@ -73,7 +74,7 @@ namespace CryptoLive
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, 120, "Init2",storageStartTime);
-                CurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, storageStartTime);
+                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, storageStartTime);
                 currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, cancellationTokenSource);
             }
 
@@ -103,7 +104,7 @@ namespace CryptoLive
             return storageWorker;
         }
 
-        private static async Task RunMultiplePhasesPerCurrency(CurrencyBot currencyBot,
+        private static async Task RunMultiplePhasesPerCurrency(ICurrencyBot currencyBot,
             CancellationTokenSource cancellationTokenSource)
         {
             while(!cancellationTokenSource.IsCancellationRequested)

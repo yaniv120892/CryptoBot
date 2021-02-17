@@ -7,6 +7,7 @@ using Common;
 using Common.DataStorageObjects;
 using CryptoBot;
 using CryptoBot.Abstractions;
+using CryptoBot.Abstractions.Factories;
 using CryptoBot.Factories;
 using Infra;
 using Infra.NotificationServices;
@@ -210,7 +211,7 @@ namespace DemoCryptoLive
                 try
                 {
                     var cancellationTokenSource = new CancellationTokenSource();
-                    CurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime);
+                    ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime);
                     BotResultDetails botResultDetails;
                     (botResultDetails, currentTime) = await currencyBot.StartAsync();
                     switch (botResultDetails.BotResult)
