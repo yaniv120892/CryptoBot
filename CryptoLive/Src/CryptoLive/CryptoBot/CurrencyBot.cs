@@ -14,6 +14,9 @@ namespace CryptoBot
     public class CurrencyBot : ICurrencyBot
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CurrencyBot>();
+        private static readonly int s_waitInSecondsBeforeStartChild = 60;
+        private static readonly int s_waitInSecondsAfterCandleNotRed = 60;
+        private static readonly int s_waitInSecondsBeforeCandleIsGreen = (15-1)*60;
         
         private readonly ICurrencyBotPhasesExecutor m_currencyBotPhasesExecutor;
         private readonly ICurrencyBotFactory m_currencyBotFactory;
@@ -65,11 +68,20 @@ namespace CryptoBot
             if(!isCandleRed)
             {
                 s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is not red");
-                m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,1*60, "FullMode_WaitAfterCandleNotRed");
+                m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency, s_waitInSecondsAfterCandleNotRed, "FullMode_WaitAfterCandleNotRed");
                 return (CreateBotResultDetails(0), m_currentTime);
             }
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, 
+                m_cancellationTokenSource.Token,
+                m_currency, 
+                s_waitInSecondsBeforeStartChild, 
+                "FullMode_WaitBeforeStartChild");
             Task<(BotResultDetails, DateTime)> child = StartChildAsync();
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,15*60, "FullMode_WaitAfterCandleIsRed");
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, 
+                m_cancellationTokenSource.Token,
+                m_currency,
+                s_waitInSecondsBeforeCandleIsGreen, 
+                "FullMode_WaitAfterCandleIsRed");
             
             bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age, ++phaseNumber, m_phasesDescription);
             if(!isCandleGreen)
@@ -96,10 +108,7 @@ namespace CryptoBot
         
         private async Task<(BotResultDetails, DateTime)> StartChildAsync()
         {
-            const int timeToWaitInSeconds = 1 * 60;
             s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, m_cancellationTokenSource.Token,
-                m_currency, timeToWaitInSeconds, "FullMode_WaitBeforeStartChild");
             ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(m_currency, m_cancellationTokenSource, m_currentTime, m_age+1);
             return await childCurrencyBot.StartAsync();
         }
