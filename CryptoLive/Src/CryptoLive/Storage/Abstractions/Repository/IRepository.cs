@@ -10,5 +10,6 @@ namespace Storage.Abstractions.Repository
         void Add(string currency, DateTime time, T storedData);
         void Delete(string currency, DateTime time);
         Task SaveDataToFileAsync(string currency, string fileName);
+        DateTime GetLastByTime(string currency);
     }
 }

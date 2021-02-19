@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,6 +9,7 @@ using Infra;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Abstractions;
+using Utils;
 
 namespace DataGenerator
 {
@@ -33,19 +33,12 @@ namespace DataGenerator
                     MyCandle[] oldCandles = ReadOldCandles(fileName);
                     s_logger.LogInformation($"Merge old and new data");
                     var mergedCandles = (oldCandles.Union(newCandles)).Distinct().ToArray();
-                    DeleteOldFile(fileName);
+                    CsvFileAccess.DeleteFile(fileName);
                     newCandles = mergedCandles;
                 }
 
                 s_logger.LogInformation($"Start write new data to {fileName}");
-                await using var writer = new StreamWriter(fileName);
-                {
-                    await using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-                    {
-                        csvWriter.Configuration.HasHeaderRecord = true;
-                        await csvWriter.WriteRecordsAsync((IEnumerable) newCandles.ToArray());
-                    }
-                }
+                await CsvFileAccess.WriteCsvAsync(fileName, newCandles);
                 s_logger.LogInformation($"Done create {fileName}");
             }
         }
@@ -56,12 +49,6 @@ namespace DataGenerator
                 new CurrencyClientFactory(dataGeneratorParameters.BinanceApiKey,
                     dataGeneratorParameters.BinanceApiSecretKey);
             return new BinanceCandleService(currencyClientFactory);
-        }
-
-        private static void DeleteOldFile(string fileName)
-        {
-            s_logger.LogInformation($"Delete file {fileName}");
-            File.Delete(fileName);
         }
 
         private static MyCandle[] ReadOldCandles(string fileName)

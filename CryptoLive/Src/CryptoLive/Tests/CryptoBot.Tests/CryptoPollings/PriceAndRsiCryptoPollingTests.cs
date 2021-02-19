@@ -18,7 +18,6 @@ namespace CryptoBot.Tests.CryptoPollings
     public class PriceAndRsiCryptoPollingTests
     {
         private static readonly string s_currency = "CurrencyName";
-        private static readonly int s_candleSize = 15;
         private static readonly decimal s_maxRsiToNotify = 35;
 
         private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
@@ -37,10 +36,10 @@ namespace CryptoBot.Tests.CryptoPollings
 
             var expectedResponse = new PriceAndRsiPollingResponse(pollingEndTime, oldPriceAndRsi, newPriceAndRsi);
             m_currencyDataProviderMock
-                .Setup(m => m.GetRsiAndClosePrice(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingStartTime))
                 .Returns(oldPriceAndRsi);
             m_currencyDataProviderMock
-                .Setup(m => m.GetRsiAndClosePrice(s_currency, s_candleSize, pollingEndTime))
+                .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingEndTime))
                 .Returns(newPriceAndRsi);
 
             m_cryptoPriceAndRsiQueueMock.Setup(m => m.GetLowerRsiAndHigherPrice(oldPriceAndRsi)).Returns(default(PriceAndRsi));
@@ -48,7 +47,7 @@ namespace CryptoBot.Tests.CryptoPollings
             
             var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
                 m_currencyDataProviderMock.Object,
-                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_candleSize, s_maxRsiToNotify);
+                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
             
             // Act
             PriceAndRsiPollingResponse actualResponse = (PriceAndRsiPollingResponse)await candleCryptoPolling.StartAsync(s_currency, CancellationToken.None, pollingStartTime);
@@ -57,7 +56,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedResponse, actualResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetRsiAndClosePrice(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Exactly(2));
         }
@@ -73,15 +71,15 @@ namespace CryptoBot.Tests.CryptoPollings
             Exception exception = new Exception();
             var expectedResponse = new PriceAndRsiPollingResponse(pollingEndTime, null, null, false, exception);
             m_currencyDataProviderMock
-                .Setup(m => m.GetRsiAndClosePrice(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingStartTime))
                 .Returns(priceAndRsi);
             m_currencyDataProviderMock
-                .Setup(m => m.GetRsiAndClosePrice(s_currency, s_candleSize, pollingEndTime))
+                .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingEndTime))
                 .Throws(exception);
 
             var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
                 m_currencyDataProviderMock.Object,
-                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_candleSize, s_maxRsiToNotify);
+                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
 
             // Act
             PriceAndRsiPollingResponse actualResponse =
@@ -92,7 +90,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedResponse, actualResponse);
             m_currencyDataProviderMock.Verify(m =>
                     m.GetRsiAndClosePrice(It.IsAny<string>(),
-                        It.IsAny<int>(),
                         It.IsAny<DateTime>()),
                 Times.Exactly(2));
             m_cryptoPriceAndRsiQueueMock.Verify(m =>
@@ -110,7 +107,7 @@ namespace CryptoBot.Tests.CryptoPollings
 
             var expectedResponse = new PriceAndRsiPollingResponse(pollingStartTime, null, null, true);
             m_currencyDataProviderMock
-                .Setup(m => m.GetRsiAndClosePrice(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingStartTime))
                 .Returns(priceAndRsi).Callback(cancellationTokenSource.Cancel);
             m_cryptoPriceAndRsiQueueMock
                 .Setup(m => m.GetLowerRsiAndHigherPrice(priceAndRsi))
@@ -118,7 +115,7 @@ namespace CryptoBot.Tests.CryptoPollings
 
             var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
                 m_currencyDataProviderMock.Object,
-                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_candleSize, s_maxRsiToNotify);
+                m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
             
             // Act
             PriceAndRsiPollingResponse actualResponse = (PriceAndRsiPollingResponse)await candleCryptoPolling.StartAsync(s_currency, cancellationTokenSource.Token, pollingStartTime);
@@ -127,7 +124,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedResponse, actualResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetRsiAndClosePrice(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Once);
             m_cryptoPriceAndRsiQueueMock.Verify(m=>

@@ -1,6 +1,5 @@
 ﻿using Common;
 using Common.CryptoQueue;
-using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
@@ -40,23 +39,23 @@ namespace CryptoBot.Factories
             int rsiMemorySize)
         {
             var cryptoPriceAndRsiQueue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
-            return new PriceAndRsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, candleSize, maxRsiToNotify);
+            return new PriceAndRsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, maxRsiToNotify);
         }
 
         public MacdHistogramCryptoPolling CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
-            new MacdHistogramCryptoPolling(null, CurrencyDataProvider, SystemClock, macdCandleSize, maxMacdPollingTime);
+            new MacdHistogramCryptoPolling(null, CurrencyDataProvider, SystemClock, maxMacdPollingTime);
 
         public RsiCryptoPolling CreateRsiPolling(decimal maxRsiToNotify) => 
             new RsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, maxRsiToNotify);
         
         
         public RedCandleValidator CreateRedCandleValidator(int candleSize) =>
-            new RedCandleValidator(m_notificationService, CurrencyDataProvider, candleSize);
+            new RedCandleValidator(m_notificationService, CurrencyDataProvider);
 
         public GreenCandleValidator CreateGreenCandleValidator(int candleSize) =>
-            new GreenCandleValidator(m_notificationService, CurrencyDataProvider, candleSize);
+            new GreenCandleValidator(m_notificationService, CurrencyDataProvider);
 
         public MacdHistogramNegativeValidator CreateMacdNegativeValidator(int macdCandleSize) => 
-            new MacdHistogramNegativeValidator(m_notificationService, CurrencyDataProvider, macdCandleSize);
+            new MacdHistogramNegativeValidator(m_notificationService, CurrencyDataProvider);
     }
 }

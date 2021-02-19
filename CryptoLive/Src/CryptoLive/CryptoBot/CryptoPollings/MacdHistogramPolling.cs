@@ -20,20 +20,17 @@ namespace CryptoBot.CryptoPollings
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
         private readonly INotificationService m_notificationService;
-        private readonly int m_candleSizeInMinutes;
         private readonly int m_maxMacdPollingTimeInMinutes;
         private DateTime m_currentTime;
 
         public MacdHistogramCryptoPolling(INotificationService notificationService,
             ICurrencyDataProvider currencyDataProvider, 
             ISystemClock systemClock,
-            int candleSizeInMinutes,
             int maxMacdPollingTimeInMinutes)
         {
             m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
-            m_candleSizeInMinutes = candleSizeInMinutes;
             m_maxMacdPollingTimeInMinutes = maxMacdPollingTimeInMinutes;
         }
 
@@ -77,14 +74,14 @@ namespace CryptoBot.CryptoPollings
             CancellationToken cancellationToken)
         {
             decimal macdHistogram =
-                m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, m_currentTime);
+                m_currencyDataProvider.GetMacdHistogram(currency, m_currentTime);
             for (int i = 0; i < m_maxMacdPollingTimeInMinutes && macdHistogram < 0; i++)
             {
                 m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds,
                     s_actionName,
                     m_currentTime);
                 macdHistogram =
-                    m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, m_currentTime);
+                    m_currencyDataProvider.GetMacdHistogram(currency, m_currentTime);
             }
 
             if (macdHistogram >= 0)

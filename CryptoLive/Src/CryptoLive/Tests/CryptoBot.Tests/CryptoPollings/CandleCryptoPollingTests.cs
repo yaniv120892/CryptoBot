@@ -38,7 +38,7 @@ namespace CryptoBot.Tests.CryptoPollings
             DateTime pollingStartTime = candle.CloseTime;
             var expectedCandlePollingResponse = new CandlePollingResponse(false, true, candle.CloseTime, candle);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -55,7 +55,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Once);
         }
@@ -68,7 +67,7 @@ namespace CryptoBot.Tests.CryptoPollings
             DateTime pollingStartTime = candle.CloseTime;
             var expectedCandlePollingResponse = new CandlePollingResponse(true, false, candle.CloseTime, candle);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -85,7 +84,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Once);
         }
@@ -98,7 +96,7 @@ namespace CryptoBot.Tests.CryptoPollings
             DateTime pollingStartTime = candle.CloseTime;
             var expectedCandlePollingResponse = new CandlePollingResponse(true, true, candle.CloseTime, candle);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -115,7 +113,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Once);
         }
@@ -133,10 +130,10 @@ namespace CryptoBot.Tests.CryptoPollings
             var candleReachLowerPrice = new MyCandle(s_maxPrice, s_maxPrice, openTimeSecondCandle, closeTimeSecondCandle, s_lowerThanMinPrice, s_lowerThanMaxPrice);
             var expectedCandlePollingResponse = new CandlePollingResponse(true, false, closeTimeSecondCandle, candleReachLowerPrice);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candleNotReachMinOrMaxPrice);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime.AddSeconds(s_delayTimeInSeconds)))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime.AddSeconds(s_delayTimeInSeconds)))
                 .Returns(candleReachLowerPrice);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -153,7 +150,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.AreEqual(expectedCandlePollingResponse, actualCandlePollingResponse);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Exactly(2));
         }
@@ -166,7 +162,7 @@ namespace CryptoBot.Tests.CryptoPollings
             MyCandle candle = CreateCandle(s_higherThanMinPrice, s_lowerThanMaxPrice);
             DateTime pollingStartTime = candle.CloseTime;
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, pollingStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -185,7 +181,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.IsNull(actualCandlePollingResponse.Exception);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.AtLeastOnce);
         }
@@ -196,7 +191,7 @@ namespace CryptoBot.Tests.CryptoPollings
             // Arrange
             Exception expectedException = new Exception();
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, It.IsAny<DateTime>()))
+                .Setup(m => m.GetLastCandle(s_currency, It.IsAny<DateTime>()))
                 .Throws(expectedException);
             
             var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
@@ -214,7 +209,6 @@ namespace CryptoBot.Tests.CryptoPollings
             Assert.IsFalse(actualCandlePollingResponse.IsCancelled);
             m_currencyDataProviderMock.Verify(m=>
                     m.GetLastCandle(It.IsAny<string>(), 
-                        It.IsAny<int>(), 
                         It.IsAny<DateTime>()),
                 Times.Once);
         }

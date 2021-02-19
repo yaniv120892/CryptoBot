@@ -3,9 +3,7 @@ using System.Threading.Tasks;
 using Common.DataStorageObjects;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Storage.Abstractions;
 using Storage.Abstractions.Repository;
-using Storage.Repository;
 using Utils.Calculators;
 
 namespace Storage.Updaters
@@ -14,14 +12,14 @@ namespace Storage.Updaters
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<RsiRepositoryUpdater>();
 
-        private readonly RepositoryImpl<RsiStorageObject> m_rsiRepository;
-        private readonly RepositoryImpl<WsmaStorageObject> m_wsmaRepository;
+        private readonly IRepository<RsiStorageObject> m_rsiRepository;
+        private readonly IRepository<WsmaStorageObject> m_wsmaRepository;
         private readonly string m_currency;
         private readonly int m_rsiSize;
         private readonly string m_calculatedDataFolder;
 
-        public RsiRepositoryUpdater(RepositoryImpl<RsiStorageObject> rsiRepository, 
-            RepositoryImpl<WsmaStorageObject> wsmaRepository, string currency, int rsiSize,
+        public RsiRepositoryUpdater(IRepository<RsiStorageObject> rsiRepository, 
+            IRepository<WsmaStorageObject> wsmaRepository, string currency, int rsiSize,
             string calculatedDataFolder)
         {
             m_rsiRepository = rsiRepository;

@@ -17,22 +17,30 @@ namespace Storage.Providers
 
         public Memory<MyCandle> GetCandles(string currency, 
             int amountOfCandles, 
-            int candleSize,
             DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[amountOfCandles];
-            DateTime time = currentTime;
-            for (int i = ans.Length-1; i >= 0; i-- , time = time.Subtract(TimeSpan.FromMinutes(candleSize)))
+            DateTime time = AlignTimeToRepositoryKeyFormat(currentTime);
+            int counter = amountOfCandles -1;
+            while (counter >= 0)
             {
-                ans.Span[i] = m_repository.Get(currency, time).Candle;
+                MyCandle candle = m_repository.Get(currency, time).Candle;
+                ans.Span[counter] = candle;
+                counter--;
+                time = candle.OpenTime.AddSeconds(-1);
             }
 
             return ans;
         }
-        
-        public MyCandle GetLastCandle(string currency, int candleSize, DateTime currentTime)
+
+        private static DateTime AlignTimeToRepositoryKeyFormat(DateTime currentTime) =>
+            currentTime.Second != 59 ?
+                currentTime.Subtract(TimeSpan.FromSeconds(currentTime.Second + 1)) :
+                currentTime;
+
+        public MyCandle GetLastCandle(string currency, DateTime currentTime)
         {
-            Memory<MyCandle> candles = GetCandles(currency, 1, candleSize, currentTime);
+            Memory<MyCandle> candles = GetCandles(currency, 1, currentTime);
             return candles.Span[0];
         }
     }

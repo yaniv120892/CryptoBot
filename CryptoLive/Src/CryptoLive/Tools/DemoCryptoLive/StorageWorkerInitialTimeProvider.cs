@@ -1,6 +1,6 @@
 using System;
 using Common.DataStorageObjects;
-using Storage.Repository;
+using Storage.Abstractions.Repository;
 
 namespace DemoCryptoLive
 {
@@ -8,7 +8,7 @@ namespace DemoCryptoLive
     {
         internal static readonly DateTime DefaultStorageInitialTime = DateTime.Parse("2/12/2021  2:59:00 PM");
 
-        internal static DateTime GetStorageInitialTime(string currency, RepositoryImpl<CandleStorageObject> candleRepository)
+        internal static DateTime GetStorageInitialTime(string currency, IRepository<CandleStorageObject> candleRepository)
         {
             DateTime lastSavedCandleTime = candleRepository.GetLastByTime(currency);
             if (default == lastSavedCandleTime)
