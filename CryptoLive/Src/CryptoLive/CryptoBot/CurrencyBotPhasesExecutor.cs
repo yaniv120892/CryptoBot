@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common.Abstractions;
 using Common.PollingResponses;
-using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
