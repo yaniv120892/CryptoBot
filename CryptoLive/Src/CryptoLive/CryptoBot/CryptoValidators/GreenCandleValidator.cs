@@ -3,7 +3,6 @@ using Common;
 using CryptoBot.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 
 namespace CryptoBot.CryptoValidators
@@ -14,21 +13,18 @@ namespace CryptoBot.CryptoValidators
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly INotificationService m_notificationService;
-        private readonly int m_candleSizeInMinutes;
 
         public GreenCandleValidator( 
             INotificationService notificationService, 
-            ICurrencyDataProvider currencyDataProvider,
-            int candleSizeInMinutes)
+            ICurrencyDataProvider currencyDataProvider)
         {
             m_currencyDataProvider = currencyDataProvider;
-            m_candleSizeInMinutes = candleSizeInMinutes;
             m_notificationService = notificationService;
         }
         
         public bool Validate(string currency, DateTime time )
         {
-            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, m_candleSizeInMinutes, time);
+            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, time);
             
             if (currCandle.Close < currCandle.Open)
             {

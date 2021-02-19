@@ -30,32 +30,32 @@ namespace Storage.Providers
         public decimal GetRsi(string currency, DateTime currentTime) => 
             m_rsiProvider.Get(currency, currentTime);
 
-        public PriceAndRsi GetRsiAndClosePrice(string currency, int candleSizeInMinutes, DateTime currentTime) =>
-            GetRsiAndPriceImpl(currency, candleSizeInMinutes, currentTime);
+        public PriceAndRsi GetRsiAndClosePrice(string currency, DateTime currentTime) =>
+            GetRsiAndPriceImpl(currency, currentTime);
 
-        public (MyCandle prevCandle, MyCandle currCandle) GetLastCandles(string currency, int candleSizeInMinutes, DateTime currentTime) => 
-            GetLastCandlesImpl(currency, candleSizeInMinutes, currentTime);
+        public (MyCandle prevCandle, MyCandle currCandle) GetLastCandles(string currency, DateTime currentTime) => 
+            GetLastCandlesImpl(currency, currentTime);
 
-        public MyCandle GetLastCandle(string currency, int candleSizeInMinutes, DateTime currentTime)
+        public MyCandle GetLastCandle(string currency, DateTime currentTime)
         {
-            (MyCandle _, MyCandle currCandle) = GetLastCandles(currency, candleSizeInMinutes, currentTime);
+            (MyCandle _, MyCandle currCandle) = GetLastCandles(currency, currentTime);
             return currCandle;
         }
 
-        public decimal GetMacdHistogram(string currency, int candleSizeInMinutes, DateTime currentTime) => 
+        public decimal GetMacdHistogram(string currency, DateTime currentTime) => 
             m_macdProvider.Get(currency, currentTime);
 
-        private PriceAndRsi GetRsiAndPriceImpl(string currency, int candleSizeInMinutes, DateTime currentTime)
+        private PriceAndRsi GetRsiAndPriceImpl(string currency, DateTime currentTime)
         {
-            MyCandle lastCandle = m_candlesProvider.GetLastCandle(currency, candleSizeInMinutes, currentTime);
+            MyCandle lastCandle = m_candlesProvider.GetLastCandle(currency, currentTime);
             decimal rsi = m_rsiProvider.Get(currency, currentTime);
             return new PriceAndRsi(lastCandle.Close, rsi, lastCandle.CloseTime);
         }
         
-        private (MyCandle prevCandle, MyCandle currCandle) GetLastCandlesImpl(string currency, int candleSizeInMinutes,
+        private (MyCandle prevCandle, MyCandle currCandle) GetLastCandlesImpl(string currency,
             DateTime currentTime)
         {
-            Memory<MyCandle> lastCandles = m_candlesProvider.GetCandles(currency, candleSizeInMinutes, 2, currentTime);
+            Memory<MyCandle> lastCandles = m_candlesProvider.GetCandles(currency, 2, currentTime);
             MyCandle prevCandle = lastCandles.Span[0];
             MyCandle currCandle = lastCandles.Span[1];
             return (prevCandle, currCandle);

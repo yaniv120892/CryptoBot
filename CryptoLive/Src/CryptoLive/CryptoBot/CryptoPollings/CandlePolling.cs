@@ -20,7 +20,6 @@ namespace CryptoBot.CryptoPollings
         private readonly INotificationService m_notificationService;
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
-        private readonly int m_candleSize;
         private readonly decimal m_minPrice;
         private readonly decimal m_maxPrice;
         
@@ -45,7 +44,6 @@ namespace CryptoBot.CryptoPollings
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_delayTimeInSeconds = delayTimeInSeconds;
-            m_candleSize = candleSize;
             m_minPrice = minPrice;
             m_maxPrice = maxPrice;
         }
@@ -80,13 +78,13 @@ namespace CryptoBot.CryptoPollings
         private async Task<CandlePollingResponse> StartAsyncImpl(string currency,
             CancellationToken cancellationToken)
         {
-            m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, m_currentTime);
+            m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_currentTime);
             (bool isBelow, bool isAbove) = IsCandleInRange(m_currCandle);
             while (isBelow == false && isAbove == false)
             {
                 m_currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds,
                     "Price range", m_currentTime);
-                m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_candleSize, m_currentTime);
+                m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_currentTime);
                 (isBelow, isAbove) = IsCandleInRange(m_currCandle);
             }
 

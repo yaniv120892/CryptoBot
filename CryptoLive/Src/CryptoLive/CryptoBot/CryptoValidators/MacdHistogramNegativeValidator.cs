@@ -2,7 +2,6 @@ using System;
 using CryptoBot.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Storage.Abstractions;
 using Storage.Abstractions.Providers;
 
 namespace CryptoBot.CryptoValidators
@@ -13,21 +12,18 @@ namespace CryptoBot.CryptoValidators
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly INotificationService m_notificationService;
-        private readonly int m_candleSizeInMinutes;
 
         public MacdHistogramNegativeValidator(            
             INotificationService notificationService, 
-            ICurrencyDataProvider currencyDataProvider,
-            int candleSizeInMinutes)
+            ICurrencyDataProvider currencyDataProvider)
         {
             m_currencyDataProvider = currencyDataProvider;
-            m_candleSizeInMinutes = candleSizeInMinutes;
             m_notificationService = notificationService;
         }
 
         public bool Validate(string currency, DateTime time)
         {
-            decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(currency, m_candleSizeInMinutes, time);
+            decimal macdHistogram = m_currencyDataProvider.GetMacdHistogram(currency, time);
             if (macdHistogram < 0)
             {
                 string message = $"{currency}: MACD histogram is negative, {macdHistogram}, {time}";

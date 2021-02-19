@@ -22,7 +22,6 @@ namespace CryptoBot.CryptoPollings
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
-        private readonly int m_candleSizeInMinutes;
         private readonly decimal m_maxRsiToNotify;
         
         private DateTime m_currentTime;
@@ -31,13 +30,11 @@ namespace CryptoBot.CryptoPollings
             ICurrencyDataProvider currencyDataProvider,
             ISystemClock systemClock,
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
-            int candleSizeInMinutes,
             decimal maxRsiToNotify)
         {
             m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
-            m_candleSizeInMinutes = candleSizeInMinutes;
             m_maxRsiToNotify = maxRsiToNotify;
             m_cryptoPriceAndRsiQueue = cryptoPriceAndRsiQueue;
         }
@@ -70,14 +67,14 @@ namespace CryptoBot.CryptoPollings
         private async Task<PollingResponseBase> StartAsyncImpl(string currency, CancellationToken cancellationToken)
         {
             PriceAndRsi currentPriceAndRsi =
-                m_currencyDataProvider.GetRsiAndClosePrice(currency, m_candleSizeInMinutes, m_currentTime);
+                m_currencyDataProvider.GetRsiAndClosePrice(currency, m_currentTime);
             PriceAndRsi oldPriceAndRsi;
             while (ShouldContinuePolling(currentPriceAndRsi, out oldPriceAndRsi))
             {
                 m_cryptoPriceAndRsiQueue.Enqueue(currentPriceAndRsi);
                 m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, s_actionName,
                     m_currentTime);
-                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(currency, m_candleSizeInMinutes, m_currentTime);
+                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(currency, m_currentTime);
             }
             
             var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(m_currentTime, oldPriceAndRsi ,currentPriceAndRsi);

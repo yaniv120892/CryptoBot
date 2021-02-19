@@ -26,9 +26,9 @@ namespace CryptoBot.Tests.CryptoValidators
             var validatorStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
             MyCandle redCandle = CreateCandle(validatorStartTime, openValue, closeValue);
             var redCandleValidator = new RedCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object, s_candleSize);
+                m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, validatorStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, validatorStartTime))
                 .Returns(redCandle);
             bool actual = redCandleValidator.Validate(s_currency, validatorStartTime);
 
@@ -44,9 +44,9 @@ namespace CryptoBot.Tests.CryptoValidators
             var validatorStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
             MyCandle redCandle = CreateCandle(validatorStartTime, openValue, closeValue);
             var redCandleValidator = new RedCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object, s_candleSize);
+                m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, validatorStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, validatorStartTime))
                 .Returns(redCandle);
             bool actual = redCandleValidator.Validate(s_currency, validatorStartTime);
 

@@ -41,9 +41,9 @@ namespace CryptoBot.Tests.CryptoValidators
                 openValueCurrent, 
                 closeValueCurrent);     
             var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object, s_candleSize);
+                m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandles(s_currency, s_candleSize, validatorStartTime))
+                .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));
             bool actual = greenCandleValidator.Validate(s_currency, validatorStartTime);
 
@@ -74,9 +74,9 @@ namespace CryptoBot.Tests.CryptoValidators
                 openValueCurrent, 
                 closeValueCurrent);     
             var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object, s_candleSize);
+                m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandles(s_currency, s_candleSize, validatorStartTime))
+                .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));
             bool actual = greenCandleValidator.Validate(s_currency, validatorStartTime);
 
@@ -107,9 +107,9 @@ namespace CryptoBot.Tests.CryptoValidators
                 openValueCurrent, 
                 closeValueCurrent);     
             var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object, s_candleSize);
+                m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandles(s_currency, s_candleSize, validatorStartTime))
+                .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));
             bool actual = greenCandleValidator.Validate(s_currency, validatorStartTime);
 

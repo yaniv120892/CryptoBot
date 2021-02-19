@@ -19,6 +19,7 @@ using Storage.Repository;
 using Storage.Updaters;
 using Storage.Workers;
 using Utils.Abstractions;
+using Utils.StopWatches;
 using Utils.SystemClocks;
 
 namespace CryptoLive
@@ -38,6 +39,7 @@ namespace CryptoLive
         private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
         {
             var systemClock = new SystemClock();
+            var stopWatchWrapper = new StopWatchWrapper();
             var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
             var cancellationTokenSource = new CancellationTokenSource();
             
@@ -58,9 +60,9 @@ namespace CryptoLive
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
                 macdRepository, systemClockWithDelay, currencyClientFactory);
-            ICurrencyBotPhasesExecutorFactory currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
+            var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
-            ICurrencyBotFactory currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
+            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
             
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
@@ -70,7 +72,7 @@ namespace CryptoLive
                 string currency = cryptoLiveParameters.Currencies[i];
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
-                    systemClock, cancellationTokenSource, candleSize);
+                    systemClock, stopWatchWrapper, cancellationTokenSource, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, 120, "Init2",storageStartTime);
@@ -81,10 +83,10 @@ namespace CryptoLive
             await Task.WhenAll(currencyBotTasks);
         }
 
-        private static StorageWorker CreateStorageWorker(RepositoryImpl<RsiStorageObject> rsiRepository, RepositoryImpl<WsmaStorageObject> wsmRepository,
-            string currency, int rsiSize, RepositoryImpl<MacdStorageObject> macdRepository, RepositoryImpl<EmaAndSignalStorageObject> emaAndSignalStorageObject,
-            int fastEmaSize, int slowEmaSize, int signalSize, RepositoryImpl<CandleStorageObject> candleRepository,
-            BinanceCandleService candlesService, SystemClock systemClock, CancellationTokenSource cancellationTokenSource,
+        private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
+            string currency, int rsiSize, IRepository<MacdStorageObject> macdRepository, IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject,
+            int fastEmaSize, int slowEmaSize, int signalSize, IRepository<CandleStorageObject> candleRepository,
+            ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper, CancellationTokenSource cancellationTokenSource,
             int candleSize)
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
@@ -94,13 +96,14 @@ namespace CryptoLive
             
             var storageWorker = new StorageWorker(candlesService,
                 systemClock,
+                stopWatchWrapper,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
                 macdRepositoryUpdater,
                 cancellationTokenSource.Token,
                 candleSize,
                 currency,
-                StorageWorkerMode.Live);
+                false);
             return storageWorker;
         }
 

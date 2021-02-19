@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Globalization;
 using System.IO;
@@ -12,6 +13,7 @@ namespace Utils
     public class CsvFileAccess
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CsvFileAccess>();
+        private static readonly string s_dateTimeTypeConverterOptions =  "dd/MM/yyyy HH:mm:ss";
 
         public static T[] ReadCsv<T>(string fileName)
         {
@@ -30,6 +32,7 @@ namespace Utils
             {
                 await using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
                 {
+                    csvWriter.Configuration.TypeConverterOptionsCache.GetOptions<DateTime>().Formats = new[] {s_dateTimeTypeConverterOptions};
                     csvWriter.Configuration.HasHeaderRecord = true;
                     await csvWriter.WriteRecordsAsync((IEnumerable) data.ToArray());
                 }
