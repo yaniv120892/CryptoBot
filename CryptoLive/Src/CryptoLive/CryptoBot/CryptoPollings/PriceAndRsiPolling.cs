@@ -12,7 +12,7 @@ using Utils.Abstractions;
 
 namespace CryptoBot.CryptoPollings
 {
-    public class PriceAndRsiCryptoPolling : ICryptoPolling
+    public class PriceAndRsiCryptoPolling : CryptoPollingBase
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<PriceAndRsiCryptoPolling>();
         private static readonly int s_timeToWaitInSeconds = 60;
@@ -24,8 +24,6 @@ namespace CryptoBot.CryptoPollings
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
         private readonly decimal m_maxRsiToNotify;
         
-        private DateTime m_currentTime;
-
         public PriceAndRsiCryptoPolling(INotificationService notificationService,
             ICurrencyDataProvider currencyDataProvider,
             ISystemClock systemClock,
@@ -37,49 +35,25 @@ namespace CryptoBot.CryptoPollings
             m_systemClock = systemClock;
             m_maxRsiToNotify = maxRsiToNotify;
             m_cryptoPriceAndRsiQueue = cryptoPriceAndRsiQueue;
+            PollingType = nameof(PriceAndRsiCryptoPolling);
         }
 
-        public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken,
-            DateTime currentTime)
-        {
-            PollingResponseBase pollingResponse;
-            m_currentTime = currentTime;
-            s_logger.LogDebug(StartPollingDescription(currency));
-
-            try
-            {
-                pollingResponse =  await StartAsyncImpl(currency, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                s_logger.LogWarning("got cancellation request");
-                pollingResponse = CreateGotCancelledPollingResponse();
-            }
-            catch (Exception e)
-            {
-                s_logger.LogWarning(e, $"Failed, {e.Message}");
-                pollingResponse = CreateExceptionPollingResponse(e);
-            }
-            s_logger.LogDebug(EndPollingDescription(currency, pollingResponse));
-            return pollingResponse;
-        }
-
-        private async Task<PollingResponseBase> StartAsyncImpl(string currency, CancellationToken cancellationToken)
+        protected override async Task<PollingResponseBase> StartAsyncImpl(CancellationToken cancellationToken)
         {
             PriceAndRsi currentPriceAndRsi =
-                m_currencyDataProvider.GetRsiAndClosePrice(currency, m_currentTime);
+                m_currencyDataProvider.GetRsiAndClosePrice(Currency, CurrentTime);
             PriceAndRsi oldPriceAndRsi;
             while (ShouldContinuePolling(currentPriceAndRsi, out oldPriceAndRsi))
             {
                 m_cryptoPriceAndRsiQueue.Enqueue(currentPriceAndRsi);
-                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds, s_actionName,
-                    m_currentTime);
-                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(currency, m_currentTime);
+                CurrentTime = await m_systemClock.Wait(cancellationToken, Currency, s_timeToWaitInSeconds, s_actionName,
+                    CurrentTime);
+                currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(Currency, CurrentTime);
             }
             
-            var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(m_currentTime, oldPriceAndRsi ,currentPriceAndRsi);
+            var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(CurrentTime, oldPriceAndRsi ,currentPriceAndRsi);
             string message =
-                $"{currency}: {nameof(PriceAndRsiCryptoPolling)} done, {rsiAndPricePollingResponse}";
+                $"{Currency}: {nameof(PriceAndRsiCryptoPolling)} done, {rsiAndPricePollingResponse}";
             m_notificationService.Notify(message);
             return rsiAndPricePollingResponse;
         }
@@ -102,18 +76,15 @@ namespace CryptoBot.CryptoPollings
             return false;
         }
 
-        private static string StartPollingDescription(string currency) =>
-            $"{currency}: {nameof(PriceAndRsiCryptoPolling)} start, " +
+        protected override string StartPollingDescription() =>
+            $"{PollingType} {Currency} {CurrentTime} start, " +
             $"Get update every  {s_timeToWaitInSeconds / 60} minutes";
-        
-        private static string EndPollingDescription(string currency, PollingResponseBase pollingResponse) => 
-            $"{currency}: {nameof(PriceAndRsiCryptoPolling)} done, {pollingResponse}";
-        
-        private PollingResponseBase CreateExceptionPollingResponse(Exception exception) => 
-            new PriceAndRsiPollingResponse(m_currentTime, null ,null, false, exception);
 
-        private PollingResponseBase CreateGotCancelledPollingResponse() => 
-            new PriceAndRsiPollingResponse(m_currentTime, null ,null, true);
+        protected override PollingResponseBase CreateExceptionPollingResponse(Exception exception) => 
+            new PriceAndRsiPollingResponse(CurrentTime, null ,null, false, exception);
+
+        protected override PollingResponseBase CreateGotCancelledPollingResponse() => 
+            new PriceAndRsiPollingResponse(CurrentTime, null ,null, true);
     }
 }
     

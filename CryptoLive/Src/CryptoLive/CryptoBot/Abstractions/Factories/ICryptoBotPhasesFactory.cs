@@ -1,5 +1,4 @@
-﻿using CryptoBot.CryptoPollings;
-using CryptoBot.CryptoValidators;
+﻿using CryptoBot.CryptoValidators;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -9,15 +8,15 @@ namespace CryptoBot.Abstractions.Factories
     {
         ICurrencyDataProvider CurrencyDataProvider { get; }
         ISystemClock SystemClock { get; }
-        CandleCryptoPolling CreateCandlePolling(decimal basePrice, 
+        CryptoPollingBase CreateCandlePolling(decimal basePrice, 
             int delayTimeIterationsInSeconds, 
             int candleSize,
             decimal priceChangeToNotify);
-        public PriceAndRsiCryptoPolling CreatePriceAndRsiPolling(int candleSize, 
+        CryptoPollingBase CreatePriceAndRsiPolling(int candleSize, 
             decimal maxRsiToNotify,
             int rsiMemorySize);
-        MacdHistogramCryptoPolling CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime);
-        RsiCryptoPolling CreateRsiPolling(decimal maxRsiToNotify);
+        CryptoPollingBase CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime);
+        CryptoPollingBase CreateRsiPolling(decimal maxRsiToNotify);
         RedCandleValidator CreateRedCandleValidator(int candleSize);
         GreenCandleValidator CreateGreenCandleValidator(int candleSize);
         MacdHistogramNegativeValidator CreateMacdNegativeValidator(int macdCandleSize);

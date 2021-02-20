@@ -4,8 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common.Abstractions;
 using Common.PollingResponses;
+using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
-using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
 using Infra;
 using Microsoft.Extensions.Logging;
@@ -58,7 +58,7 @@ namespace CryptoBot
             List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age}: {currentTime} Start phase {phaseNumber}: wait until RSI is below {m_maxRsiToNotify}");
-            RsiCryptoPolling rsiPolling = m_cryptoBotPhasesFactory.CreateRsiPolling(m_maxRsiToNotify);
+            CryptoPollingBase rsiPolling = m_cryptoBotPhasesFactory.CreateRsiPolling(m_maxRsiToNotify);
             PollingResponseBase responseBase = await rsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
             phasesDescription.Add($"{phaseNumber}.Wait until RSI is below {m_maxRsiToNotify}, Info :" +
@@ -74,7 +74,7 @@ namespace CryptoBot
             List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
-            PriceAndRsiCryptoPolling priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, m_rsiMemorySize);
+            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, m_rsiMemorySize);
             PollingResponseBase responseBase = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}"); 
             phasesDescription.Add($"{phaseNumber}.Wait until lower price and higher RSI, Info :" +
@@ -92,7 +92,7 @@ namespace CryptoBot
         {
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: get price every {m_priceChangeDelayTimeIterationsInSeconds / 60} minutes until it changed by {m_priceChangeToNotify}%, price: {basePrice}, {currentTime}");
             currentTime = await m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken, currency,m_minutesToWaitBeforePollingPrice*60, "FullMode_WaitBeforeStartPricePolling", currentTime);
-            CandleCryptoPolling candlePolling = m_cryptoBotPhasesFactory.CreateCandlePolling(basePrice, m_priceChangeDelayTimeIterationsInSeconds, m_priceChangeCandleSize, m_priceChangeToNotify);
+            CryptoPollingBase candlePolling = m_cryptoBotPhasesFactory.CreateCandlePolling(basePrice, m_priceChangeDelayTimeIterationsInSeconds, m_priceChangeCandleSize, m_priceChangeToNotify);
             PollingResponseBase responseBase = await candlePolling.StartAsync(currency,cancellationToken, currentTime);
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";

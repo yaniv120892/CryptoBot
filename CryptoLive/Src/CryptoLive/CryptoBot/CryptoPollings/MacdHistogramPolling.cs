@@ -5,15 +5,13 @@ using Common.Abstractions;
 using Common.PollingResponses;
 using CryptoBot.Abstractions;
 using Infra;
-using Microsoft.Extensions.Logging;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
 namespace CryptoBot.CryptoPollings
 {
-    public class MacdHistogramCryptoPolling : ICryptoPolling
+    public class MacdHistogramCryptoPolling : CryptoPollingBase
     {
-        private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<MacdHistogramCryptoPolling>();
         private static readonly int s_timeToWaitInSeconds = 60;
         private static readonly string s_actionName = "Macd polling";
         
@@ -21,7 +19,6 @@ namespace CryptoBot.CryptoPollings
         private readonly ISystemClock m_systemClock;
         private readonly INotificationService m_notificationService;
         private readonly int m_maxMacdPollingTimeInMinutes;
-        private DateTime m_currentTime;
 
         public MacdHistogramCryptoPolling(INotificationService notificationService,
             ICurrencyDataProvider currencyDataProvider, 
@@ -32,64 +29,28 @@ namespace CryptoBot.CryptoPollings
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_maxMacdPollingTimeInMinutes = maxMacdPollingTimeInMinutes;
+            PollingType = nameof(MacdHistogramCryptoPolling);
         }
-
-        public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
-        {
-            PollingResponseBase pollingResponse;
-            m_currentTime = currentTime;
-            s_logger.LogDebug(StartPollingDescription(currency));
-
-            try
-            {
-                pollingResponse =  await StartAsyncImpl(currency, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                s_logger.LogWarning("got cancellation request");
-                pollingResponse = CreateGotCancelledPollingResponse();
-            }
-            catch (Exception e)
-            {
-                s_logger.LogWarning(e, $"Failed, {e.Message}");
-                pollingResponse = CreateExceptionPollingResponse(e);
-            }
-            s_logger.LogDebug(EndPollingDescription(currency, pollingResponse));
-            return pollingResponse;
-        }
-
-        private static string EndPollingDescription(string currency, PollingResponseBase pollingResponse)
-        {
-            return $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {pollingResponse}";
-        }
-
-        private string StartPollingDescription(string currency)
-        {
-            return $"{currency}: {nameof(MacdHistogramCryptoPolling)} start, " +
-                   $"Get update every 1 minute," +
-                   $"Max iteration {m_maxMacdPollingTimeInMinutes}";
-        }
-
-        private async Task<MacdHistogramPollingResponse> StartAsyncImpl(string currency,
-            CancellationToken cancellationToken)
+        
+        protected override async Task<PollingResponseBase> StartAsyncImpl(CancellationToken cancellationToken)
         {
             decimal macdHistogram =
-                m_currencyDataProvider.GetMacdHistogram(currency, m_currentTime);
+                m_currencyDataProvider.GetMacdHistogram(Currency, CurrentTime);
             for (int i = 0; i < m_maxMacdPollingTimeInMinutes && macdHistogram < 0; i++)
             {
-                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, s_timeToWaitInSeconds,
+                CurrentTime = await m_systemClock.Wait(cancellationToken, Currency, s_timeToWaitInSeconds,
                     s_actionName,
-                    m_currentTime);
+                    CurrentTime);
                 macdHistogram =
-                    m_currencyDataProvider.GetMacdHistogram(currency, m_currentTime);
+                    m_currencyDataProvider.GetMacdHistogram(Currency, CurrentTime);
             }
 
             if (macdHistogram >= 0)
             {
                 MacdHistogramPollingResponse macdHistogramPollingResponse =
-                        new MacdHistogramPollingResponse(m_currentTime, macdHistogram);
+                        new MacdHistogramPollingResponse(CurrentTime, macdHistogram);
                     string message =
-                        $"{currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
+                        $"{Currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
                     m_notificationService.Notify(message);
                     return macdHistogramPollingResponse;
             }
@@ -97,13 +58,18 @@ namespace CryptoBot.CryptoPollings
             return CreateReachedMaxTimeMacdHistogramPollingResponse();
         }
 
-        private MacdHistogramPollingResponse CreateReachedMaxTimeMacdHistogramPollingResponse() => 
-            new MacdHistogramPollingResponse(m_currentTime, 0, true);
+        protected override string StartPollingDescription() =>
+            $"{Currency}: {nameof(MacdHistogramCryptoPolling)} start, " +
+            $"Get update every 1 minute," +
+            $"Max iteration {m_maxMacdPollingTimeInMinutes}";
 
-        private MacdHistogramPollingResponse CreateGotCancelledPollingResponse() => 
-            new MacdHistogramPollingResponse(m_currentTime, 0, false, true);
+        protected override PollingResponseBase CreateGotCancelledPollingResponse() => 
+            new MacdHistogramPollingResponse(CurrentTime, 0, false, true);
 
-        private MacdHistogramPollingResponse CreateExceptionPollingResponse(Exception e) => 
-            new MacdHistogramPollingResponse(m_currentTime, 0, false, false, e);
+        protected override PollingResponseBase CreateExceptionPollingResponse(Exception e) => 
+            new MacdHistogramPollingResponse(CurrentTime, 0, false, false, e);
+        
+        private PollingResponseBase CreateReachedMaxTimeMacdHistogramPollingResponse() => 
+            new MacdHistogramPollingResponse(CurrentTime, 0, true);
     }
 }

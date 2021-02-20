@@ -4,6 +4,6 @@ namespace CryptoBot.Abstractions
 {
     public interface ICryptoValidator
     {
-        bool Validate(string currency, DateTime time);
+        bool Validate(string currency, DateTime currentTime);
     }
 }
