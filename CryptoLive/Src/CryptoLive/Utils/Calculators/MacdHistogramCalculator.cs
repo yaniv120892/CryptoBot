@@ -8,7 +8,7 @@ namespace Utils.Calculators
         {
             decimal difference = fastEma - slowEma;
             decimal macd = difference - signal;
-            return Math.Round(macd, 3);
+            return macd;
 
         }
     }

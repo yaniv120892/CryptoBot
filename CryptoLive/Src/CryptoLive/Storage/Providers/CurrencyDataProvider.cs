@@ -48,7 +48,7 @@ namespace Storage.Providers
         private PriceAndRsi GetRsiAndPriceImpl(string currency, DateTime currentTime)
         {
             MyCandle lastCandle = m_candlesProvider.GetLastCandle(currency, currentTime);
-            decimal rsi = m_rsiProvider.Get(currency, currentTime);
+            decimal rsi = m_rsiProvider.Get(currency, lastCandle.CloseTime);
             return new PriceAndRsi(lastCandle.Close, rsi, lastCandle.CloseTime);
         }
         

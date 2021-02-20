@@ -55,13 +55,10 @@ namespace Storage.Repository
             if (m_deleteOldData)
             {
                 string timeToDelete = time.Subtract(TimeSpan.FromMinutes(15)).ToString(CultureInfo.InvariantCulture);
-                if (!mapTimeToStoredData.Remove(timeToDelete, out _))
-                {
-                    s_logger.LogWarning($"{currency}_{typeof(T)}: Failed to delete {timeToDelete}, {string.Join(", ",mapTimeToStoredData.Keys)}");
-                }
+                DeleteOldDataIfExists(currency, mapTimeToStoredData, timeToDelete);
             }
         }
-        
+
         public void Delete(string currency, DateTime time)
         {
             s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {time}");
@@ -143,6 +140,25 @@ namespace Storage.Repository
             List<DateTime> allDateTimes = m_mapCurrencyTimeToStoredData[currency].Keys.Select(DateTime.Parse).ToList();
             allDateTimes.Sort();
             return allDateTimes.LastOrDefault();
+        }
+        
+        private static void DeleteOldDataIfExists(string currency, ConcurrentDictionary<string, T> mapTimeToStoredData,
+            string timeToDelete)
+        {
+            if (!mapTimeToStoredData.TryGetValue(timeToDelete, out _))
+            {
+                return;
+            }
+
+            if (mapTimeToStoredData.Remove(timeToDelete, out _))
+            {
+
+            }
+
+            var keys = mapTimeToStoredData.Keys.ToList();
+            keys.Sort();
+            s_logger.LogWarning(
+                $"{currency}_{typeof(T)}: Failed to delete {timeToDelete}, {string.Join(", ", keys )}");
         }
     }
 }
