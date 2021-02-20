@@ -182,7 +182,8 @@ namespace DemoCryptoLive
                 cancellationToken,
                 candleSize,
                 currency,
-                true);
+                true,
+                60);
             return storageWorker;        
         }
 

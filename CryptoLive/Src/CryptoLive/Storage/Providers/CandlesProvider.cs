@@ -3,6 +3,7 @@ using Common;
 using Common.DataStorageObjects;
 using Storage.Abstractions.Providers;
 using Storage.Abstractions.Repository;
+using Storage.Repository;
 
 namespace Storage.Providers
 {
@@ -20,7 +21,7 @@ namespace Storage.Providers
             DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[amountOfCandles];
-            DateTime time = AlignTimeToRepositoryKeyFormat(currentTime);
+            DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);
             int counter = amountOfCandles -1;
             while (counter >= 0)
             {
@@ -32,11 +33,6 @@ namespace Storage.Providers
 
             return ans;
         }
-
-        private static DateTime AlignTimeToRepositoryKeyFormat(DateTime currentTime) =>
-            currentTime.Second != 59 ?
-                currentTime.Subtract(TimeSpan.FromSeconds(currentTime.Second + 1)) :
-                currentTime;
 
         public MyCandle GetLastCandle(string currency, DateTime currentTime)
         {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Common;
 using Services.Abstractions;
+using Storage.Repository;
 using Utils;
 
 namespace DemoCryptoLive
@@ -39,7 +40,7 @@ namespace DemoCryptoLive
         public Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[candlesAmount];
-            DateTime time = currentTime;
+            DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);
             for (int i = ans.Length-1; i >= 0; i-- , time = time.Subtract(TimeSpan.FromMinutes(1)))
             {
                 ans.Span[i] = m_mapCurrencyToCandle[currency][time];

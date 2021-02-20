@@ -86,6 +86,46 @@ namespace Storage.Repository
             }
         }
 
+        public T[] GetAll(string currency) => 
+            m_mapCurrencyTimeToStoredData[currency].Values.ToArray();
+
+        public async Task SaveDataToFileAsync(string currency, string fileName)
+        {
+            T[] newCalculated = GetAll(currency);
+            if (File.Exists(fileName))
+            {
+                T[] oldCalculated = CsvFileAccess.ReadCsv<T>(fileName); 
+                s_logger.LogInformation($"Merge old and new data");
+                var mergedCalculated = (oldCalculated.Union(newCalculated)).Distinct().ToArray();
+                CsvFileAccess.DeleteFile(fileName);
+                newCalculated = mergedCalculated;
+            }
+
+            var newCalculatedSorted = newCalculated.ToList();
+            newCalculatedSorted.Sort();
+            await CsvFileAccess.WriteCsvAsync(fileName, newCalculatedSorted);
+            s_logger.LogInformation($"Done create {fileName}");        
+        }
+
+        public void InitFromFile(string currency, string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                throw new Exception($"File not found {fileName}");
+            }
+
+            T[] oldCalculated = CsvFileAccess.ReadCsv<T>(fileName);
+            m_mapCurrencyTimeToStoredData[currency] = new ConcurrentDictionary<string, T>
+                (oldCalculated.ToDictionary(m => m.Time.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        public DateTime GetLastByTime(string currency)
+        {
+            List<DateTime> allDateTimes = m_mapCurrencyTimeToStoredData[currency].Keys.Select(DateTime.Parse).ToList();
+            allDateTimes.Sort();
+            return allDateTimes.LastOrDefault();
+        }
+
         private void Initialize(Dictionary<string, string> currenciesToCalculatedDataFiles)
         {
             foreach (var currency in currenciesToCalculatedDataFiles.Keys)
@@ -99,47 +139,6 @@ namespace Storage.Repository
                     InitFromFile(currency,currenciesToCalculatedDataFiles[currency]);
                 }
             }
-        }
-
-        public T[] GetAll(string currency)
-        {
-            return m_mapCurrencyTimeToStoredData[currency].Values.ToArray();
-        }
-        
-        public async Task SaveDataToFileAsync(string currency, string fileName)
-        {
-            T[] newCalculated = GetAll(currency);
-            if (File.Exists(fileName))
-            {
-                T[] oldCalculated = CsvFileAccess.ReadCsv<T>(fileName); 
-                s_logger.LogInformation($"Merge old and new data");
-                var mergedCalculated = (oldCalculated.Union(newCalculated)).Distinct().ToArray();
-                CsvFileAccess.DeleteFile(fileName);
-                newCalculated = mergedCalculated;
-            }
-
-            newCalculated.ToList().Sort((x, y) => x.Time.CompareTo(y.Time));
-            await CsvFileAccess.WriteCsvAsync(fileName, newCalculated);
-            s_logger.LogInformation($"Done create {fileName}");        
-        }
-
-        public void InitFromFile(string currency, string fileName)
-        {
-            if (!File.Exists(fileName))
-            {
-                throw new Exception($"File not found {fileName}");
-            }
-
-            T[] oldCalculated = CsvFileAccess.ReadCsv<T>(fileName);
-            m_mapCurrencyTimeToStoredData[currency] = new ConcurrentDictionary<string, T>
-                (oldCalculated.ToDictionary(m => m.Time.AddSeconds(-m.Time.Second).ToString(CultureInfo.InvariantCulture)));
-        }
-
-        public DateTime GetLastByTime(string currency)
-        {
-            List<DateTime> allDateTimes = m_mapCurrencyTimeToStoredData[currency].Keys.Select(DateTime.Parse).ToList();
-            allDateTimes.Sort();
-            return allDateTimes.LastOrDefault();
         }
         
         private static void DeleteOldDataIfExists(string currency, ConcurrentDictionary<string, T> mapTimeToStoredData,

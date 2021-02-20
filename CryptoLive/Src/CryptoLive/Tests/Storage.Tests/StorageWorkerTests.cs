@@ -75,7 +75,8 @@ namespace Storage.Tests
                 cancellationTokenSource.Token,
                 s_candleSize,
                 s_currency,
-                false);
+                false,
+                60);
             stopWatchMock.Setup(m => m.ElapsedSeconds)
                 .Returns(120);
 
@@ -142,7 +143,8 @@ namespace Storage.Tests
                 cancellationTokenSource.Token,
                 s_candleSize,
                 s_currency,
-                false);
+                false,
+                60);
 
             // Act
             cancellationTokenSource.Cancel();

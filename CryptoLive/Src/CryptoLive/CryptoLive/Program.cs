@@ -103,7 +103,8 @@ namespace CryptoLive
                 cancellationTokenSource.Token,
                 candleSize,
                 currency,
-                false);
+                false,
+                30);
             return storageWorker;
         }
 
