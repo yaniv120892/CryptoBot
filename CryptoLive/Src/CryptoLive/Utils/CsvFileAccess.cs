@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace Utils
             return oldData.ToArray();
         }
 
-        public static async Task WriteCsvAsync<T>(string fileName, T[] data)
+        public static async Task WriteCsvAsync<T>(string fileName, IEnumerable<T> data)
         {
             s_logger.LogInformation($"Start write new data to {fileName}");
             CreateDirectoryIfNotExist(Path.GetDirectoryName(fileName));

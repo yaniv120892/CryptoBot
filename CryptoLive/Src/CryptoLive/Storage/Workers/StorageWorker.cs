@@ -15,7 +15,6 @@ namespace Storage.Workers
     public class StorageWorker
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<StorageWorker>();
-        private static readonly int s_maxSecondsPerIteration = 59;
 
         private readonly ISystemClock m_systemClock;
         private readonly IStopWatch m_stopWatch;
@@ -27,6 +26,7 @@ namespace Storage.Workers
         private readonly int m_candleSize;
         private readonly string m_currency;
         private readonly bool m_persistData;
+        private readonly int m_iterationTimeInSeconds;
         private DateTime m_currentTime;
 
         public WorkerStatus WorkerStatus { get; private set; }
@@ -41,13 +41,15 @@ namespace Storage.Workers
             CancellationToken cancellationToken,
             int candleSize,
             string currency,
-            bool persistData)
+            bool persistData,
+            int iterationTimeInSeconds)
         {
             m_systemClock = systemClock;
             m_stopWatch = stopWatch;
             m_candleSize = candleSize;
             m_currency = currency;
             m_persistData = persistData;
+            m_iterationTimeInSeconds = iterationTimeInSeconds;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
             m_macdRepositoryUpdater = macdRepositoryUpdater;
@@ -94,10 +96,10 @@ namespace Storage.Workers
                 m_stopWatch.Stop();
 
                 int elapsedSeconds = m_stopWatch.ElapsedSeconds;
-                int timeToWaitInSeconds = s_maxSecondsPerIteration - elapsedSeconds;
+                int timeToWaitInSeconds = m_iterationTimeInSeconds - elapsedSeconds;
                 if (timeToWaitInSeconds < 0)
                 {
-                    throw new TimeoutException($"Add data to repositories took {elapsedSeconds}, timeout is {s_maxSecondsPerIteration}");
+                    throw new TimeoutException($"Add data to repositories took {elapsedSeconds}, timeout is {m_iterationTimeInSeconds}");
                 }
 
                 m_currentTime = await m_systemClock.Wait(m_cancellationToken, m_currency, timeToWaitInSeconds,
