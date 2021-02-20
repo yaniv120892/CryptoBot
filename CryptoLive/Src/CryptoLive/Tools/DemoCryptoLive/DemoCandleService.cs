@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Common;
-using CsvHelper;
 using Services.Abstractions;
+using Utils;
 
 namespace DemoCryptoLive
 {
@@ -24,21 +23,14 @@ namespace DemoCryptoLive
             foreach (string currency in currencies)
             {
                 string fileName = GetFileName(folderName, currency);
-                using (var reader = new StreamReader(fileName))
+                MyCandle[] candles = CsvFileAccess.ReadCsv<MyCandle>(fileName);
+                
+                var dateTimeToCandle = new Dictionary<DateTime, MyCandle>();
+                foreach (MyCandle candle in candles)
                 {
-                    using (var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture))
-                    {
-                        csvReader.Configuration.HeaderValidated = null;
-                        var candles = csvReader.GetRecords<MyCandle>();
-                        var dateTimeToCandle = new Dictionary<DateTime, MyCandle>();
-                        foreach (MyCandle candle in candles)
-                        {
-                            dateTimeToCandle[candle.OpenTime] = candle;
-                        }
-
-                        m_mapCurrencyToCandle[currency] = dateTimeToCandle;
-                    }
+                    dateTimeToCandle[candle.CloseTime] = candle;
                 }
+                m_mapCurrencyToCandle[currency] = dateTimeToCandle;
             }
         }
 

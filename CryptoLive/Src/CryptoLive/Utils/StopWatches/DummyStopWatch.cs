@@ -13,6 +13,6 @@ namespace Utils.StopWatches
         {
         }
 
-        public int ElapsedSeconds => 60;
+        public int ElapsedSeconds => 0;
     }
 }

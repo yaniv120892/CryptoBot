@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Common;
-using CsvHelper;
 using Infra;
 using Microsoft.Extensions.Logging;
 using Services;
@@ -30,7 +28,7 @@ namespace DataGenerator
                 MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, candlesAmount, DateTime.UtcNow)).ToArray();
                 if (File.Exists(fileName))
                 {
-                    MyCandle[] oldCandles = ReadOldCandles(fileName);
+                    MyCandle[] oldCandles = CsvFileAccess.ReadCsv<MyCandle>(fileName);
                     s_logger.LogInformation($"Merge old and new data");
                     var mergedCandles = (oldCandles.Union(newCandles)).Distinct().ToArray();
                     CsvFileAccess.DeleteFile(fileName);
@@ -49,15 +47,6 @@ namespace DataGenerator
                 new CurrencyClientFactory(dataGeneratorParameters.BinanceApiKey,
                     dataGeneratorParameters.BinanceApiSecretKey);
             return new BinanceCandleService(currencyClientFactory);
-        }
-
-        private static MyCandle[] ReadOldCandles(string fileName)
-        {
-            using var reader = new StreamReader(fileName);
-            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
-            csvReader.Configuration.HeaderValidated = null;
-            var oldCandles = csvReader.GetRecords<MyCandle>();
-            return oldCandles.ToArray();
         }
 
         private static string GetFileName(string currency, string candlesDataFolder)
