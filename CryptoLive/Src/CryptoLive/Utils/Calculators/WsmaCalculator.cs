@@ -7,7 +7,7 @@ namespace Utils.Calculators
         public static decimal Calculate(decimal value, decimal previousWsma, int candlesAmount)
         {
             var ans = previousWsma * (1 - 1 / (decimal) candlesAmount) + (1 / (decimal) candlesAmount) * value;
-            return Math.Round(ans, 3);
+            return Math.Round(ans, 6);
         } 
     }
 }
