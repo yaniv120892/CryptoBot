@@ -12,10 +12,11 @@ using Utils.Abstractions;
 
 namespace CryptoBot.CryptoPollings
 {
-    public class CandleCryptoPolling : ICryptoPolling
+    public class CandleCryptoPolling : CryptoPollingBase
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CandleCryptoPolling>();
-        
+        private static string s_actionName = "Candle polling";
+
         private readonly int m_delayTimeInSeconds;
         private readonly INotificationService m_notificationService;
         private readonly ICurrencyDataProvider m_currencyDataProvider;
@@ -24,7 +25,6 @@ namespace CryptoBot.CryptoPollings
         private readonly decimal m_maxPrice;
         
         private MyCandle m_currCandle;
-        private DateTime m_currentTime;
 
         public CandleCryptoPolling(INotificationService notificationService, 
             ICurrencyDataProvider currencyDataProvider, 
@@ -46,58 +46,35 @@ namespace CryptoBot.CryptoPollings
             m_delayTimeInSeconds = delayTimeInSeconds;
             m_minPrice = minPrice;
             m_maxPrice = maxPrice;
+            PollingType = nameof(MacdHistogramCryptoPolling);
         }
 
-        public async Task<PollingResponseBase> StartAsync(string currency, CancellationToken cancellationToken, DateTime currentTime)
+        protected override async Task<PollingResponseBase> StartAsyncImpl(CancellationToken cancellationToken)
         {
-            CandlePollingResponse candlePollingResponse;
-            m_currentTime = currentTime;
-            s_logger.LogDebug($"{currency}: {nameof(CandleCryptoPolling)}, " +
-                              $"Get update every {m_delayTimeInSeconds / 60} minutes");
-            try
-            {
-                candlePollingResponse =
-                    await StartAsyncImpl(currency, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                s_logger.LogWarning("got cancellation request");
-                candlePollingResponse = CreateGotCancelledPollingResponse();
-            }
-            catch (Exception e)
-            {
-                s_logger.LogWarning(e, $"Failed, {e.Message}");
-                candlePollingResponse = CreateExceptionPollingResponse(e);
-            }
-            string message = $"{currency}: {nameof(CandleCryptoPolling)} done, {candlePollingResponse}";
-            m_notificationService.Notify(message);
-            s_logger.LogDebug(message);
-            return candlePollingResponse;
-        }
-
-        private async Task<CandlePollingResponse> StartAsyncImpl(string currency,
-            CancellationToken cancellationToken)
-        {
-            m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_currentTime);
+            m_currCandle = m_currencyDataProvider.GetLastCandle(Currency, CurrentTime);
             (bool isBelow, bool isAbove) = IsCandleInRange(m_currCandle);
             while (isBelow == false && isAbove == false)
             {
-                m_currentTime = await m_systemClock.Wait(cancellationToken, currency, m_delayTimeInSeconds,
-                    "Price range", m_currentTime);
-                m_currCandle = m_currencyDataProvider.GetLastCandle(currency, m_currentTime);
+                CurrentTime = await m_systemClock.Wait(cancellationToken, Currency, m_delayTimeInSeconds,
+                    s_actionName, CurrentTime);
+                m_currCandle = m_currencyDataProvider.GetLastCandle(Currency, CurrentTime);
                 (isBelow, isAbove) = IsCandleInRange(m_currCandle);
             }
 
-            return new CandlePollingResponse(isBelow, isAbove, m_currentTime, m_currCandle);
+            return new CandlePollingResponse(isBelow, isAbove, CurrentTime, m_currCandle);
         }
+        
+        protected override string StartPollingDescription() =>
+            $"{PollingType} {Currency} {CurrentTime} start, " +
+            $"Get update every  {m_delayTimeInSeconds / 60} minutes"; 
 
         private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) =>
             (currCandle.Low < m_minPrice, currCandle.High > m_maxPrice);
         
-        private CandlePollingResponse CreateExceptionPollingResponse(Exception e) => 
-            new CandlePollingResponse(false, false, m_currentTime, m_currCandle, false, e);
+        protected override PollingResponseBase CreateExceptionPollingResponse(Exception e) => 
+            new CandlePollingResponse(false, false, CurrentTime, m_currCandle, false, e);
 
-        private CandlePollingResponse CreateGotCancelledPollingResponse() => 
-            new CandlePollingResponse(false, false, m_currentTime, m_currCandle, true);
+        protected override PollingResponseBase CreateGotCancelledPollingResponse() => 
+            new CandlePollingResponse(false, false, CurrentTime, m_currCandle, true);
     }
 }

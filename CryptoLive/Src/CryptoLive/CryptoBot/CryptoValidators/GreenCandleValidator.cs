@@ -22,16 +22,16 @@ namespace CryptoBot.CryptoValidators
             m_notificationService = notificationService;
         }
         
-        public bool Validate(string currency, DateTime time )
+        public bool Validate(string currency, DateTime currentTime)
         {
-            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, time);
+            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, currentTime);
             
             if (currCandle.Close < currCandle.Open)
             {
-                s_logger.LogDebug($"{currency}: Candle is red, {currCandle} ,{time}");
+                s_logger.LogDebug($"{currency}: Candle is red, {currCandle} ,{currentTime}");
                 return false;
             }
-            s_logger.LogDebug($"{currency}: Candle is green, {currCandle} ,{time}");
+            s_logger.LogDebug($"{currency}: Candle is green, {currCandle} ,{currentTime}");
             
             // if (currCandle.Close < currCandle.Open * (decimal)1.005)
             // {
@@ -39,17 +39,17 @@ namespace CryptoBot.CryptoValidators
             //     return false;
             // }
             
-            s_logger.LogDebug($"{currency}: Candle increase is above 1%, {currCandle} ,{time}");
+            s_logger.LogDebug($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
             if (prevCandle.High < currCandle.Close)
             {
                 string message =
-                    $"{currency}: Previous.High is smaller than Current.Close, {prevCandle}, {currCandle} ,{time}";
+                    $"{currency}: Previous.High is smaller than Current.Close, {prevCandle}, {currCandle} ,{currentTime}";
                 m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }
 
-            s_logger.LogDebug($"{currency}: Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{time}");
+            s_logger.LogDebug($"{currency}: Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}");
             return false;
         }
     }

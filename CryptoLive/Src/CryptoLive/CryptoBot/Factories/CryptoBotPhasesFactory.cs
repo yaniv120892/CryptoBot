@@ -1,5 +1,6 @@
 ﻿using Common;
 using Common.CryptoQueue;
+using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoPollings;
 using CryptoBot.CryptoValidators;
@@ -24,7 +25,7 @@ namespace CryptoBot.Factories
             m_notificationService = notificationService;
         }
 
-        public CandleCryptoPolling CreateCandlePolling(decimal basePrice, 
+        public CryptoPollingBase CreateCandlePolling(decimal basePrice, 
             int delayTimeIterationsInSeconds, 
             int candleSize, decimal 
                 priceChangeToNotify)
@@ -34,7 +35,7 @@ namespace CryptoBot.Factories
             return new CandleCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, delayTimeIterationsInSeconds, candleSize, minPrice, maxPrice);
         }
 
-        public PriceAndRsiCryptoPolling CreatePriceAndRsiPolling(int candleSize,
+        public CryptoPollingBase CreatePriceAndRsiPolling(int candleSize,
             decimal maxRsiToNotify,
             int rsiMemorySize)
         {
@@ -42,10 +43,10 @@ namespace CryptoBot.Factories
             return new PriceAndRsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, maxRsiToNotify);
         }
 
-        public MacdHistogramCryptoPolling CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
+        public CryptoPollingBase CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
             new MacdHistogramCryptoPolling(null, CurrencyDataProvider, SystemClock, maxMacdPollingTime);
 
-        public RsiCryptoPolling CreateRsiPolling(decimal maxRsiToNotify) => 
+        public CryptoPollingBase CreateRsiPolling(decimal maxRsiToNotify) => 
             new RsiCryptoPolling(m_notificationService, CurrencyDataProvider, SystemClock, maxRsiToNotify);
         
         
