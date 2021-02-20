@@ -152,7 +152,7 @@ namespace Storage.Repository
 
             if (mapTimeToStoredData.Remove(timeToDelete, out _))
             {
-
+                return;
             }
 
             var keys = mapTimeToStoredData.Keys.ToList();

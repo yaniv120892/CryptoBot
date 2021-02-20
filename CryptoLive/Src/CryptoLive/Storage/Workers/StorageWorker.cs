@@ -15,7 +15,7 @@ namespace Storage.Workers
     public class StorageWorker
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<StorageWorker>();
-        private static readonly int s_maxSecondsPerIteration = 60;
+        private static readonly int s_maxSecondsPerIteration = 59;
 
         private readonly ISystemClock m_systemClock;
         private readonly IStopWatch m_stopWatch;
@@ -87,9 +87,9 @@ namespace Storage.Workers
 
         private async Task StartAsyncImpl()
         {
+            m_stopWatch.Restart();
             while (!m_cancellationToken.IsCancellationRequested)
             {
-                m_stopWatch.Restart();
                 await AddDataToRepositories();
                 m_stopWatch.Stop();
 
@@ -102,6 +102,7 @@ namespace Storage.Workers
 
                 m_currentTime = await m_systemClock.Wait(m_cancellationToken, m_currency, timeToWaitInSeconds,
                     nameof(StorageWorker), m_currentTime);
+                m_stopWatch.Restart();
             }
         }
 
