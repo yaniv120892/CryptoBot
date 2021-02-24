@@ -51,7 +51,7 @@ namespace DataGenerator
 
         private static string GetFileName(string currency, string candlesDataFolder)
         {
-            return $"{candlesDataFolder}\\{currency}.csv";
+            return Path.Combine(candlesDataFolder, $"{currency}.csv");
         }
 
         private static void CreateDirectoryIfNotExist(string folderName)
