@@ -60,7 +60,7 @@ namespace CryptoBot
             int phaseNumber = 0;
             s_logger.LogInformation($"{m_currency}_{m_age}: Start iteration");
             
-            //currentTime = await m_currencyBotPhasesExecutor.WaitUntilRsiIsBelowMaxValueAsync(currentTime, cancellationTokenSource.Token, Currency , age, ++phaseNumber, phasesDescription);
+            //m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilRsiIsBelowMaxValueAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
             m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
 
             // Validator
