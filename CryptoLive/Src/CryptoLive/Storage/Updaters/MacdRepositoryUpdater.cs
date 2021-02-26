@@ -39,6 +39,10 @@ namespace Storage.Updaters
 
         public void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime)
         {
+            if (m_macdRepository.TryGet(m_currency, newTime, out _))
+            {
+                return;
+            }
             AddEmaAndSignalToRepository(candle, previousTime, newTime);
             AddMacdToRepository(newTime);
         }

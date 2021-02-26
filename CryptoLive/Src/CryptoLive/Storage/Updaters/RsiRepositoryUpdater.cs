@@ -31,6 +31,10 @@ namespace Storage.Updaters
 
         public void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime)
         {
+            if (m_rsiRepository.TryGet(m_currency, newTime, out _))
+            {
+                return;
+            }
             AddWsmaToRepository(candle, previousTime, newTime);
             AddRsiToRepository(newTime);
         }
