@@ -28,10 +28,10 @@ namespace CryptoBot.CryptoValidators
             
             if (currCandle.Close < currCandle.Open)
             {
-                s_logger.LogDebug($"{currency}: Candle is red, {currCandle} ,{currentTime}");
+                s_logger.LogInformation($"{currency}: Candle is red, {currCandle} ,{currentTime}");
                 return false;
             }
-            s_logger.LogDebug($"{currency}: Candle is green, {currCandle} ,{currentTime}");
+            s_logger.LogInformation($"{currency}: Candle is green, {currCandle} ,{currentTime}");
             
             // if (currCandle.Close < currCandle.Open * (decimal)1.005)
             // {
@@ -39,7 +39,7 @@ namespace CryptoBot.CryptoValidators
             //     return false;
             // }
             
-            s_logger.LogDebug($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
+            s_logger.LogInformation($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
             if (prevCandle.High < currCandle.Close)
             {
                 string message =
@@ -49,7 +49,7 @@ namespace CryptoBot.CryptoValidators
                 return true;
             }
 
-            s_logger.LogDebug($"{currency}: Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}");
+            s_logger.LogInformation($"{currency}: Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}");
             return false;
         }
     }
