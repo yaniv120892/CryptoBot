@@ -56,23 +56,11 @@ namespace Storage.Repository
 
             if (m_deleteOldData)
             {
-                string timeToDelete = time.Subtract(TimeSpan.FromMinutes(15)).ToString(CultureInfo.InvariantCulture);
+                string timeToDelete = time.Subtract(TimeSpan.FromMinutes(60)).ToString(CultureInfo.InvariantCulture);
                 DeleteOldDataIfExists(currency, mapTimeToStoredData, timeToDelete);
             }
         }
 
-        public void Delete(string currency, DateTime time)
-        {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {time.ToString(CultureInfo.InvariantCulture)}");
-
-            if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out _))
-            {
-                return;
-            }
-            
-            m_mapCurrencyTimeToStoredData[currency].Remove(time.ToString(CultureInfo.InvariantCulture), out _);
-        }
-        
         public bool TryGet(string currency, DateTime time, out T storedData)
         {
             try
@@ -152,6 +140,7 @@ namespace Storage.Repository
         private static void DeleteOldDataIfExists(string currency, ConcurrentDictionary<string, T> mapTimeToStoredData,
             string timeToDelete)
         {
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {timeToDelete}");
             if (!mapTimeToStoredData.TryGetValue(timeToDelete, out _))
             {
                 return;
