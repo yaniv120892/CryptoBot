@@ -28,15 +28,17 @@ namespace Storage.Repository
 
         public T Get(string currency, DateTime time)
         {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: get data at {time}");
+            s_logger.LogTrace($"{currency}_{typeof(T)}: get data at {time.ToString(CultureInfo.InvariantCulture)}");
             if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
             {
+                s_logger.LogError($"Unknown currency {currency}");
                 throw new KeyNotFoundException($"Unknown currency {currency}");
             }
             
             if (!mapTimeToStoredData.TryGetValue(time.ToString(CultureInfo.InvariantCulture), out T result))
             {
-                throw new KeyNotFoundException($"{currency}_{typeof(T)} for {currency} at {time} not found");
+                s_logger.LogError($"{currency}_{typeof(T)} for {currency} at {time.ToString(CultureInfo.InvariantCulture)} not found");
+                throw new KeyNotFoundException($"{currency}_{typeof(T)} for {currency} at {time.ToString(CultureInfo.InvariantCulture)} not found");
             }
             
             return result;
@@ -50,7 +52,7 @@ namespace Storage.Repository
             }
             
             mapTimeToStoredData[time.ToString(CultureInfo.InvariantCulture)] = storedData;
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Add data at time {time}");
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Add data at time {time.ToString(CultureInfo.InvariantCulture)}");
 
             if (m_deleteOldData)
             {
@@ -61,7 +63,7 @@ namespace Storage.Repository
 
         public void Delete(string currency, DateTime time)
         {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {time}");
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {time.ToString(CultureInfo.InvariantCulture)}");
 
             if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out _))
             {
@@ -75,14 +77,20 @@ namespace Storage.Repository
         {
             try
             {
-                s_logger.LogTrace($"{currency}_{typeof(T)}: Try get data at {time}");
+                s_logger.LogTrace($"{currency}_{typeof(T)}: Try get data at {time.ToString(CultureInfo.InvariantCulture)}");
                 storedData = Get(currency, time);
                 return true;
             }
             catch (KeyNotFoundException)
             {
+                s_logger.LogTrace($"{currency}_{typeof(T)}: Failed to try get data at {time.ToString(CultureInfo.InvariantCulture)}");
                 storedData = default(T);
                 return false;
+            }
+            catch (Exception e)
+            {
+                s_logger.LogError(e,$"Not keyNotFound, {currency}_{typeof(T)}: Failed to try get data at {time.ToString(CultureInfo.InvariantCulture)}");
+                throw;
             }
         }
 
