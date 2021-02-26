@@ -139,7 +139,7 @@ namespace Storage.Workers
             (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
             m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
             m_rsiRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
-            m_macdRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
+            //m_macdRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
         }
     }
 }

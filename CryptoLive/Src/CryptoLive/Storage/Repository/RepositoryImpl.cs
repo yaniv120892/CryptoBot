@@ -25,63 +25,7 @@ namespace Storage.Repository
             m_mapCurrencyTimeToStoredData = new ConcurrentDictionary<string, ConcurrentDictionary<string, T>>();
             Initialize(currenciesToCalculatedDataFiles);
         }
-
-        public T Get(string currency, DateTime time)
-        {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: get data at {time.ToString(CultureInfo.InvariantCulture)}");
-            if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
-            {
-                s_logger.LogError($"Unknown currency {currency}");
-                throw new KeyNotFoundException($"Unknown currency {currency}");
-            }
-            
-            if (!mapTimeToStoredData.TryGetValue(time.ToString(CultureInfo.InvariantCulture), out T result))
-            {
-                s_logger.LogError($"{currency}_{typeof(T)} for {currency} at {time.ToString(CultureInfo.InvariantCulture)} not found");
-                throw new KeyNotFoundException($"{currency}_{typeof(T)} for {currency} at {time.ToString(CultureInfo.InvariantCulture)} not found");
-            }
-            
-            return result;
-        }
         
-        public void Add(string currency, DateTime time, T storedData)
-        {
-            if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
-            {
-                throw new KeyNotFoundException($"Unknown currency {currency}");
-            }
-            
-            mapTimeToStoredData[time.ToString(CultureInfo.InvariantCulture)] = storedData;
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Add data at time {time.ToString(CultureInfo.InvariantCulture)}");
-
-            if (m_deleteOldData)
-            {
-                string timeToDelete = time.Subtract(TimeSpan.FromMinutes(60)).ToString(CultureInfo.InvariantCulture);
-                DeleteOldDataIfExists(currency, mapTimeToStoredData, timeToDelete);
-            }
-        }
-
-        public bool TryGet(string currency, DateTime time, out T storedData)
-        {
-            try
-            {
-                s_logger.LogTrace($"{currency}_{typeof(T)}: Try get data at {time.ToString(CultureInfo.InvariantCulture)}");
-                storedData = Get(currency, time);
-                return true;
-            }
-            catch (KeyNotFoundException)
-            {
-                s_logger.LogTrace($"{currency}_{typeof(T)}: Failed to try get data at {time.ToString(CultureInfo.InvariantCulture)}");
-                storedData = default(T);
-                return false;
-            }
-            catch (Exception e)
-            {
-                s_logger.LogError(e,$"Not keyNotFound, {currency}_{typeof(T)}: Failed to try get data at {time.ToString(CultureInfo.InvariantCulture)}");
-                throw;
-            }
-        }
-
         public T[] GetAll(string currency) => 
             m_mapCurrencyTimeToStoredData[currency].Values.ToArray();
 
@@ -122,6 +66,63 @@ namespace Storage.Repository
             return allDateTimes.LastOrDefault();
         }
 
+        public T Get(string currency, DateTime time)
+        {
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Get {currency}_{time.ToString(CultureInfo.InvariantCulture)}");
+            if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
+            {
+                s_logger.LogError($"{currency}_{typeof(T)} Get failed, The given key '{currency}' was not present in the dictionary");
+                throw new KeyNotFoundException($"The given key '{currency}' was not present in the dictionary");
+            }
+            
+            if (!mapTimeToStoredData.TryGetValue(time.ToString(CultureInfo.InvariantCulture), out T result))
+            {
+                s_logger.LogError($"{currency}_{typeof(T)} Get failed, The given key '{time.ToString(CultureInfo.InvariantCulture)}' was not present in the dictionary");
+                throw new KeyNotFoundException($"{currency}_{typeof(T)} Get failed, The given key '{time.ToString(CultureInfo.InvariantCulture)}' was not present in the dictionary");
+            }
+            
+            return result;
+        }
+        
+        public void Add(string currency, DateTime time, T storedData)
+        {
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Add {currency}_{time.ToString(CultureInfo.InvariantCulture)}");
+            if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
+            {
+                s_logger.LogError($"{currency}_{typeof(T)} Add failed, The given key '{currency}' was not present in the dictionary");
+                throw new KeyNotFoundException($"The given key '{currency}' was not present in the dictionary");            
+            }
+            
+            mapTimeToStoredData[time.ToString(CultureInfo.InvariantCulture)] = storedData;
+
+            if (m_deleteOldData)
+            {
+                string timeToDelete = time.Subtract(TimeSpan.FromMinutes(60)).ToString(CultureInfo.InvariantCulture);
+                DeleteOldDataIfExists(currency, mapTimeToStoredData, timeToDelete);
+            }
+        }
+
+        public bool TryGet(string currency, DateTime time, out T storedData)
+        {
+            s_logger.LogTrace($"{currency}_{typeof(T)}: TryGet {currency}_{time.ToString(CultureInfo.InvariantCulture)}");
+            try
+            {
+                storedData = m_mapCurrencyTimeToStoredData[currency][time.ToString(CultureInfo.InvariantCulture)];
+                return true;
+            }
+            catch (KeyNotFoundException e)
+            {
+                s_logger.LogTrace($"{currency}_{typeof(T)}: TryGet failed, {e.Message}");
+                storedData = default(T);
+                return false;
+            }
+            catch (Exception e)
+            {
+                s_logger.LogTrace($"{currency}_{typeof(T)}: TryGet failed, {e.Message}");
+                throw;
+            }
+        }
+
         private void Initialize(Dictionary<string, string> currenciesToCalculatedDataFiles)
         {
             foreach (var currency in currenciesToCalculatedDataFiles.Keys)
@@ -140,7 +141,7 @@ namespace Storage.Repository
         private static void DeleteOldDataIfExists(string currency, ConcurrentDictionary<string, T> mapTimeToStoredData,
             string timeToDelete)
         {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete data at {timeToDelete}");
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Delete {currency}_{timeToDelete}");
             if (!mapTimeToStoredData.TryGetValue(timeToDelete, out _))
             {
                 return;
@@ -154,7 +155,7 @@ namespace Storage.Repository
             var keys = mapTimeToStoredData.Keys.ToList();
             keys.Sort();
             s_logger.LogWarning(
-                $"{currency}_{typeof(T)}: Failed to delete {timeToDelete}, {string.Join(", ", keys )}");
+                $"{currency}_{typeof(T)}: Delete {timeToDelete} failed , {string.Join(", ", keys )}");
         }
     }
 }
