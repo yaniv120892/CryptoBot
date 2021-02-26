@@ -33,7 +33,7 @@ namespace CryptoBot.CryptoValidators
                 return true;
             }
 
-            s_logger.LogDebug($"{currency}: Candle is green, {currCandle} ,{currentTime}");
+            s_logger.LogInformation($"{currency}: Candle is green, {currCandle} ,{currentTime}");
             return false;
         }
     }
