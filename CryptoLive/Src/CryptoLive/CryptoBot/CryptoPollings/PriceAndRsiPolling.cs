@@ -49,7 +49,7 @@ namespace CryptoBot.CryptoPollings
                 CurrentTime = await m_systemClock.Wait(cancellationToken, Currency, s_timeToWaitInSeconds, s_actionName,
                     CurrentTime);
                 currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(Currency, CurrentTime);
-                s_logger.LogInformation(currentPriceAndRsi.ToString());
+                s_logger.LogInformation($"{Currency}: {currentPriceAndRsi}");
             }
             
             var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(CurrentTime, oldPriceAndRsi ,currentPriceAndRsi);
