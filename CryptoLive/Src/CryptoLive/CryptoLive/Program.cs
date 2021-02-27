@@ -87,7 +87,7 @@ namespace CryptoLive
                     systemClock, stopWatchWrapper, notificationService, cancellationTokenSource, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
-                await systemClock.Wait(CancellationToken.None, currency, 120, "Init2",storageStartTime);
+                await systemClock.Wait(CancellationToken.None, currency, 60, "Init2",storageStartTime);
                 ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, storageStartTime);
                 currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, cancellationTokenSource);
             }
