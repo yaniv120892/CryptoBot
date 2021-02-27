@@ -16,6 +16,7 @@ namespace Storage.Workers
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<StorageWorker>();
 
+        private readonly INotificationService m_notificationService;
         private readonly ISystemClock m_systemClock;
         private readonly IStopWatch m_stopWatch;
         private readonly ICandlesService m_candlesService;
@@ -32,6 +33,7 @@ namespace Storage.Workers
         public WorkerStatus WorkerStatus { get; private set; }
 
         public StorageWorker(
+            INotificationService notificationService,
             ICandlesService candlesService,
             ISystemClock systemClock,
             IStopWatch stopWatch,
@@ -44,6 +46,7 @@ namespace Storage.Workers
             bool persistData,
             int iterationTimeInSeconds)
         {
+            m_notificationService = notificationService;
             m_systemClock = systemClock;
             m_stopWatch = stopWatch;
             m_candleSize = candleSize;
@@ -62,6 +65,8 @@ namespace Storage.Workers
         {
             m_currentTime = startTime;
             s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
+            m_notificationService.Notify($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
+
             WorkerStatus = WorkerStatus.Running;
             try
             {
@@ -76,11 +81,13 @@ namespace Storage.Workers
             {
                 s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
                 WorkerStatus = WorkerStatus.Cancelled;
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
             }
             catch (Exception e)
             {
                 WorkerStatus = WorkerStatus.Faulted;
                 s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}, {e.Message}");
             }
 
             await PersistRepositoriesDataIfNeeded();

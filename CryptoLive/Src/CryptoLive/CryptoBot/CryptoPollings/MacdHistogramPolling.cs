@@ -50,7 +50,7 @@ namespace CryptoBot.CryptoPollings
                 MacdHistogramPollingResponse macdHistogramPollingResponse =
                         new MacdHistogramPollingResponse(CurrentTime, macdHistogram);
                     string message =
-                        $"{Currency}: {nameof(MacdHistogramCryptoPolling)} done, {macdHistogramPollingResponse}";
+                        $"{Currency}: {s_actionName} done, {macdHistogramPollingResponse}";
                     m_notificationService.Notify(message);
                     return macdHistogramPollingResponse;
             }

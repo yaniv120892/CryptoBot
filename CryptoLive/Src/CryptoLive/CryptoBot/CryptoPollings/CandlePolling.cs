@@ -46,7 +46,7 @@ namespace CryptoBot.CryptoPollings
             m_delayTimeInSeconds = delayTimeInSeconds;
             m_minPrice = minPrice;
             m_maxPrice = maxPrice;
-            PollingType = nameof(MacdHistogramCryptoPolling);
+            PollingType = nameof(CandleCryptoPolling);
         }
 
         protected override async Task<PollingResponseBase> StartAsyncImpl(CancellationToken cancellationToken)
@@ -60,8 +60,9 @@ namespace CryptoBot.CryptoPollings
                 m_currCandle = m_currencyDataProvider.GetLastCandle(Currency, CurrentTime);
                 (isBelow, isAbove) = IsCandleInRange(m_currCandle);
             }
-
-            return new CandlePollingResponse(isBelow, isAbove, CurrentTime, m_currCandle);
+            var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, CurrentTime, m_currCandle);
+            m_notificationService.Notify($"{Currency}: {s_actionName} done, {candlePollingResponse}");
+            return candlePollingResponse;
         }
         
         protected override string StartPollingDescription() =>

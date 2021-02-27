@@ -44,7 +44,7 @@ namespace CryptoBot.CryptoPollings
             }
 
             var rsiPollingResponse = new RsiPollingResponse(CurrentTime, rsi);
-            string notificationMessage = $"{Currency}: {nameof(RsiCryptoPolling)} done, {rsiPollingResponse}";
+            string notificationMessage = $"{Currency}: {s_actionName} done, {rsiPollingResponse}";
             m_notificationService.Notify(notificationMessage);
             return rsiPollingResponse;
         }
