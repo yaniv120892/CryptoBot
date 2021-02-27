@@ -9,6 +9,7 @@ using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.Factories;
 using Infra;
+using Infra.NotificationServices;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Abstractions;
@@ -33,6 +34,10 @@ namespace CryptoLive
         {
             CryptoLiveParameters appParameters = AppParametersLoader<CryptoLiveParameters>.Load(s_configFile);
             s_logger.LogInformation(appParameters.ToString());
+            INotificationService notificationService = new WhatsAppNotificationService(
+                appParameters.TwilioWhatsAppSender, appParameters.WhatsAppRecipient, appParameters.TwilioSsid,
+                appParameters.TwilioAuthToken);
+            notificationService.Notify($"Start CryptoLive {Environment.MachineName}");
             RunMultiplePhases(appParameters).Wait();
         }
 
