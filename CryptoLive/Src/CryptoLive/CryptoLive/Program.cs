@@ -39,6 +39,7 @@ namespace CryptoLive
                 appParameters.TwilioAuthToken);
             notificationService.Notify($"Start CryptoLive {Environment.MachineName}");
             RunMultiplePhases(appParameters).Wait();
+            notificationService.Notify($"Done CryptoLive {Environment.MachineName}");
         }
 
         private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
