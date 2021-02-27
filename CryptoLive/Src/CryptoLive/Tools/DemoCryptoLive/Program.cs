@@ -167,13 +167,14 @@ namespace DemoCryptoLive
             int candleSize, 
             string calculatedDataFolder)
         {
+            INotificationService notificationService = new EmptyNotificationService();
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, calculatedDataFolder);
             var macdRepositoryUpdater = new MacdRepositoryUpdater(macdRepository, emaAndSignalStorageObject,
                 currency,
                 fastEmaSize, slowEmaSize, signalSize, calculatedDataFolder);
             var candleRepositoryUpdater =
                 new CandleRepositoryUpdater(candleRepository, currency, candleSize, calculatedDataFolder);
-            var storageWorker = new StorageWorker(candlesService,
+            var storageWorker = new StorageWorker(notificationService, candlesService,
                 systemClock,
                 stopWatch,
                 rsiRepositoryUpdater,

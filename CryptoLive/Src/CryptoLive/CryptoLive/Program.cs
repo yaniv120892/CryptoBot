@@ -9,7 +9,6 @@ using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.Factories;
 using Infra;
-using Infra.NotificationServices;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Abstractions;
@@ -19,6 +18,7 @@ using Storage.Repository;
 using Storage.Updaters;
 using Storage.Workers;
 using Utils.Abstractions;
+using Utils.Notifications;
 using Utils.StopWatches;
 using Utils.SystemClocks;
 
@@ -42,8 +42,14 @@ namespace CryptoLive
             var stopWatchWrapper = new StopWatchWrapper();
             var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
             var cancellationTokenSource = new CancellationTokenSource();
+            var notificationServiceFactory =
+                new NotificationServiceFactory(cryptoLiveParameters.TwilioWhatsAppSender,
+                    cryptoLiveParameters.WhatsAppRecipient, cryptoLiveParameters.TwilioSsid,
+                    cryptoLiveParameters.TwilioAuthToken);
+            INotificationService notificationService = notificationServiceFactory.Create(cryptoLiveParameters.NotificationType);
             
-            var currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, cryptoLiveParameters.BinanceApiSecretKey);
+            CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 
+                cryptoLiveParameters.BinanceApiSecretKey);
             var candlesService = new BinanceCandleService(currencyClientFactory);
             
             var candleRepository = new RepositoryImpl<CandleStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
@@ -59,7 +65,7 @@ namespace CryptoLive
             int candleSize = cryptoLiveParameters.CandleSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay, currencyClientFactory);
+                macdRepository, systemClockWithDelay, currencyClientFactory, notificationService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
             var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
@@ -72,7 +78,7 @@ namespace CryptoLive
                 string currency = cryptoLiveParameters.Currencies[i];
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
-                    systemClock, stopWatchWrapper, cancellationTokenSource, candleSize);
+                    systemClock, stopWatchWrapper, notificationService, cancellationTokenSource, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, 120, "Init2",storageStartTime);
@@ -86,7 +92,7 @@ namespace CryptoLive
         private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
             string currency, int rsiSize, IRepository<MacdStorageObject> macdRepository, IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject,
             int fastEmaSize, int slowEmaSize, int signalSize, IRepository<CandleStorageObject> candleRepository,
-            ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper, CancellationTokenSource cancellationTokenSource,
+            ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper, INotificationService notificationService, CancellationTokenSource cancellationTokenSource,
             int candleSize)
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
@@ -94,7 +100,8 @@ namespace CryptoLive
                 currency, fastEmaSize, slowEmaSize, signalSize, string.Empty);
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency, candleSize,string.Empty);
             
-            var storageWorker = new StorageWorker(candlesService,
+            var storageWorker = new StorageWorker(notificationService,
+                candlesService,
                 systemClock,
                 stopWatchWrapper,
                 rsiRepositoryUpdater,
@@ -123,14 +130,14 @@ namespace CryptoLive
             IRepository<RsiStorageObject> rsiRepository,
             IRepository<MacdStorageObject> macdRepository,
             ISystemClock systemClock,
-            ICurrencyClientFactory currencyClientFactory)
+            ICurrencyClientFactory currencyClientFactory,
+            INotificationService notificationService)
         {
             var priceService = new BinancePriceService(currencyClientFactory);
             var priceProvider = new PriceProvider(priceService);
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
             var macdProvider = new MacdProvider(macdRepository);
-            var notificationService = new EmptyNotificationService();
             var cryptoBotPhasesFactoryCreator = new CryptoBotPhasesFactoryCreator(
                 systemClock, 
                 priceProvider, 
