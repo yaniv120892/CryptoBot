@@ -10,6 +10,7 @@ namespace CryptoBot.CryptoValidators
     public class GreenCandleValidator : ICryptoValidator
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<GreenCandleValidator>();
+        private static readonly string s_actionName = "Green Candle Validator";
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly INotificationService m_notificationService;
@@ -25,10 +26,13 @@ namespace CryptoBot.CryptoValidators
         public bool Validate(string currency, DateTime currentTime)
         {
             (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, currentTime);
-            
+
+            string message;
             if (currCandle.Close < currCandle.Open)
             {
-                s_logger.LogInformation($"{currency}: Candle is red, {currCandle} ,{currentTime}");
+                message =
+                    $"{currency} {s_actionName} done, Candle is not green {currCandle}, {currentTime}";
+                m_notificationService.Notify(message);
                 return false;
             }
             s_logger.LogInformation($"{currency}: Candle is green, {currCandle} ,{currentTime}");
@@ -38,18 +42,20 @@ namespace CryptoBot.CryptoValidators
             //     s_logger.LogDebug($"{currency}: Candle increase is less than 1%, {currCandle} ,{time}");
             //     return false;
             // }
+            // s_logger.LogInformation($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
             
-            s_logger.LogInformation($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
             if (prevCandle.High < currCandle.Close)
             {
-                string message =
-                    $"{currency}: Previous.High is smaller than Current.Close, {prevCandle}, {currCandle} ,{currentTime}";
+                message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime}";
                 m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }
 
-            s_logger.LogInformation($"{currency}: Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}");
+            message =
+                $"{currency} {s_actionName} done, Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}";
+            m_notificationService.Notify(message);
+            s_logger.LogInformation(message);
             return false;
         }
     }
