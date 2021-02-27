@@ -17,13 +17,13 @@
             "high_logFile": {
                 "type": "file",
                 "name": "file",
-                "fileName": "logs\\crypto_high_${shortdate}.log",
+                "fileName": "logs/crypto_high_${shortdate}.log",
                 "layout": "${longdate}|[${threadid}]|${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
             },
             "logFile": {
                 "type": "file",
                 "name": "file",
-                "fileName": "logs\\crypto_${shortdate}.log",
+                "fileName": "logs/crypto_${shortdate}.log",
                 "layout": "${longdate}|[${threadid}]|${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
             }
         },
