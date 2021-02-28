@@ -29,7 +29,7 @@
             },
             {
                 "logger": "*",
-                "minLevel": "Info",
+                "minLevel": "Debug",
                 "writeTo": "logFile"
             }
         ]

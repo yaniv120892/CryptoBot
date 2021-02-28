@@ -14,12 +14,6 @@
                 "type": "ColoredConsole",
                 "layout": "${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
             },
-            "high_logFile": {
-                "type": "file",
-                "name": "file",
-                "fileName": "logs/crypto_high_${shortdate}.log",
-                "layout": "${longdate}|[${threadid}]|${uppercase:${level}}|${logger}|${message} ${exception:format=tostring}"
-            },
             "logFile": {
                 "type": "file",
                 "name": "file",
@@ -35,13 +29,8 @@
             },
             {
                 "logger": "*",
-                "minLevel": "Info",
+                "minLevel": "Debug",
                 "writeTo": "logFile"
-            },
-            {
-                "logger": "*",
-                "minLevel": "Trace",
-                "writeTo": "high_logFile"
             }
         ]
     }
