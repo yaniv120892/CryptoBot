@@ -47,7 +47,6 @@ namespace CryptoLive
             var systemClock = new SystemClock();
             var stopWatchWrapper = new StopWatchWrapper();
             var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
-            var cancellationTokenSource = new CancellationTokenSource();
             var notificationServiceFactory =
                 new NotificationServiceFactory(cryptoLiveParameters.TwilioWhatsAppSender,
                     cryptoLiveParameters.WhatsAppRecipient, cryptoLiveParameters.TwilioSsid,
@@ -57,7 +56,8 @@ namespace CryptoLive
             CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 
                 cryptoLiveParameters.BinanceApiSecretKey);
             var candlesService = new BinanceCandleService(currencyClientFactory);
-            
+            var storageCancellationTokenSource = new CancellationTokenSource();
+
             var candleRepository = new RepositoryImpl<CandleStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var rsiRepository = new RepositoryImpl<RsiStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var wsmRepository = new RepositoryImpl<WsmaStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
@@ -84,12 +84,11 @@ namespace CryptoLive
                 string currency = cryptoLiveParameters.Currencies[i];
                 StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
                     emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
-                    systemClock, stopWatchWrapper, notificationService, cancellationTokenSource, candleSize);
+                    systemClock, stopWatchWrapper, notificationService, storageCancellationTokenSource, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, 60, "Init2",storageStartTime);
-                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, storageStartTime);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBot, cancellationTokenSource);
+                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, storageStartTime, storageCancellationTokenSource);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -121,15 +120,19 @@ namespace CryptoLive
             return storageWorker;
         }
 
-        private static async Task RunMultiplePhasesPerCurrency(ICurrencyBot currencyBot,
-            CancellationTokenSource cancellationTokenSource)
+        private static async Task RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory, 
+            string currency,
+            DateTime storageStartTime, 
+            CancellationTokenSource storageCancellationTokenSource)
         {
-            while(!cancellationTokenSource.IsCancellationRequested)
+            CancellationTokenSource botCancellationTokenSource = new CancellationTokenSource();
+            ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, storageStartTime);
+            while(!storageCancellationTokenSource.IsCancellationRequested)
             {
                 (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync();
                 Console.WriteLine(botResultDetails);
             }
-            s_logger.LogInformation("Got cancellation request");
+            s_logger.LogInformation($"{currency} Storage worker got cancellation request");
         }
         
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
