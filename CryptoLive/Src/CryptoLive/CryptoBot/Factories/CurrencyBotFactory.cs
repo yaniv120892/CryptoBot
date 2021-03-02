@@ -22,6 +22,7 @@ namespace CryptoBot.Factories
                 m_currencyBotPhasesExecutor, 
                 currency, 
                 cancellationTokenSource, 
-                botStartTime);
+                botStartTime,
+                age);
     }
 }
