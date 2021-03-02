@@ -26,7 +26,7 @@ namespace Infra
                 builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddNLog(nlogConfig);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Logging is disabled");
             }
