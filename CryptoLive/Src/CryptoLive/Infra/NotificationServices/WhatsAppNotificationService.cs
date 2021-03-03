@@ -33,8 +33,8 @@ namespace Infra.NotificationServices
             }
             catch (Exception e)
             {
-                s_logger.LogError($"Failed send WhatsApp message, {e.Message}");
-                throw new Exception("Failed send WhatsApp message");
+                s_logger.LogError($"Failed send WhatsApp message with body \"{body}\", Error: {e.Message}");
+                //throw new Exception("Failed send WhatsApp message");
             }
         }
 

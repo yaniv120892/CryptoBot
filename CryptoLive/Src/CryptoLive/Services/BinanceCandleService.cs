@@ -5,6 +5,8 @@ using Binance.Net;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces;
 using Common;
+using Infra;
+using Microsoft.Extensions.Logging;
 using Services.Abstractions;
 using Utils.Converters;
 
@@ -12,6 +14,8 @@ namespace Services
 {
     public class BinanceCandleService : ICandlesService
     {
+        private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<BinanceCandleService>();
+
         private readonly ICurrencyClientFactory m_currencyClientFactory;
         
         public BinanceCandleService(ICurrencyClientFactory currencyClientFactory)
@@ -33,7 +37,7 @@ namespace Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency}");
                 throw;
             }
             
