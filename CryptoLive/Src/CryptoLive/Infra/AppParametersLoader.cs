@@ -32,7 +32,7 @@ namespace Infra
             }
             
             object appParameters = ctor.Invoke(new object[] { appParametersSection });
-            Console.WriteLine($"Done load tool parameters from config file {configFileName}");
+            s_logger.LogInformation($"Done load tool parameters from config file {configFileName}");
             return appParameters;
         }
 
