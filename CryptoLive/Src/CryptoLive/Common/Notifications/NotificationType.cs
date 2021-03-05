@@ -3,6 +3,7 @@
     public enum NotificationType
     {
         WhatsApp,
-        Disable
+        Disable,
+        Telegram
     }
 }
