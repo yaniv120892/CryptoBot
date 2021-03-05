@@ -34,9 +34,8 @@ namespace CryptoLive
         {
             CryptoLiveParameters appParameters = AppParametersLoader<CryptoLiveParameters>.Load(s_configFile);
             s_logger.LogInformation(appParameters.ToString());
-            INotificationService notificationService = new WhatsAppNotificationService(
-                appParameters.TwilioWhatsAppSender, appParameters.WhatsAppRecipient, appParameters.TwilioSsid,
-                appParameters.TwilioAuthToken);
+            INotificationService notificationService = new TelegramNotificationService(appParameters.TelegramChatId,
+                appParameters.TelegramAuthToken);
             notificationService.Notify($"Start CryptoLive {Environment.MachineName}");
             RunMultiplePhases(appParameters).Wait();
             notificationService.Notify($"Done CryptoLive {Environment.MachineName}");
@@ -50,7 +49,7 @@ namespace CryptoLive
             var notificationServiceFactory =
                 new NotificationServiceFactory(cryptoLiveParameters.TwilioWhatsAppSender,
                     cryptoLiveParameters.WhatsAppRecipient, cryptoLiveParameters.TwilioSsid,
-                    cryptoLiveParameters.TwilioAuthToken);
+                    cryptoLiveParameters.TwilioAuthToken, cryptoLiveParameters.TelegramChatId, cryptoLiveParameters.TelegramAuthToken);
             INotificationService notificationService = notificationServiceFactory.Create(cryptoLiveParameters.NotificationType);
             
             CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 

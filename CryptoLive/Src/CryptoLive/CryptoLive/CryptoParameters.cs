@@ -21,6 +21,8 @@ namespace CryptoLive
         public int SignalSize { get; set; }
         public int MaxMacdPollingTime { get; set; }
         public int BotDelayTime { get; set; }
+        public string TelegramChatId { get; }
+        public string TelegramAuthToken { get; }
 
         public CryptoLiveParameters(IConfigurationSection applicationSection) : base(applicationSection)
         {
@@ -38,6 +40,8 @@ namespace CryptoLive
             SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
             MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
             BotDelayTime = int.Parse(applicationSection[nameof(BotDelayTime)]);
+            TelegramChatId = applicationSection[nameof(TelegramChatId)];
+            TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];
         }
     }
 }
