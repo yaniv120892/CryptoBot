@@ -23,24 +23,37 @@ namespace Services
             m_currencyClientFactory = currencyClientFactory;
         }
 
-        public async Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
+        public async Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount,
+            DateTime currentTime)
         {
             BinanceClient client = m_currencyClientFactory.Create();
             KlineInterval interval = KlineInterval.OneMinute;
             try
             {
                 var response = await client.Spot.Market.GetKlinesAsync(currency, interval, limit: candlesAmount);
-                IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
-                Memory<MyCandle> candlesDescription =
-                    BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
-                return candlesDescription;
+                
+                if (response.Success)
+                {
+                    IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
+                    Memory<MyCandle> candlesDescription =
+                        BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
+                    return candlesDescription;
+                }
+
+                if (!(response.Error is null))
+                {
+                    throw new Exception(
+                        $"Response returned with error, Message: {response.Error.Message}, Code: {response.Error.Code}, Data: {response.Error.Data}");
+                }
+
+                throw new Exception(
+                    $"Response not success and has no Error, StatusCode: {response.ResponseStatusCode}");
             }
             catch (Exception e)
             {
                 s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency}");
-                throw;
+                throw new Exception($"Failed to get {candlesAmount} candles for {currency}");
             }
-            
         }
     }
 }
