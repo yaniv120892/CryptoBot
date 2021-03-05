@@ -22,7 +22,8 @@ namespace Common.CryptoQueue
         {
             return m_fixedSizeQueue.MyQueue.FirstOrDefault(oldRsiAndPrice => 
                 priceAndRsi.Rsi > oldRsiAndPrice.Rsi
-                && priceAndRsi.Price * (decimal) 1.02 < oldRsiAndPrice.Price
+                && priceAndRsi.Price < oldRsiAndPrice.Price
+                //&& priceAndRsi.Price * (decimal) 1.02 < oldRsiAndPrice.Price
                 // && oldRsiAndPrice.CandleTime < priceAndRsi.CandleTime.Subtract(TimeSpan.FromMinutes(60))
             );
         }
