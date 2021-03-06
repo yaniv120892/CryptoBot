@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
+using Infra.NotificationServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -56,6 +57,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult<(bool, DateTime)>((true,pricePollingEndTime)));
 
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
+                new EmptyNotificationService(),
                 currencyBotPhasesExecutorMock.Object, 
                 s_currency, 
                 cancellationTokenSource, 
@@ -111,6 +113,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult<(bool, DateTime)>((false,pricePollingEndTime)));
 
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
+                new EmptyNotificationService(),
                 currencyBotPhasesExecutorMock.Object, 
                 s_currency, 
                 cancellationTokenSource, 
@@ -189,6 +192,7 @@ namespace CryptoBot.Tests
                 .Returns(false);
 
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
+                new EmptyNotificationService(), 
                 currencyBotPhasesExecutorMock.Object, 
                 s_currency, 
                 cancellationTokenSource, 

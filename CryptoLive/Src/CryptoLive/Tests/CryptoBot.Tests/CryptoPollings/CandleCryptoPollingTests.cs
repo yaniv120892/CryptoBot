@@ -41,8 +41,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,
@@ -70,8 +69,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,
@@ -99,8 +97,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,
@@ -136,8 +133,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime.AddSeconds(s_delayTimeInSeconds)))
                 .Returns(candleReachLowerPrice);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,
@@ -165,8 +161,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
                 .Returns(candle);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,
@@ -194,8 +189,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLastCandle(s_currency, It.IsAny<DateTime>()))
                 .Throws(expectedException);
             
-            var candleCryptoPolling = new CandleCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
                 s_candleSize,
                 s_minPrice,

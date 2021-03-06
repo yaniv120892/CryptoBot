@@ -40,8 +40,7 @@ namespace CryptoBot.Tests.CryptoValidators
                 validatorStartTime,
                 openValueCurrent, 
                 closeValueCurrent);     
-            var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object);
+            var greenCandleValidator = new GreenCandleValidator(m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));
@@ -73,8 +72,7 @@ namespace CryptoBot.Tests.CryptoValidators
                 validatorStartTime,
                 openValueCurrent, 
                 closeValueCurrent);     
-            var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object);
+            var greenCandleValidator = new GreenCandleValidator(m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));
@@ -106,8 +104,7 @@ namespace CryptoBot.Tests.CryptoValidators
                 validatorStartTime,
                 openValueCurrent, 
                 closeValueCurrent);     
-            var greenCandleValidator = new GreenCandleValidator(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object);
+            var greenCandleValidator = new GreenCandleValidator(m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandles(s_currency, validatorStartTime))
                 .Returns((previousCandle, currentCandle));

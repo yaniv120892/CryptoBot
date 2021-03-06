@@ -61,8 +61,11 @@ namespace CryptoBot
             CryptoPollingBase rsiPolling = m_cryptoBotPhasesFactory.CreateRsiPolling(m_maxRsiToNotify);
             PollingResponseBase responseBase = await rsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
-            phasesDescription.Add($"{phaseNumber}.Wait until RSI is below {m_maxRsiToNotify}, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{responseBase.Time}, Rsi: {((RsiPollingResponse)responseBase).Rsi}");
+            phasesDescription.Add($"{phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
+                                  $"\tCurrency: {currency}, \n" +
+                                  $"\tStart Polling Time: {currentTime}, \n" +
+                                  $"\tEnd Polling Time: {responseBase.Time}, \n" +
+                                  $"\tRsi: {((RsiPollingResponse)responseBase).Rsi}\n");
             return responseBase.Time;
         }
         
@@ -77,8 +80,12 @@ namespace CryptoBot
             CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, m_rsiMemorySize);
             PollingResponseBase responseBase = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             s_logger.LogInformation($"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}"); 
-            phasesDescription.Add($"{phaseNumber}.Wait until lower price and higher RSI, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{responseBase.Time}, \nNew:{((PriceAndRsiPollingResponse)responseBase).NewPriceAndRsi}, \nOld:{((PriceAndRsiPollingResponse)responseBase).OldPriceAndRsi}");
+            phasesDescription.Add($"{phaseNumber}.Found candle with lower price and greater RSI, \n" +
+                                  $"\tCurrency: {currency}, \n" +
+                                  $"\tStart Polling Time: {currentTime}, \n" +
+                                  $"\tEnd Polling Time: {responseBase.Time}, \n" +
+                                  $"\tNew : {((PriceAndRsiPollingResponse)responseBase).NewPriceAndRsi}, \n" +
+                                  $"\tOld : {((PriceAndRsiPollingResponse)responseBase).OldPriceAndRsi}\n");
             return responseBase.Time;
         }
         
@@ -97,8 +104,14 @@ namespace CryptoBot
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} {m_priceChangeToNotify}%, {candlePollingResponse.Time}");
-            phasesDescription.Add($"{phaseNumber}.Wait until price change by {m_priceChangeToNotify}%, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, EndTime:{candlePollingResponse.Time}, BasePrice:{basePrice}, IsWin: {candlePollingResponse.IsWin}, Candle: {candlePollingResponse.Candle}");
+            phasesDescription.Add($"{phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
+                                  $"\tCurrency: {currency}, \n" +
+                                  $"\tStart Time: {currentTime}, \n" +
+                                  $"\tEnd Time: {responseBase.Time}, \n" +
+                                  $"\tBuy price: {basePrice}, \n" +
+                                  $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
+                                  $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
+                                  $"\tLast Candle: {candlePollingResponse.Candle}\n");
             return (candlePollingResponse.IsWin, candlePollingResponse.Time);
         }
 
@@ -112,8 +125,10 @@ namespace CryptoBot
             RedCandleValidator redCandleValidator = m_cryptoBotPhasesFactory.CreateRedCandleValidator(m_redCandleSize);
             bool isCandleRed = redCandleValidator.Validate(currency, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is red: {isCandleRed} {currentTime}");
-            phasesDescription.Add($"{phaseNumber}.Validate candle is red, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, IsRed: {isCandleRed}");
+            phasesDescription.Add($"{phaseNumber}.Validate candle is red, \n" +
+                                  $"\tCurrency:{currency}, \n" +
+                                  $"\tStart Time:{currentTime}, \n" +
+                                  $"\tIs Candle Red: {isCandleRed}\n");
             return isCandleRed;        
         }
 
@@ -126,8 +141,10 @@ namespace CryptoBot
             GreenCandleValidator greenCandleValidator = m_cryptoBotPhasesFactory.CreateGreenCandleValidator(m_greenCandleSize);
             bool isCandleGreen = greenCandleValidator.Validate(currency, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is green: {isCandleGreen} {currentTime}");
-            phasesDescription.Add($"{phaseNumber}.Validate candle is green, Info :" +
-                                  $"Currency:{currency}, StartTime:{currentTime}, IsGreen: {isCandleGreen}");
+            phasesDescription.Add($"{phaseNumber}.Done waiting for next candle, Validate candle is green, \n" +
+                                  $"\tCurrency:{currency}, \n" +
+                                  $"\tStart Time:{currentTime}, \n" +
+                                  $"\tIs Candle Green: {isCandleGreen}\n");
             return isCandleGreen;
         }
 
@@ -155,51 +172,5 @@ namespace CryptoBot
 
             return candlePollingResponse;
         }
-    }
-
-    public interface ICurrencyBotPhasesExecutor
-    {
-        Task<DateTime> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            int age,
-            int phaseNumber,
-            List<string> phasesDescription);
-        
-        Task<DateTime> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            int age,
-            int phaseNumber,
-            List<string> phasesDescription);
-        
-        Task<(bool, DateTime)> WaitUnitPriceChangeAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            decimal basePrice,
-            int age,
-            int phaseNumber,
-            List<string> phasesDescription);
-        
-        bool ValidateCandleIsRed(DateTime currentTime,
-            string currency,
-            int age,
-            int phaseNumber,
-            List<string> phasesDescription);
-        
-        bool ValidateCandleIsGreen(DateTime currentTime,
-            string currency,
-            int age,
-            int phaseNumber, List<string> phasesDescription);
-        
-        Task<DateTime> WaitAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            int timeToWaitInSeconds,
-            string action);
-        
-        Task<decimal> GetPriceAsync(string currency,
-            DateTime currentTime);
-        
     }
 }

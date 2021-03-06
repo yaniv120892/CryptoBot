@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
@@ -20,6 +21,7 @@ namespace CryptoBot
         
         private readonly ICurrencyBotPhasesExecutor m_currencyBotPhasesExecutor;
         private readonly ICurrencyBotFactory m_currencyBotFactory;
+        private readonly INotificationService m_notificationService;
         private readonly CancellationTokenSource m_cancellationTokenSource;
         private readonly List<string> m_phasesDescription;
         private readonly int m_age;
@@ -27,8 +29,8 @@ namespace CryptoBot
 
         private DateTime m_currentTime;
 
-        public CurrencyBot(
-            ICurrencyBotFactory currencyBotFactory,
+        public CurrencyBot(ICurrencyBotFactory currencyBotFactory,
+            INotificationService notificationService,
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor,
             string currency,
             CancellationTokenSource cancellationTokenSource,
@@ -37,6 +39,7 @@ namespace CryptoBot
         {
             m_currency = currency;
             m_currencyBotFactory = currencyBotFactory;
+            m_notificationService = notificationService;
             m_cancellationTokenSource = cancellationTokenSource;
             m_currentTime = botStartTime;
             m_age = age;
@@ -93,9 +96,11 @@ namespace CryptoBot
             m_cancellationTokenSource.Cancel();
             // Enter
             decimal basePrice = await m_currencyBotPhasesExecutor.GetPriceAsync(m_currency, m_currentTime);
+            m_notificationService.Notify($"{string.Join("\n\n",m_phasesDescription)},\n\n Bot buy {m_currency} at price: {basePrice}");
             bool isWin;
             (isWin, m_currentTime) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
                 m_currency, basePrice, m_age, ++phaseNumber, m_phasesDescription);
+            m_notificationService.Notify(m_phasesDescription.Last());
             if (isWin)
             {
                 s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - Win {m_currentTime}");

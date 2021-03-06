@@ -36,8 +36,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Returns(rsiToReturn);
 
             
-            var candleCryptoPolling = new RsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new RsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock,s_maxRsiToNotify);
             
             // Act
@@ -68,8 +67,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Returns(rsiToReturnSecondIteration);
 
             
-            var candleCryptoPolling = new RsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new RsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock,s_maxRsiToNotify);
             
             // Act
@@ -90,8 +88,7 @@ namespace CryptoBot.Tests.CryptoPollings
             DateTime pollingStartTime = new DateTime(2020, 1, 1, 10, 10, 0);
 
             var expectedResponse = new RsiPollingResponse(pollingStartTime, -1, false, exception);
-            var candleCryptoPolling = new RsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new RsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock,s_maxRsiToNotify);
             
             m_currencyDataProviderMock
@@ -117,8 +114,7 @@ namespace CryptoBot.Tests.CryptoPollings
             const decimal rsiToReturnFirsIteration = 50;
 
             var expectedResponse = new RsiPollingResponse(pollingStartTime, -1, true);
-            var candleCryptoPolling = new RsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new RsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock,s_maxRsiToNotify);
             
             m_currencyDataProviderMock

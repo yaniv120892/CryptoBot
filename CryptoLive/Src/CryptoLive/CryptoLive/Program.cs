@@ -4,12 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Common.DataStorageObjects;
-using CryptoBot;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.Factories;
 using Infra;
-using Infra.NotificationServices;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Abstractions;
@@ -34,11 +32,7 @@ namespace CryptoLive
         {
             CryptoLiveParameters appParameters = AppParametersLoader<CryptoLiveParameters>.Load(s_configFile);
             s_logger.LogInformation(appParameters.ToString());
-            INotificationService notificationService = new TelegramNotificationService(appParameters.TelegramChatId,
-                appParameters.TelegramAuthToken);
-            notificationService.Notify($"Start CryptoLive {Environment.MachineName}");
             RunMultiplePhases(appParameters).Wait();
-            notificationService.Notify($"Done CryptoLive {Environment.MachineName}");
         }
 
         private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
@@ -51,7 +45,7 @@ namespace CryptoLive
                     cryptoLiveParameters.WhatsAppRecipient, cryptoLiveParameters.TwilioSsid,
                     cryptoLiveParameters.TwilioAuthToken, cryptoLiveParameters.TelegramChatId, cryptoLiveParameters.TelegramAuthToken);
             INotificationService notificationService = notificationServiceFactory.Create(cryptoLiveParameters.NotificationType);
-            
+
             CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 
                 cryptoLiveParameters.BinanceApiSecretKey);
             var candlesService = new BinanceCandleService(currencyClientFactory);
@@ -70,14 +64,15 @@ namespace CryptoLive
             int candleSize = cryptoLiveParameters.CandleSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay, currencyClientFactory, notificationService);
+                macdRepository, systemClockWithDelay, currencyClientFactory);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
-            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
+            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, notificationService);
             
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
             
+            notificationService.Notify($"Start CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
             for (int i = 0; i < currencyBotTasks.Length; i++)
             {
                 string currency = cryptoLiveParameters.Currencies[i];
@@ -86,11 +81,12 @@ namespace CryptoLive
                     systemClock, stopWatchWrapper, notificationService, storageCancellationTokenSource, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
-                await systemClock.Wait(CancellationToken.None, currency, 60, "Init2",storageStartTime);
+                await systemClock.Wait(CancellationToken.None, currency, cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
                 currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, storageStartTime, storageCancellationTokenSource);
             }
 
             await Task.WhenAll(currencyBotTasks);
+            notificationService.Notify($"Done CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
         }
 
         private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
@@ -138,8 +134,7 @@ namespace CryptoLive
             IRepository<RsiStorageObject> rsiRepository,
             IRepository<MacdStorageObject> macdRepository,
             ISystemClock systemClock,
-            ICurrencyClientFactory currencyClientFactory,
-            INotificationService notificationService)
+            ICurrencyClientFactory currencyClientFactory)
         {
             var priceService = new BinancePriceService(currencyClientFactory);
             var priceProvider = new PriceProvider(priceService);
@@ -151,8 +146,7 @@ namespace CryptoLive
                 priceProvider, 
                 rsiProvider, 
                 candlesProvider, 
-                macdProvider,
-                notificationService);
+                macdProvider);
             return cryptoBotPhasesFactoryCreator.Create();
         }
     }

@@ -18,19 +18,16 @@ namespace CryptoBot.CryptoPollings
         private static readonly int s_timeToWaitInSeconds = 60;
         private static string s_actionName = "RSI And Price";
 
-        private readonly INotificationService m_notificationService;
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
         private readonly decimal m_maxRsiToNotify;
         
-        public PriceAndRsiCryptoPolling(INotificationService notificationService,
-            ICurrencyDataProvider currencyDataProvider,
+        public PriceAndRsiCryptoPolling(ICurrencyDataProvider currencyDataProvider,
             ISystemClock systemClock,
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
             decimal maxRsiToNotify)
         {
-            m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_maxRsiToNotify = maxRsiToNotify;
@@ -53,9 +50,6 @@ namespace CryptoBot.CryptoPollings
             }
             
             var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(CurrentTime, oldPriceAndRsi ,currentPriceAndRsi);
-            string message =
-                $"{Currency}: {s_actionName} done, {rsiAndPricePollingResponse}";
-            m_notificationService.Notify(message);
             return rsiAndPricePollingResponse;
         }
         

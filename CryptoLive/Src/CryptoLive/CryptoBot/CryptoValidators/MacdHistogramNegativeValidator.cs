@@ -11,14 +11,11 @@ namespace CryptoBot.CryptoValidators
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<MacdHistogramNegativeValidator>();
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
-        private readonly INotificationService m_notificationService;
 
         public MacdHistogramNegativeValidator(            
-            INotificationService notificationService, 
             ICurrencyDataProvider currencyDataProvider)
         {
             m_currencyDataProvider = currencyDataProvider;
-            m_notificationService = notificationService;
         }
 
         public bool Validate(string currency, DateTime currentTime)
@@ -27,7 +24,6 @@ namespace CryptoBot.CryptoValidators
             if (macdHistogram < 0)
             {
                 string message = $"{currency}: MACD histogram is negative, {macdHistogram}, {currentTime}";
-                m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }

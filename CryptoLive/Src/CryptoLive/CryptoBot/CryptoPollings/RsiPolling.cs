@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Common.Abstractions;
 using Common.PollingResponses;
 using CryptoBot.Abstractions;
-using Infra;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -16,17 +15,14 @@ namespace CryptoBot.CryptoPollings
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
-        private readonly INotificationService m_notificationService;
         private readonly decimal m_maxRsiToNotify;
         
         private static string s_actionName = "RSI";
 
-        public RsiCryptoPolling(INotificationService notificationService,
-            ICurrencyDataProvider currencyDataProvider, 
+        public RsiCryptoPolling(ICurrencyDataProvider currencyDataProvider, 
             ISystemClock systemClock,
             decimal maxRsiToNotify)
         {
-            m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_maxRsiToNotify = maxRsiToNotify;
@@ -44,8 +40,6 @@ namespace CryptoBot.CryptoPollings
             }
 
             var rsiPollingResponse = new RsiPollingResponse(CurrentTime, rsi);
-            string notificationMessage = $"{Currency}: {s_actionName} done, {rsiPollingResponse}";
-            m_notificationService.Notify(notificationMessage);
             return rsiPollingResponse;
         }
         
