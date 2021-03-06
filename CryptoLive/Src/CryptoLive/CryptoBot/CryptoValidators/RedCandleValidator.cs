@@ -13,14 +13,10 @@ namespace CryptoBot.CryptoValidators
         private static readonly string s_actionName = "Red Candle Validator";
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
-        private readonly INotificationService m_notificationService;
 
-        public RedCandleValidator(            
-            INotificationService notificationService,
-            ICurrencyDataProvider currencyDataProvider)
+        public RedCandleValidator(ICurrencyDataProvider currencyDataProvider)
         {
             m_currencyDataProvider = currencyDataProvider;
-            m_notificationService = notificationService;
         }
 
         public bool Validate(string currency, DateTime currentTime)
@@ -30,13 +26,11 @@ namespace CryptoBot.CryptoValidators
             if (currCandle.Close < currCandle.Open)
             {
                 message = $"{currency} {s_actionName} done, {currCandle} ,{currentTime}";
-                m_notificationService.Notify(message);
                 s_logger.LogInformation(message);
                 return true;
             }
 
             message = $"{currency} {s_actionName} done, Candle is not red {currCandle} ,{currentTime}";
-            m_notificationService.Notify(message);
             s_logger.LogInformation(message);
             return false;
         }

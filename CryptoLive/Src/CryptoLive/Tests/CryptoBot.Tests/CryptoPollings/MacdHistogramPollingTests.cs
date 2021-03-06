@@ -33,8 +33,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetMacdHistogram(s_currency, pollingStartTime))
                 .Returns(positiveMacdHistogram);
             
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, 
                 maxMacdPollingTimeInMinutes);
             
@@ -65,8 +64,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetMacdHistogram(s_currency, pollingEndTime))
                 .Returns(negativeMacdHistogram);
             
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, 
                 maxMacdPollingTimeInMinutes);
             
@@ -102,8 +100,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetMacdHistogram(s_currency, getMacdHistogramAfter2Minute))
                 .Returns(positiveMacdHistogram);
             
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, 
                 maxMacdPollingTimeInMinutes);
             
@@ -131,8 +128,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Returns(negativeMacdHistogram)
                 .Callback(()=>cancellationTokenSource.Cancel());
 
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, 
                 maxMacdPollingTimeInMinutes);
             
@@ -160,8 +156,7 @@ namespace CryptoBot.Tests.CryptoPollings
             m_currencyDataProviderMock
                 .Setup(m => m.GetMacdHistogram(s_currency, pollingStartTime))
                 .Throws(expectedException);
-            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var macdHistogramCryptoPolling = new MacdHistogramCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock,
                 maxMacdPollingTimeInMinutes);
 

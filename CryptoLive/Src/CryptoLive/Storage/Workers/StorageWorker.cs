@@ -65,7 +65,7 @@ namespace Storage.Workers
         {
             m_currentTime = startTime;
             s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
-            m_notificationService.Notify($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
+            //m_notificationService.Notify($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
 
             WorkerStatus = WorkerStatus.Running;
             try
@@ -73,7 +73,7 @@ namespace Storage.Workers
                 await StartAsyncImpl();
                 if (m_cancellationToken.IsCancellationRequested)
                 {
-                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
+                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
                     WorkerStatus = WorkerStatus.Cancelled;
                 }
             }
@@ -81,7 +81,7 @@ namespace Storage.Workers
             {
                 s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
                 WorkerStatus = WorkerStatus.Cancelled;
-                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
             }
             catch (Exception e)
             {

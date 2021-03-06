@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Common.Abstractions;
 using Common.PollingResponses;
 using CryptoBot.Abstractions;
-using Infra;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -17,15 +16,12 @@ namespace CryptoBot.CryptoPollings
         
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
-        private readonly INotificationService m_notificationService;
         private readonly int m_maxMacdPollingTimeInMinutes;
 
-        public MacdHistogramCryptoPolling(INotificationService notificationService,
-            ICurrencyDataProvider currencyDataProvider, 
+        public MacdHistogramCryptoPolling(ICurrencyDataProvider currencyDataProvider, 
             ISystemClock systemClock,
             int maxMacdPollingTimeInMinutes)
         {
-            m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_maxMacdPollingTimeInMinutes = maxMacdPollingTimeInMinutes;
@@ -49,10 +45,7 @@ namespace CryptoBot.CryptoPollings
             {
                 MacdHistogramPollingResponse macdHistogramPollingResponse =
                         new MacdHistogramPollingResponse(CurrentTime, macdHistogram);
-                    string message =
-                        $"{Currency}: {s_actionName} done, {macdHistogramPollingResponse}";
-                    m_notificationService.Notify(message);
-                    return macdHistogramPollingResponse;
+                return macdHistogramPollingResponse;
             }
 
             return CreateReachedMaxTimeMacdHistogramPollingResponse();

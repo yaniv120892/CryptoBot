@@ -45,8 +45,7 @@ namespace CryptoBot.Tests.CryptoPollings
             m_cryptoPriceAndRsiQueueMock.Setup(m => m.GetLowerRsiAndHigherPrice(oldPriceAndRsi)).Returns(default(PriceAndRsi));
             m_cryptoPriceAndRsiQueueMock.Setup(m => m.GetLowerRsiAndHigherPrice(newPriceAndRsi)).Returns(oldPriceAndRsi);
             
-            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
             
             // Act
@@ -77,8 +76,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetRsiAndClosePrice(s_currency, pollingEndTime))
                 .Throws(exception);
 
-            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
 
             // Act
@@ -113,8 +111,7 @@ namespace CryptoBot.Tests.CryptoPollings
                 .Setup(m => m.GetLowerRsiAndHigherPrice(priceAndRsi))
                 .Returns(default(PriceAndRsi));
 
-            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_notificationServiceMock.Object,
-                m_currencyDataProviderMock.Object,
+            var candleCryptoPolling = new PriceAndRsiCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, m_cryptoPriceAndRsiQueueMock.Object, s_maxRsiToNotify);
             
             // Act

@@ -12,5 +12,11 @@ namespace Common
             BotResult = botResult;
             PhasesDescription = phasesDescription;
         }
+
+        public override string ToString()
+        {
+            return $"BitResult: {BotResult}, " +
+                   $"Phases description: {string.Join(",\n", PhasesDescription)}";
+        }
     }
 }

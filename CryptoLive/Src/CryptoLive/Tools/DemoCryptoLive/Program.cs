@@ -86,7 +86,7 @@ namespace DemoCryptoLive
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, appParameters);
-            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor);
+            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, new EmptyNotificationService());
             return currencyBotFactory;
         }
 
@@ -198,8 +198,7 @@ namespace DemoCryptoLive
             var macdProvider = new MacdProvider(macdRepository);
             var currencyDataProvider =
                 new CurrencyDataProvider(priceProvider, candlesProvider, rsiProvider, macdProvider);
-            var notificationService = new EmptyNotificationService();
-            var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock, notificationService);
+            var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock);
             return cryptoBotPhasesFactory;
         }
 

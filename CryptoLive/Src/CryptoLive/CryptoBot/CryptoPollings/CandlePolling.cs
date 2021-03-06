@@ -18,7 +18,6 @@ namespace CryptoBot.CryptoPollings
         private static string s_actionName = "Candle polling";
 
         private readonly int m_delayTimeInSeconds;
-        private readonly INotificationService m_notificationService;
         private readonly ICurrencyDataProvider m_currencyDataProvider;
         private readonly ISystemClock m_systemClock;
         private readonly decimal m_minPrice;
@@ -26,8 +25,7 @@ namespace CryptoBot.CryptoPollings
         
         private MyCandle m_currCandle;
 
-        public CandleCryptoPolling(INotificationService notificationService, 
-            ICurrencyDataProvider currencyDataProvider, 
+        public CandleCryptoPolling(ICurrencyDataProvider currencyDataProvider, 
             ISystemClock systemClock,
             int delayTimeInSeconds, 
             int candleSize,
@@ -40,7 +38,6 @@ namespace CryptoBot.CryptoPollings
                 throw new ArgumentException(
                     $"delayTimeInSeconds/60=candleSize should be true but delayTimeInSeconds={delayTimeInSeconds},candleSize={candleSize}");
             }
-            m_notificationService = notificationService;
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_delayTimeInSeconds = delayTimeInSeconds;
@@ -61,7 +58,6 @@ namespace CryptoBot.CryptoPollings
                 (isBelow, isAbove) = IsCandleInRange(m_currCandle);
             }
             var candlePollingResponse = new CandlePollingResponse(isBelow, isAbove, CurrentTime, m_currCandle);
-            m_notificationService.Notify($"{Currency}: {s_actionName} done, {candlePollingResponse}");
             return candlePollingResponse;
         }
         
