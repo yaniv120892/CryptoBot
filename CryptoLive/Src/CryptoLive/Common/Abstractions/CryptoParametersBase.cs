@@ -20,5 +20,15 @@ namespace Common.Abstractions
         public int DelayTimeIterationsInSeconds { get; set; }
         public decimal PriceChangeToNotify { get; set; }
         public int MinutesToWaitBeforePollingPrice { get; set; }
+        
+        public override string ToString()
+        {
+            return $"Price Change To Notify: {PriceChangeToNotify}%,\n" +
+                   $"Max Rsi To Notify: {MaxRsiToNotify},\n" +
+                   $"Candle Size: {CandleSize},\n" +
+                   $"Rsi Memory Size: {RsiMemorySize},\n" +
+                   $"Minutes To Wait Before Polling Price: {MinutesToWaitBeforePollingPrice},\n" +
+                   $"Delay Time Iterations In Seconds: {DelayTimeIterationsInSeconds},\n";
+        }
     }
 }
