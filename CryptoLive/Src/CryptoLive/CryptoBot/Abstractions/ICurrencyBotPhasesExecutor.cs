@@ -46,7 +46,7 @@ namespace CryptoBot.Abstractions
             int timeToWaitInSeconds,
             string action);
         
-        Task<decimal> GetPriceAsync(string currency,
+        decimal GetPrice(string currency,
             DateTime currentTime);
         
     }

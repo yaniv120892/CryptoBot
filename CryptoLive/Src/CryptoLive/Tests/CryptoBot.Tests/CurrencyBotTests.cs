@@ -48,8 +48,8 @@ namespace CryptoBot.Tests
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
             currencyBotPhasesExecutorMock
-                .Setup(m => m.GetPriceAsync(s_currency, validateCandleIsGreenStartTime))
-                .Returns(Task.FromResult(basePrice));
+                .Setup(m => m.GetPrice(s_currency, validateCandleIsGreenStartTime))
+                .Returns(basePrice);
             currencyBotPhasesExecutorMock
                 .Setup(m => m.WaitUnitPriceChangeAsync(validateCandleIsGreenStartTime,
                     It.IsAny<CancellationToken>(), s_currency, basePrice, 0, 
@@ -104,8 +104,8 @@ namespace CryptoBot.Tests
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
             currencyBotPhasesExecutorMock
-                .Setup(m => m.GetPriceAsync(s_currency, validateCandleIsGreenStartTime))
-                .Returns(Task.FromResult(basePrice));
+                .Setup(m => m.GetPrice(s_currency, validateCandleIsGreenStartTime))
+                .Returns(basePrice);
             currencyBotPhasesExecutorMock
                 .Setup(m => m.WaitUnitPriceChangeAsync(validateCandleIsGreenStartTime,
                     It.IsAny<CancellationToken>(), s_currency, basePrice, 0, 

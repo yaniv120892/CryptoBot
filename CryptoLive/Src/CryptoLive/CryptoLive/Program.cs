@@ -64,7 +64,7 @@ namespace CryptoLive
             int candleSize = cryptoLiveParameters.CandleSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay, currencyClientFactory);
+                macdRepository, systemClockWithDelay);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
             var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, notificationService);
@@ -133,17 +133,13 @@ namespace CryptoLive
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
             IRepository<RsiStorageObject> rsiRepository,
             IRepository<MacdStorageObject> macdRepository,
-            ISystemClock systemClock,
-            ICurrencyClientFactory currencyClientFactory)
+            ISystemClock systemClock)
         {
-            var priceService = new BinancePriceService(currencyClientFactory);
-            var priceProvider = new PriceProvider(priceService);
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
             var macdProvider = new MacdProvider(macdRepository);
             var cryptoBotPhasesFactoryCreator = new CryptoBotPhasesFactoryCreator(
                 systemClock, 
-                priceProvider, 
                 rsiProvider, 
                 candlesProvider, 
                 macdProvider);

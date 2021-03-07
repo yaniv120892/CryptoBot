@@ -33,10 +33,8 @@ namespace Storage.Tests
             m_rsiProviderMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
 
-            var priceProviderMock = new Mock<IPriceProvider>();
             var macdProviderMock = new Mock<IMacdProvider>();
-            var sut = new CurrencyDataProvider(priceProviderMock.Object, 
-                m_candlesProviderMock.Object, 
+            var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
                 m_rsiProviderMock.Object, 
                 macdProviderMock.Object);
 
@@ -65,10 +63,8 @@ namespace Storage.Tests
             m_rsiProviderMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
 
-            var priceProviderMock = new Mock<IPriceProvider>();
             var macdProviderMock = new Mock<IMacdProvider>();
-            var sut = new CurrencyDataProvider(priceProviderMock.Object, 
-                m_candlesProviderMock.Object, 
+            var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
                 m_rsiProviderMock.Object, 
                 macdProviderMock.Object);
 

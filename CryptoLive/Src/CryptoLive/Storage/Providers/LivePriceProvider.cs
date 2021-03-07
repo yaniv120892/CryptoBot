@@ -6,11 +6,11 @@ using Storage.Abstractions.Providers;
 
 namespace Storage.Providers
 {
-    public class PriceProvider : IPriceProvider
+    public class LivePriceProvider : IPriceProvider
     {
         private readonly IPriceService m_priceService;
 
-        public PriceProvider(IPriceService priceService)
+        public LivePriceProvider(IPriceService priceService)
         {
             m_priceService = priceService;
         }

@@ -65,7 +65,7 @@ namespace DemoCryptoLive
             await RunStorageWorkers(macdRepository, rsiRepository, candleRepository, systemClock, stopWatch, demoCandleService ,
                 appParameters.Currencies , appParameters.CandleSize, appParameters.RsiSize, 
                 appParameters.FastEmaSize, appParameters.SlowEmaSize, appParameters.SignalSize, appParameters.CalculatedDataFolder);
-            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(appParameters, candleRepository, rsiRepository, macdRepository, systemClock, demoCandleService);
+            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(appParameters, candleRepository, rsiRepository, macdRepository, systemClock);
 
             var tasks = new Dictionary<string,Task<(int, int, string)>>();
             foreach (string currency in appParameters.Currencies)
@@ -79,10 +79,10 @@ namespace DemoCryptoLive
 
         private static ICurrencyBotFactory CreateCurrencyBotFactory(DemoCryptoParameters appParameters,
             RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository, RepositoryImpl<MacdStorageObject> macdRepository,
-            DummySystemClock systemClock, DemoCandleService demoCandleService)
+            DummySystemClock systemClock)
         {
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository,
-                macdRepository, systemClock, demoCandleService);
+                macdRepository, systemClock);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, appParameters);
@@ -189,15 +189,13 @@ namespace DemoCryptoLive
         }
 
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
-            IRepository<RsiStorageObject> rsiRepository, IRepository<MacdStorageObject> macdRepository, ISystemClock systemClock,
-            IPriceService priceService)
+            IRepository<RsiStorageObject> rsiRepository, IRepository<MacdStorageObject> macdRepository, ISystemClock systemClock)
         {
-            var priceProvider = new PriceProvider(priceService);
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
             var macdProvider = new MacdProvider(macdRepository);
             var currencyDataProvider =
-                new CurrencyDataProvider(priceProvider, candlesProvider, rsiProvider, macdProvider);
+                new CurrencyDataProvider(candlesProvider, rsiProvider, macdProvider);
             var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock);
             return cryptoBotPhasesFactory;
         }

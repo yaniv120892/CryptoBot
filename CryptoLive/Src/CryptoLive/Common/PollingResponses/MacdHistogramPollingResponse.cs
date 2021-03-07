@@ -21,7 +21,7 @@ namespace Common.PollingResponses
 
         public override string ToString()
         {
-            return $"IsReachMaxTimeInMinutes: {IsReachMaxTimeInMinutes}, MacdHistogram: {MacdHistogram}, Time: {Time}";
+            return $"Is reach max time: {IsReachMaxTimeInMinutes}, Macd Histogram: {MacdHistogram}, Time: {Time}";
         }
 
         public bool Equals(MacdHistogramPollingResponse other)
