@@ -28,7 +28,7 @@ namespace Common.Abstractions
                    $"Candle Size: {CandleSize},\n" +
                    $"Rsi Memory Size: {RsiMemorySize},\n" +
                    $"Minutes To Wait Before Polling Price: {MinutesToWaitBeforePollingPrice},\n" +
-                   $"Delay Time Iterations In Seconds: {DelayTimeIterationsInSeconds},\n";
+                   $"Delay Time Iterations In Seconds: {DelayTimeIterationsInSeconds}";
         }
     }
 }
