@@ -125,6 +125,10 @@ namespace CryptoLive
             while(!storageCancellationTokenSource.IsCancellationRequested)
             {
                 (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync();
+                if (botResultDetails.BotResult == BotResult.Even)
+                {
+                    continue;
+                }
                 s_logger.LogInformation(botResultDetails.ToString());
             }
             s_logger.LogInformation($"{currency} Storage worker got cancellation request");
