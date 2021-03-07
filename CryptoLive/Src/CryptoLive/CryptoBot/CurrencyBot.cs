@@ -101,7 +101,7 @@ namespace CryptoBot
             bool isWin;
             (isWin, m_currentTime) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
                 m_currency, basePrice, m_age, ++phaseNumber, m_phasesDescription);
-            m_notificationService.Notify(m_phasesDescription.Last());
+            m_notificationService.Notify(m_phasesDescription.LastOrDefault());
             if (isWin)
             {
                 s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - Win {m_currentTime}");
