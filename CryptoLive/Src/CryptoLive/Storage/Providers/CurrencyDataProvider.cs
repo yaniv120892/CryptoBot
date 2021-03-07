@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Common;
 using Storage.Abstractions.Providers;
 
@@ -7,25 +6,22 @@ namespace Storage.Providers
 {
     public class CurrencyDataProvider : ICurrencyDataProvider
     {
-        private readonly IPriceProvider m_priceProvider;
         private readonly ICandlesProvider m_candlesProvider;
         private readonly IRsiProvider m_rsiProvider;
         private readonly IMacdProvider m_macdProvider;
 
         public CurrencyDataProvider(
-            IPriceProvider priceProvider,
             ICandlesProvider candlesProvider,
             IRsiProvider rsiProvider,
             IMacdProvider macdProvider)
         {
-            m_priceProvider = priceProvider;
             m_candlesProvider = candlesProvider;
             m_rsiProvider = rsiProvider;
             m_macdProvider = macdProvider;
         }
 
-        public async Task<decimal> GetPriceAsync(string currency, DateTime currentTime) => 
-            await m_priceProvider.GetPrice(currency, currentTime);
+        public decimal GetPriceAsync(string currency, DateTime currentTime) => 
+            GetLastCandle(currency, currentTime).Close;
 
         public decimal GetRsi(string currency, DateTime currentTime) => 
             m_rsiProvider.Get(currency, currentTime);

@@ -95,8 +95,9 @@ namespace CryptoBot
 
             m_cancellationTokenSource.Cancel();
             // Enter
-            decimal basePrice = await m_currencyBotPhasesExecutor.GetPriceAsync(m_currency, m_currentTime);
-            m_notificationService.Notify($"{string.Join("\n\n",m_phasesDescription)},\n\n Bot buy {m_currency} at price: {basePrice}");
+            decimal basePrice = m_currencyBotPhasesExecutor.GetPrice(m_currency, m_currentTime);
+            m_notificationService.Notify($"{string.Join("\n\n",m_phasesDescription)}\n\n" +
+                                         $"\tBot buy {m_currency} at price: {basePrice}");
             bool isWin;
             (isWin, m_currentTime) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
                 m_currency, basePrice, m_age, ++phaseNumber, m_phasesDescription);

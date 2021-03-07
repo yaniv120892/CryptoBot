@@ -21,7 +21,7 @@ namespace Common.PollingResponses
 
         public override string ToString()
         {
-            return $"InitialPrice: {InitialPrice}, Price {CurrentPrice}, Time {Time}";
+            return $"Initial price: {InitialPrice}, Price {CurrentPrice}";
         }
     }
 }
