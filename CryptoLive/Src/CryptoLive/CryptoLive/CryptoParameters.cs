@@ -43,5 +43,14 @@ namespace CryptoLive
             TelegramChatId = applicationSection[nameof(TelegramChatId)];
             TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];
         }
+
+        public override string ToString()
+        {
+            return $"{base.ToString()},\n" +
+                   $"Currencies {string.Join(", ", Currencies)},\n" +
+                   $"Notification Type: {NotificationType.ToString()},\n" +
+                   $"Rsi Size: {RsiSize},\n" +
+                   $"Bot Delay Time: {BotDelayTime}\n";
+        }
     }
 }
