@@ -112,7 +112,7 @@ namespace CryptoBot
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} {m_priceChangeToNotify}%, {candlePollingResponse.Time}");
-            phasesDescription.Add($"{currentTime} {currency}: {phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
+            phasesDescription.Add($"{candlePollingResponse.Time} {currency}: {phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
                                   $"\tBuy price: {basePrice}, \n" +
                                   $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
                                   $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
