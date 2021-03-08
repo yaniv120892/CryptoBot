@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.Abstractions;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using Infra;
@@ -63,9 +64,12 @@ namespace CryptoBot
             int phaseNumber = 0;
             s_logger.LogInformation($"{m_currency}_{m_age}: Start iteration");
             
-            //m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilRsiIsBelowMaxValueAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
-
+            PollingResponseBase pollingResponseBase = await m_currencyBotPhasesExecutor.WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency , m_age, ++phaseNumber, m_phasesDescription);
+            m_currentTime = pollingResponseBase.Time;
+            if (!pollingResponseBase.IsSuccess)
+            {
+                return (CreateBotResultDetails(0), m_currentTime);
+            }
             // Validator
             bool isCandleRed = m_currencyBotPhasesExecutor.ValidateCandleIsRed(m_currentTime, m_currency, m_age, ++phaseNumber, m_phasesDescription);
             if(!isCandleRed)
@@ -99,8 +103,14 @@ namespace CryptoBot
             m_notificationService.Notify($"{string.Join("\n\n",m_phasesDescription)}\n\n" +
                                          $"\tBot buy {m_currency} at price: {basePrice}");
             bool isWin;
-            (isWin, m_currentTime) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
+            (isWin, pollingResponseBase) = await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
                 m_currency, basePrice, m_age, ++phaseNumber, m_phasesDescription);
+            m_currentTime = pollingResponseBase.Time;
+            if (!pollingResponseBase.IsSuccess)
+            {
+                return (CreateBotResultDetails(0), m_currentTime);
+            }
+            
             m_notificationService.Notify(m_phasesDescription.LastOrDefault());
             if (isWin)
             {

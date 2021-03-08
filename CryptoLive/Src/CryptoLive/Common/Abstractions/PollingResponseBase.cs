@@ -14,6 +14,7 @@ namespace Common.Abstractions
         public DateTime Time { get; }
         public bool IsCancelled { get; }
         public Exception Exception { get; }
+        public bool IsSuccess => !IsCancelled && Exception is null;
 
         public bool Equals(PollingResponseBase other)
         {

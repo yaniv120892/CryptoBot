@@ -50,7 +50,7 @@ namespace CryptoBot
             m_priceChangeCandleSize = priceChangeCandleSize;
         }
 
-        public async Task<DateTime> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
+        public async Task<PollingResponseBase> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             int age,
@@ -60,13 +60,21 @@ namespace CryptoBot
             s_logger.LogInformation($"{currency}_{age}: {currentTime} Start phase {phaseNumber}: wait until RSI is below {m_maxRsiToNotify}");
             CryptoPollingBase rsiPolling = m_cryptoBotPhasesFactory.CreateRsiPolling(m_maxRsiToNotify);
             PollingResponseBase responseBase = await rsiPolling.StartAsync(currency, cancellationToken, currentTime);
-            s_logger.LogInformation($"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
-            phasesDescription.Add($"{currentTime} {currency}: {phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
-                                  $"\tRsi: {((RsiPollingResponse)responseBase).Rsi}\n");
-            return responseBase.Time;
+            if (responseBase.IsSuccess)
+            {
+                s_logger.LogInformation(
+                    $"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
+                phasesDescription.Add(
+                    $"{currentTime} {currency}: {phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
+                    $"\tRsi: {((RsiPollingResponse) responseBase).Rsi}\n");
+            }
+            
+            return responseBase;
+
+            
         }
         
-        public async Task<DateTime> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
+        public async Task<PollingResponseBase> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             int age,
@@ -76,14 +84,20 @@ namespace CryptoBot
             s_logger.LogInformation($"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
             CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, m_rsiMemorySize);
             PollingResponseBase responseBase = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
-            s_logger.LogInformation($"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}"); 
-            phasesDescription.Add($"{currentTime} {currency}: {phaseNumber}.Found candle with lower price and greater RSI, \n" +
-                                  $"\tNew: {((PriceAndRsiPollingResponse)responseBase).NewPriceAndRsi}, \n" +
-                                  $"\tOld: {((PriceAndRsiPollingResponse)responseBase).OldPriceAndRsi}\n");
-            return responseBase.Time;
+            if (responseBase.IsSuccess)
+            {
+                s_logger.LogInformation(
+                    $"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}");
+                phasesDescription.Add(
+                    $"{currentTime} {currency}: {phaseNumber}.Found candle with lower price and greater RSI, \n" +
+                    $"\tNew: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
+                    $"\tOld: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
+            }
+            
+            return responseBase;
         }
         
-        public async Task<(bool, DateTime)> WaitUnitPriceChangeAsync(DateTime currentTime,
+        public async Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             decimal basePrice,
@@ -103,7 +117,7 @@ namespace CryptoBot
                                   $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
                                   $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
                                   $"\tLast Candle: {candlePollingResponse.Candle}\n");
-            return (candlePollingResponse.IsWin, candlePollingResponse.Time);
+            return (candlePollingResponse.IsWin, candlePollingResponse);
         }
 
         public bool ValidateCandleIsRed(DateTime currentTime,
