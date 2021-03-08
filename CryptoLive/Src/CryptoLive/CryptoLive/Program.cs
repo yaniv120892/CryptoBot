@@ -120,11 +120,13 @@ namespace CryptoLive
             DateTime storageStartTime, 
             CancellationTokenSource storageCancellationTokenSource)
         {
-            CancellationTokenSource botCancellationTokenSource = new CancellationTokenSource();
-            ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, storageStartTime);
+            var botCancellationTokenSource = new CancellationTokenSource();
+            DateTime botStartTime = storageStartTime;
             while(!storageCancellationTokenSource.IsCancellationRequested)
             {
-                (BotResultDetails botResultDetails, DateTime _) = await currencyBot.StartAsync();
+                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, botStartTime);
+                BotResultDetails botResultDetails;
+                (botResultDetails, botStartTime) = await currencyBot.StartAsync();
                 if (botResultDetails.BotResult == BotResult.Even)
                 {
                     continue;
