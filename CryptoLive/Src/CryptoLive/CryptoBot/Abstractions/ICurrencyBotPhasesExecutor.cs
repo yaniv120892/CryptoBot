@@ -2,26 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Common.Abstractions;
 
 namespace CryptoBot.Abstractions
 {
     public interface ICurrencyBotPhasesExecutor
     {
-        Task<DateTime> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
+        Task<PollingResponseBase> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             int age,
             int phaseNumber,
             List<string> phasesDescription);
         
-        Task<DateTime> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
+        Task<PollingResponseBase> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             int age,
             int phaseNumber,
             List<string> phasesDescription);
         
-        Task<(bool, DateTime)> WaitUnitPriceChangeAsync(DateTime currentTime,
+        Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
             decimal basePrice,
