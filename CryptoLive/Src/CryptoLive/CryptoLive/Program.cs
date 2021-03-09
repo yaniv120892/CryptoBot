@@ -82,7 +82,7 @@ namespace CryptoLive
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, storageStartTime, storageCancellationTokenSource, notificationService);
+                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, storageStartTime, storageCancellationTokenSource);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -118,7 +118,7 @@ namespace CryptoLive
         private static async Task RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
             string currency,
             DateTime storageStartTime,
-            CancellationTokenSource storageCancellationTokenSource, INotificationService notificationService)
+            CancellationTokenSource storageCancellationTokenSource)
         {
             var botCancellationTokenSource = new CancellationTokenSource();
             DateTime botStartTime = storageStartTime;
