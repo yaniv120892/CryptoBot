@@ -24,7 +24,7 @@ namespace Common.CryptoQueue
                 priceAndRsi.Rsi > oldRsiAndPrice.Rsi
                 && priceAndRsi.Price < oldRsiAndPrice.Price
                 //&& priceAndRsi.Price * (decimal) 1.02 < oldRsiAndPrice.Price
-                 && oldRsiAndPrice.CandleTime < priceAndRsi.CandleTime.Subtract(TimeSpan.FromMinutes(120))
+                 && oldRsiAndPrice.CandleTime < priceAndRsi.CandleTime.Subtract(TimeSpan.FromMinutes(30))
             );
         }
     }

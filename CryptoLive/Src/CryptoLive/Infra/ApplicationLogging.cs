@@ -30,7 +30,6 @@ namespace Infra
             {
                 Console.WriteLine("Logging is disabled");
             }
-            
         }
     }
 }
