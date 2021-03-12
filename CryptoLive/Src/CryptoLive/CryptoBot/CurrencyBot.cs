@@ -68,7 +68,7 @@ namespace CryptoBot
             m_currentTime = pollingResponseBase.Time;
             if (!pollingResponseBase.IsSuccess)
             {
-                return (CreateBotResultDetails(0), m_currentTime);
+                return CreateNotSuccessBotResultDetails(pollingResponseBase);
             }
             // Validator
             bool isCandleRed = m_currencyBotPhasesExecutor.ValidateCandleIsRed(m_currentTime, m_currency, m_age, ++phaseNumber, m_phasesDescription);
@@ -121,7 +121,22 @@ namespace CryptoBot
             s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - Loss {m_currentTime}");
             return (CreateBotResultDetails(-1), m_currentTime);
         }
-        
+
+        private (BotResultDetails, DateTime) CreateNotSuccessBotResultDetails(PollingResponseBase pollingResponseBase)
+        {
+            if (pollingResponseBase.IsCancelled)
+            {
+                return (CreateBotResultDetails(-2), m_currentTime);
+            }
+
+            if (pollingResponseBase.Exception != null)
+            {
+                return (CreateBotResultDetails(-2), m_currentTime);
+            }
+
+            throw new Exception("Polling is not success but did not got cancellation request or exception");
+        }
+
         private async Task<(BotResultDetails, DateTime)> StartChildAsync()
         {
             s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");

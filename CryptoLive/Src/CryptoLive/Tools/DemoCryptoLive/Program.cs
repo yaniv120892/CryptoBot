@@ -208,9 +208,10 @@ namespace DemoCryptoLive
             int lossCounter = 0;
             DateTime currentTime = s_botInitialTime;
             bool gotException = false;
+            bool foundFaultedResult = false;
             var winPhaseDetails = new List<List<string>>();
             var lossesPhaseDetails = new List<List<string>>();
-            while(!gotException)
+            while(!gotException && !foundFaultedResult)
             {
                 try
                 {
@@ -229,6 +230,9 @@ namespace DemoCryptoLive
                         case BotResult.Loss:
                             lossCounter++;
                             lossesPhaseDetails.Add(botResultDetails.PhasesDescription);
+                            break;
+                        case BotResult.Faulted:
+                            foundFaultedResult = true;
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
