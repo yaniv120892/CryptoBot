@@ -15,6 +15,8 @@ namespace Utils.Converters
                     return BotResult.Even;
                 case -1:
                     return BotResult.Loss;
+                case -2:
+                    return BotResult.Faulted;
             }
 
             throw new Exception($"Failed to convert int to BotResult, value should be -1,0,1 but was {value}");

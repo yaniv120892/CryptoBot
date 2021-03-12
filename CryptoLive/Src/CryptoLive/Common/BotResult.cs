@@ -5,5 +5,6 @@
         Loss,
         Even,
         Win,
+        Faulted
     }
 }
