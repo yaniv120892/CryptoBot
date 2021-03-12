@@ -65,7 +65,7 @@ namespace CryptoBot
                 s_logger.LogInformation(
                     $"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
                 phasesDescription.Add(
-                    $"{currentTime} {currency}: {phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
+                    $"{currency} {responseBase.Time}\n{phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
                     $"\tRsi: {((RsiPollingResponse) responseBase).Rsi}\n");
             }
             
@@ -89,7 +89,7 @@ namespace CryptoBot
                 s_logger.LogInformation(
                     $"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}");
                 phasesDescription.Add(
-                    $"{currentTime} {currency}: {phaseNumber}.Found candle with lower price and greater RSI, \n" +
+                    $"{currency} {responseBase.Time}\n{phaseNumber}.Found candle with lower price and greater RSI, \n" +
                     $"\tNew: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
                     $"\tOld: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
             }
@@ -112,7 +112,7 @@ namespace CryptoBot
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} {m_priceChangeToNotify}%, {candlePollingResponse.Time}");
-            phasesDescription.Add($"{candlePollingResponse.Time} {currency}: {phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
+            phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
                                   $"\tBuy price: {basePrice}, \n" +
                                   $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
                                   $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
@@ -130,8 +130,7 @@ namespace CryptoBot
             RedCandleValidator redCandleValidator = m_cryptoBotPhasesFactory.CreateRedCandleValidator(m_redCandleSize);
             bool isCandleRed = redCandleValidator.Validate(currency, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is red: {isCandleRed} {currentTime}");
-            phasesDescription.Add($"{currentTime} {currency}: {phaseNumber}.Validate candle is red, \n" +
-                                  $"\tIs Candle Red: {isCandleRed}\n");
+            phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Validate candle is Red: {isCandleRed}\n");
             return isCandleRed;        
         }
 
@@ -144,8 +143,7 @@ namespace CryptoBot
             GreenCandleValidator greenCandleValidator = m_cryptoBotPhasesFactory.CreateGreenCandleValidator(m_greenCandleSize);
             bool isCandleGreen = greenCandleValidator.Validate(currency, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is green: {isCandleGreen} {currentTime}");
-            phasesDescription.Add($"{currentTime} {currency}: {phaseNumber}.Done waiting for next candle, Validate candle is green, \n" +
-                                  $"\tIs Candle Green: {isCandleGreen}\n");
+            phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Validate candle is green: {isCandleGreen}\n");
             return isCandleGreen;
         }
 
