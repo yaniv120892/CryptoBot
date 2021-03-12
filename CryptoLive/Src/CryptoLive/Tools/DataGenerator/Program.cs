@@ -16,7 +16,7 @@ namespace DataGenerator
     {
         private static readonly string s_configFile = "appsettings.json";
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
-
+        private static readonly int s_requestsIntervalInMilliseconds = 5 * 1000;
         public static async Task Main(string[] args)
         {
             DataGeneratorParameters dataGeneratorParameters = AppParametersLoader<DataGeneratorParameters>.Load(s_configFile);
@@ -57,7 +57,7 @@ namespace DataGenerator
                 await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Union(additionalCandles).Distinct().ToArray());
                 s_logger.LogInformation($"Done create {fileName}");
                 startTime = startTime.AddDays(1);
-                await Task.Delay(1000 * 10);
+                await Task.Delay(s_requestsIntervalInMilliseconds);
             }
         }
 
