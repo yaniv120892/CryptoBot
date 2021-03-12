@@ -7,5 +7,6 @@ namespace Services.Abstractions
     public interface ICandlesService
     {
         Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime);
+        Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, DateTime startTime);
     }
 }

@@ -49,6 +49,11 @@ namespace DemoCryptoLive
             return Task.FromResult(ans);        
         }
 
+        public Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, DateTime startTime)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<decimal> GetPrice(string currency, DateTime currentTime) => Task.FromResult(m_mapCurrencyToCandle[currency][currentTime].Close);
     }
 }
