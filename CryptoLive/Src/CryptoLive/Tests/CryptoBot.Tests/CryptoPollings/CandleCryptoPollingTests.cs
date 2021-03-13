@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Common;
 using Common.PollingResponses;
 using CryptoBot.CryptoPollings;
-using Infra;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Storage.Abstractions.Providers;
@@ -26,7 +25,6 @@ namespace CryptoBot.Tests.CryptoPollings
         private static readonly decimal s_lowerThanMinPrice = s_minPrice - 1;
         private static readonly decimal s_lowerThanMaxPrice = s_maxPrice - 1;
         
-        private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
         private readonly Mock<ICurrencyDataProvider> m_currencyDataProviderMock = new Mock<ICurrencyDataProvider>();
         private readonly ISystemClock m_systemClock = new DummySystemClock();
         
@@ -159,7 +157,8 @@ namespace CryptoBot.Tests.CryptoPollings
             DateTime pollingStartTime = candle.CloseTime;
             m_currencyDataProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, pollingStartTime))
-                .Returns(candle);
+                .Returns(candle)
+                .Callback(()=>cancellationTokenSource.Cancel());
             
             var candleCryptoPolling = new CandleCryptoPolling(m_currencyDataProviderMock.Object,
                 m_systemClock, s_delayTimeInSeconds,
@@ -168,7 +167,6 @@ namespace CryptoBot.Tests.CryptoPollings
                 s_maxPrice);
             
             // Act
-            cancellationTokenSource.CancelAfter(100);
             CandlePollingResponse actualCandlePollingResponse = (CandlePollingResponse)await candleCryptoPolling.StartAsync(s_currency, cancellationTokenSource.Token, pollingStartTime);
 
             // Assert
