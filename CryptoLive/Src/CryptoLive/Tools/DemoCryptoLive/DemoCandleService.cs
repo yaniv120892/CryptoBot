@@ -34,9 +34,7 @@ namespace DemoCryptoLive
                 m_mapCurrencyToCandle[currency] = dateTimeToCandle;
             }
         }
-
-        private static string GetFileName(string folderName, string currency) => Path.Combine(folderName, $"{currency}.csv");
-
+        
         public Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[candlesAmount];
@@ -54,6 +52,13 @@ namespace DemoCryptoLive
             throw new NotImplementedException();
         }
 
-        public Task<decimal> GetPrice(string currency, DateTime currentTime) => Task.FromResult(m_mapCurrencyToCandle[currency][currentTime].Close);
+        public Task<decimal> GetPrice(string currency, DateTime currentTime)
+        {
+            DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);
+            return Task.FromResult(m_mapCurrencyToCandle[currency][time].Close);
+        }
+
+        private static string GetFileName(string folderName, string currency) => Path.Combine(folderName, $"{currency}.csv");
+
     }
 }
