@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Common;
 using Common.Abstractions;
+using Common.CryptoQueue;
 using Common.PollingResponses;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
@@ -18,14 +20,15 @@ namespace CryptoBot
 
         private readonly ICryptoBotPhasesFactory m_cryptoBotPhasesFactory;
         private readonly int m_rsiCandleSize;
-        private readonly int m_rsiMemorySize;
         private readonly int m_redCandleSize;
         private readonly int m_greenCandleSize;
         private readonly int m_priceChangeDelayTimeIterationsInSeconds;
         private readonly int m_minutesToWaitBeforePollingPrice;
         private readonly int m_priceChangeCandleSize;
         private readonly decimal m_maxRsiToNotify;
+        private readonly int m_rsiMemorySize;
         private readonly decimal m_priceChangeToNotify;
+        private readonly Dictionary<string,ICryptoPriceAndRsiQueue<PriceAndRsi>> m_currencyToPriceAndRsiQueueMapping;
 
         public CurrencyBotPhasesExecutor(ICryptoBotPhasesFactory cryptoBotPhasesFactory, 
             decimal maxRsiToNotify, 
@@ -48,6 +51,7 @@ namespace CryptoBot
             m_minutesToWaitBeforePollingPrice = minutesToWaitBeforePollingPrice;
             m_priceChangeToNotify = priceChangeToNotify;
             m_priceChangeCandleSize = priceChangeCandleSize;
+            m_currencyToPriceAndRsiQueueMapping = new Dictionary<string, ICryptoPriceAndRsiQueue<PriceAndRsi>>();
         }
 
         public async Task<PollingResponseBase> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
@@ -70,8 +74,6 @@ namespace CryptoBot
             }
             
             return responseBase;
-
-            
         }
         
         public async Task<PollingResponseBase> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
@@ -82,7 +84,8 @@ namespace CryptoBot
             List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
-            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, m_rsiMemorySize);
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue = GetPriceAndRsiQueue(currency);
+            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, cryptoPriceAndRsiQueue);
             PollingResponseBase responseBase = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             if (responseBase.IsSuccess)
             {
@@ -96,7 +99,7 @@ namespace CryptoBot
             
             return responseBase;
         }
-        
+
         public async Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
@@ -156,12 +159,27 @@ namespace CryptoBot
             return m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken,currency,timeToWaitInSeconds, action, currentTime);
         }
 
-        public decimal GetPrice(string currency,
-            DateTime currentTime)
+        public async Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
+            string currency,
+            int age,
+            int phaseNumber,
+            List<string> phasesDescription,
+            decimal quoteOrderQuantity)
         {
-            return m_cryptoBotPhasesFactory.CurrencyDataProvider.GetPriceAsync(currency, currentTime);
+            s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: Buy coin and place sell order {currentTime}");
+            IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateMarketBuyCryptoTrader();
+            (decimal buyPrice, decimal quantity) = await buyCryptoTrader.Buy(currency, quoteOrderQuantity, currentTime);
+            ISellCryptoTrader sellCryptoTrader = m_cryptoBotPhasesFactory.CreateOcoSellCryptoTrader();
+            decimal sellPrice = buyPrice * (100 + m_priceChangeToNotify) / 100;
+            decimal stopAndLimitPrice = buyPrice * (100 - m_priceChangeToNotify) / 100;
+            await sellCryptoTrader.PlaceSellOcoOrderAsync(currency, quantity, sellPrice, stopAndLimitPrice);
+            s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
+                                    $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice} {currentTime}");
+            phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
+                                  $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice}\n");
+            return new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity);
         }
-        
+
         private static CandlePollingResponse AssertIsCandlePollingResponse(PollingResponseBase pollingResponseBase)
         {
             if (!(pollingResponseBase is CandlePollingResponse candlePollingResponse))
@@ -170,6 +188,17 @@ namespace CryptoBot
             }
 
             return candlePollingResponse;
+        }
+        
+        private ICryptoPriceAndRsiQueue<PriceAndRsi> GetPriceAndRsiQueue(string currency)
+        {
+            if (!m_currencyToPriceAndRsiQueueMapping.TryGetValue(currency, out var queue))
+            {
+                queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(m_rsiMemorySize);
+                m_currencyToPriceAndRsiQueueMapping[currency] = queue;
+            }
+
+            return queue;
         }
     }
 }

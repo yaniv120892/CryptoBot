@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Common;
 using Common.Abstractions;
 
 namespace CryptoBot.Abstractions
@@ -46,9 +47,12 @@ namespace CryptoBot.Abstractions
             string currency,
             int timeToWaitInSeconds,
             string action);
-        
-        decimal GetPrice(string currency,
-            DateTime currentTime);
-        
+
+        Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
+            string currency,
+            int age,
+            int phaseNumber,
+            List<string> phasesDescription,
+            decimal quoteOrderQuantity);
     }
 }
