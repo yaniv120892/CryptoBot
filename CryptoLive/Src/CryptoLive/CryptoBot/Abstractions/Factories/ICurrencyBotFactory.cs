@@ -8,6 +8,7 @@ namespace CryptoBot.Abstractions.Factories
         ICurrencyBot Create(string currency,
             CancellationTokenSource cancellationTokenSource,
             DateTime botStartTime,
+            decimal quoteOrderQuantity,
             int age = 0);
     }
 }

@@ -27,6 +27,7 @@ namespace CryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
+        private static readonly decimal s_initialQuoteOrderQuantity = 100;
 
         public static void Main()
         {
@@ -49,6 +50,7 @@ namespace CryptoLive
             CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 
                 cryptoLiveParameters.BinanceApiSecretKey);
             var candlesService = new BinanceCandleService(currencyClientFactory);
+            var tradeService = new BinanceTradeService(currencyClientFactory);
             var storageCancellationTokenSource = new CancellationTokenSource();
 
             var candleRepository = new RepositoryImpl<CandleStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
@@ -64,7 +66,7 @@ namespace CryptoLive
             int candleSize = cryptoLiveParameters.CandleSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay);
+                macdRepository, systemClockWithDelay, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
             var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, notificationService);
@@ -121,25 +123,35 @@ namespace CryptoLive
             CancellationTokenSource storageCancellationTokenSource)
         {
             DateTime botStartTime = storageStartTime;
+            decimal quoteOrderQuantity = s_initialQuoteOrderQuantity;
             while(!storageCancellationTokenSource.IsCancellationRequested)
             {
                 var botCancellationTokenSource = new CancellationTokenSource();
-                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, botStartTime);
+                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, botStartTime, quoteOrderQuantity);
                 BotResultDetails botResultDetails;
                 (botResultDetails, botStartTime) = await currencyBot.StartAsync();
+                quoteOrderQuantity = botResultDetails.NewQuoteOrderQuantity;
                 if (botResultDetails.BotResult == BotResult.Even)
                 {
                     continue;
                 }
+                if (botResultDetails.BotResult == BotResult.Faulted)
+                {
+                    s_logger.LogWarning("Bot execution was faulted");
+                    break;
+                }
+
                 s_logger.LogInformation(botResultDetails.ToString());
             }
             s_logger.LogInformation($"{currency} Storage worker got cancellation request");
         }
         
-        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
+        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
+            IRepository<CandleStorageObject> candleRepository,
             IRepository<RsiStorageObject> rsiRepository,
             IRepository<MacdStorageObject> macdRepository,
-            ISystemClock systemClock)
+            ISystemClock systemClock, 
+            ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
@@ -148,7 +160,8 @@ namespace CryptoLive
                 systemClock, 
                 rsiProvider, 
                 candlesProvider, 
-                macdProvider);
+                macdProvider,
+                tradeService);
             return cryptoBotPhasesFactoryCreator.Create();
         }
     }

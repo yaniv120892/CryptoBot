@@ -30,6 +30,7 @@ namespace DemoCryptoLive
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
         private static readonly DateTime s_botInitialTime = StorageWorkerInitialTimeProvider.DefaultStorageInitialTime.AddMinutes(120);
+        private static readonly decimal s_initialQuoteOrderQuantity = 100;
 
         public static void Main()
         {
@@ -61,13 +62,15 @@ namespace DemoCryptoLive
 
             var demoCandleService = new DemoCandleService(appParameters.Currencies, 
                 appParameters.CandlesDataFolder);
+            var tradeService = new DemoTradeService(demoCandleService);
+
 
             await RunStorageWorkers(macdRepository, rsiRepository, candleRepository, systemClock, stopWatch, demoCandleService ,
                 appParameters.Currencies , appParameters.CandleSize, appParameters.RsiSize, 
                 appParameters.FastEmaSize, appParameters.SlowEmaSize, appParameters.SignalSize, appParameters.CalculatedDataFolder);
-            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(appParameters, candleRepository, rsiRepository, macdRepository, systemClock);
+            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(appParameters, candleRepository, rsiRepository, macdRepository, systemClock, tradeService);
 
-            var tasks = new Dictionary<string,Task<(int, int, string)>>();
+            var tasks = new Dictionary<string,Task<(int, int, string, decimal)>>();
             foreach (string currency in appParameters.Currencies)
             {
                 tasks[currency] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency);
@@ -78,11 +81,13 @@ namespace DemoCryptoLive
         }
 
         private static ICurrencyBotFactory CreateCurrencyBotFactory(DemoCryptoParameters appParameters,
-            RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository, RepositoryImpl<MacdStorageObject> macdRepository,
-            DummySystemClock systemClock)
+            RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository,
+            RepositoryImpl<MacdStorageObject> macdRepository,
+            DummySystemClock systemClock, 
+            ITradeService tradeService)
         {
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository,
-                macdRepository, systemClock);
+                macdRepository, systemClock, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, appParameters);
@@ -90,27 +95,62 @@ namespace DemoCryptoLive
             return currencyBotFactory;
         }
 
-        private static async Task PrintResults(DemoCryptoParameters appParameters, Dictionary<string, Task<(int, int, string)>> tasks)
+        private static async Task PrintResults(DemoCryptoParameters appParameters, Dictionary<string, Task<(int, int, string, decimal)>> tasks)
         {
             int totalWinCounter = 0;
             int totalLossCounter = 0;
+            decimal totalEndQuoteOrderQuantity = 0;
+            decimal totalInitialQuoteOrderQuantity = s_initialQuoteOrderQuantity * appParameters.Currencies.Length;
             int total;
             
             foreach (string currency in appParameters.Currencies)
             {
-                (int winCounter, int lossCounter, string winAndLossDescriptions) = await tasks[currency];
+                (int winCounter, int lossCounter, string winAndLossDescriptions, decimal quoteOrderQuantity) = await tasks[currency];
                 total = winCounter + lossCounter;
                 s_logger.LogInformation(
-                    $"{currency} Summary: {(total == 0 ? 0 : winCounter * 100 / total)}%, Win - {winCounter}, Loss {lossCounter}, Total {total}");
-                s_logger.LogInformation(winAndLossDescriptions);
+                    $"{currency} Summary: " +
+                    $"Success {CalculateSuccess(winCounter, total)}%, " +
+                    $"Return {CalculateReturn(quoteOrderQuantity, s_initialQuoteOrderQuantity)}%, " +
+                    $"QuoteOrderQuantity: {quoteOrderQuantity}$, " +
+                    $"Win - {winCounter}, " +
+                    $"Loss {lossCounter}, " +
+                    $"Total {total}");
+                //s_logger.LogInformation(winAndLossDescriptions);
                 totalWinCounter += winCounter;
                 totalLossCounter += lossCounter;
+                totalEndQuoteOrderQuantity += quoteOrderQuantity;
             }
 
             total = totalWinCounter + totalLossCounter;
+            decimal totalSuccess = CalculateSuccess(totalWinCounter, total);
+            decimal totalReturn = CalculateReturn(totalEndQuoteOrderQuantity, totalInitialQuoteOrderQuantity);
             s_logger.LogInformation(
-                $"Final Summary: {(total == 0 ? 0 : totalWinCounter * 100 / total)}%, Win - {totalWinCounter}, Loss {totalLossCounter}, Total {total}");
+                $"Final Summary: " +
+                $"Success: {totalSuccess}%, " +
+                $"Return: {totalReturn}%, " +
+                $"QuoteOrderQuantity: {totalEndQuoteOrderQuantity}$, " +
+                $"Win - {totalWinCounter}, " +
+                $"Loss {totalLossCounter}, " +
+                $"Total {total}");
         }
+
+        private static decimal CalculateReturn(decimal endQuantity,
+            decimal initialQuantity)
+        {
+            if (endQuantity == initialQuantity)
+            {
+                return 0;
+            }
+            if (endQuantity > initialQuantity)
+            {
+                return Math.Round(((endQuantity - initialQuantity) / initialQuantity) * 100, 3);
+            }
+            
+            return Math.Round(((initialQuantity - endQuantity) / initialQuantity) * 100, 3)*(-1);
+        }
+
+        private static decimal CalculateSuccess(int winCounter, int winAndLossCounter) => 
+            winAndLossCounter == 0 ? 0 : winCounter * 100 / winAndLossCounter;
 
         private static async Task RunStorageWorkers(IRepository<MacdStorageObject> macdRepository,
             IRepository<RsiStorageObject> rsiRepository,
@@ -188,19 +228,22 @@ namespace DemoCryptoLive
             return storageWorker;        
         }
 
-        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(IRepository<CandleStorageObject> candleRepository,
-            IRepository<RsiStorageObject> rsiRepository, IRepository<MacdStorageObject> macdRepository, ISystemClock systemClock)
+        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
+            IRepository<CandleStorageObject> candleRepository,
+            IRepository<RsiStorageObject> rsiRepository, IRepository<MacdStorageObject> macdRepository,
+            ISystemClock systemClock,
+            ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
             var macdProvider = new MacdProvider(macdRepository);
             var currencyDataProvider =
                 new CurrencyDataProvider(candlesProvider, rsiProvider, macdProvider);
-            var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock);
+            var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock, tradeService);
             return cryptoBotPhasesFactory;
         }
 
-        private static async Task<(int winCounter, int lossCounter, string winAndLossDescriptions)>
+        private static async Task<(int winCounter, int lossCounter, string winAndLossDescriptions, decimal quoteOrderQuantity)>
             RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
                 string currency)
         {
@@ -211,12 +254,13 @@ namespace DemoCryptoLive
             bool foundFaultedResult = false;
             var winPhaseDetails = new List<List<string>>();
             var lossesPhaseDetails = new List<List<string>>();
+            decimal quoteOrderQuantity = s_initialQuoteOrderQuantity;
             while(!gotException && !foundFaultedResult)
             {
                 try
                 {
                     var cancellationTokenSource = new CancellationTokenSource();
-                    ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime);
+                    ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime, quoteOrderQuantity);
                     BotResultDetails botResultDetails;
                     (botResultDetails, currentTime) = await currencyBot.StartAsync();
                     switch (botResultDetails.BotResult)
@@ -237,6 +281,8 @@ namespace DemoCryptoLive
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
+
+                    quoteOrderQuantity = botResultDetails.NewQuoteOrderQuantity;
                 }
                 catch (Exception e)
                 {
@@ -246,7 +292,7 @@ namespace DemoCryptoLive
             }
 
             string winAndLossDescriptions = TestResultsSummary.BuildWinAndLossDescriptions(lossesPhaseDetails, winPhaseDetails);
-            return (winCounter, lossCounter, winAndLossDescriptions);
+            return (winCounter, lossCounter, winAndLossDescriptions, quoteOrderQuantity);
         }
     }
 }

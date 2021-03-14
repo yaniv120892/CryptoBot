@@ -21,6 +21,7 @@ namespace CryptoBot.Factories
         public ICurrencyBot Create(string currency,
             CancellationTokenSource cancellationTokenSource,
             DateTime botStartTime, 
+            decimal quoteOrderQuantity,
             int age=0) 
             => new CurrencyBot(this, 
                 m_notificationService,
@@ -28,6 +29,7 @@ namespace CryptoBot.Factories
                 currency, 
                 cancellationTokenSource, 
                 botStartTime,
+                quoteOrderQuantity,
                 age);
     }
 }

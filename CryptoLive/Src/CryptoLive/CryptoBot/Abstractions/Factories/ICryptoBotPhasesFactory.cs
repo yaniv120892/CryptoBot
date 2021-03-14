@@ -1,4 +1,6 @@
-﻿using CryptoBot.CryptoValidators;
+﻿using Common;
+using Common.Abstractions;
+using CryptoBot.CryptoValidators;
 using Storage.Abstractions.Providers;
 using Utils.Abstractions;
 
@@ -14,11 +16,13 @@ namespace CryptoBot.Abstractions.Factories
             decimal priceChangeToNotify);
         CryptoPollingBase CreatePriceAndRsiPolling(int candleSize, 
             decimal maxRsiToNotify,
-            int rsiMemorySize);
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue);
         CryptoPollingBase CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime);
         CryptoPollingBase CreateRsiPolling(decimal maxRsiToNotify);
         RedCandleValidator CreateRedCandleValidator(int candleSize);
         GreenCandleValidator CreateGreenCandleValidator(int candleSize);
         MacdHistogramNegativeValidator CreateMacdNegativeValidator(int macdCandleSize);
+        IBuyCryptoTrader CreateMarketBuyCryptoTrader();
+        ISellCryptoTrader CreateOcoSellCryptoTrader();
     }
 }

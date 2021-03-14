@@ -6,11 +6,15 @@ namespace Common
     {
         public BotResult BotResult { get; }
         public List<string> PhasesDescription { get; }
-        
-        public BotResultDetails(BotResult botResult, List<string> phasesDescription)
+        public decimal NewQuoteOrderQuantity { get; }
+
+        public BotResultDetails(BotResult botResult, 
+            List<string> phasesDescription, 
+            decimal newQuoteOrderQuantity)
         {
             BotResult = botResult;
             PhasesDescription = phasesDescription;
+            NewQuoteOrderQuantity = newQuoteOrderQuantity;
         }
 
         public override string ToString()
