@@ -50,6 +50,7 @@ namespace Services
                 BinanceClient client = m_currencyClientFactory.Create();
                 var response = await client.Spot.Market.GetKlinesAsync(currency, s_klineInterval, 
                     limit:candlesAmount, startTime: startTime);
+                ResponseHandler.AssertSuccessResponse(response, "GetOneMinuteCandles");
                 return ExtractCandlesFromResponse(response, candlesAmount);
             }
             catch (Exception e)
@@ -58,25 +59,14 @@ namespace Services
                 throw new Exception($"Failed to get {candlesAmount} candles for {currency} from {startTime}");
             }
         }
-
-        private static Memory<MyCandle> ExtractCandlesFromResponse(WebCallResult<IEnumerable<IBinanceKline>> response, int candlesAmount)
+        
+        private static Memory<MyCandle> ExtractCandlesFromResponse(CallResult<IEnumerable<IBinanceKline>> response,
+            int candlesAmount)
         {
-            if (response.Success)
-            {
-                IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
-                Memory<MyCandle> candlesDescription =
-                    BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
-                return candlesDescription;
-            }
-
-            if (!(response.Error is null))
-            {
-                throw new Exception(
-                    $"Response returned with error, Message: {response.Error.Message}, Code: {response.Error.Code}, Data: {response.Error.Data}");
-            }
-
-            throw new Exception(
-                $"Response not success and has no Error, StatusCode: {response.ResponseStatusCode}");
+            IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
+            Memory<MyCandle> candlesDescription =
+                BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
+            return candlesDescription;
         }
     }
 }
