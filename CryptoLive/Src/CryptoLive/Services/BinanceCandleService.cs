@@ -33,6 +33,7 @@ namespace Services
             {
                 BinanceClient client = m_currencyClientFactory.Create();
                 var response = await client.Spot.Market.GetKlinesAsync(currency, s_klineInterval, limit: candlesAmount);
+                ResponseHandler.AssertSuccessResponse(response, "GetOneMinuteCandles");
                 return ExtractCandlesFromResponse(response, candlesAmount);
             }
             catch (Exception e)
