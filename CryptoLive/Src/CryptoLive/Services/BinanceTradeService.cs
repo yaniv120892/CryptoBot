@@ -26,44 +26,65 @@ namespace Services
             m_symbolToTickSizesMapping = new Dictionary<string, decimal>();
         }
 
-        public async Task<(decimal buyPrice, decimal quantity)> PlaceBuyMarketOrderAsync(string currency, decimal quoteOrderQuantity, DateTime currentTime)
+        public async Task<(decimal buyPrice, decimal quantity)> PlaceBuyMarketOrderAsync(string currency,
+            decimal quoteOrderQuantity, DateTime currentTime)
+        {
+            var action = new Func<Task<WebCallResult<BinancePlacedOrder>>>(async () =>
+                await PlaceBuyMarketOrderImplAsync(currency, quoteOrderQuantity));
+            var response = await ExecuteTradeAndAssert(action, currency,
+                $"Buy Market {quoteOrderQuantity}$");
+            return ExtractPriceAndFilledQuantity(response);
+        }
+
+        public async Task PlaceSellOcoOrderAsync(string currency, decimal quantity, decimal price,
+            decimal stopAndLimitPrice)
+        {
+            var action = new Func<Task<WebCallResult<BinanceOrderOcoList>>>(async () =>
+                await PlaceSellOcoOrderImplAsync(currency, quantity, price, stopAndLimitPrice));
+            _ = await ExecuteTradeAndAssert(action, currency,
+                $"Sell OCO {quantity}");
+
+        }
+
+        private static async Task<WebCallResult<T>> ExecuteTradeAndAssert<T>(
+            Func<Task<WebCallResult<T>>> action, string currency, string description)
         {
             try
             {
-                BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.Spot.Order.PlaceOrderAsync(currency, OrderSide.Buy, OrderType.Market,
-                    quoteOrderQuantity:quoteOrderQuantity);
-                ResponseHandler.AssertSuccessResponse(response, $"{currency} Buy Market {quoteOrderQuantity}$");
-                return ExtractPriceAndFilledQuantity(response);
+                var response = await action.Invoke();
+                ResponseHandler.AssertSuccessResponse(response, $"{currency} {description}");
+                return response;
             }
             catch (Exception e)
             {
-                s_logger.LogError(e,$"Failed to place buy order for {currency}");
-                throw new Exception($"Failed to place buy order for {currency}");
+                string message = $"Failed to place {description} for {currency}";
+                s_logger.LogError(e, message);
+                throw new Exception(message);
             }
         }
 
-        public async Task PlaceSellOcoOrderAsync(string currency, decimal quantity, decimal price, decimal stopAndLimitPrice)
+        private async Task<WebCallResult<BinancePlacedOrder>> PlaceBuyMarketOrderImplAsync(string currency, decimal quoteOrderQuantity)
         {
-            try
-            {
-                BinanceClient client = m_currencyClientFactory.Create();
-                decimal priceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, price);
-                decimal stopAndLimitPriceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, stopAndLimitPrice);
-                var response = await client.Spot.Order.PlaceOcoOrderAsync(currency, 
-                    OrderSide.Sell, 
-                    quantity, 
-                    priceByTickSize,
-                    stopAndLimitPriceByTickSize, 
-                    stopAndLimitPriceByTickSize,
-                    stopLimitTimeInForce:TimeInForce.GoodTillCancel);
-                ResponseHandler.AssertSuccessResponse(response, $"{currency} Sell OCO");
-            }
-            catch (Exception e)
-            {
-                s_logger.LogError(e,$"Failed to place sell order for {currency}");
-                throw new Exception($"Failed to place sell order for {currency}");
-            }
+            BinanceClient client = m_currencyClientFactory.Create();
+            var response = await client.Spot.Order.PlaceOrderAsync(currency, OrderSide.Buy, OrderType.Market,
+                quoteOrderQuantity: quoteOrderQuantity);
+            return response;
+        }
+        
+        private async Task<WebCallResult<BinanceOrderOcoList>> PlaceSellOcoOrderImplAsync(string currency, decimal quantity, decimal price,
+            decimal stopAndLimitPrice)
+        {
+            BinanceClient client = m_currencyClientFactory.Create();
+            decimal priceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, price);
+            decimal stopAndLimitPriceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, stopAndLimitPrice);
+            var response = await client.Spot.Order.PlaceOcoOrderAsync(currency,
+                OrderSide.Sell,
+                quantity,
+                priceByTickSize,
+                stopAndLimitPriceByTickSize,
+                stopAndLimitPriceByTickSize,
+                stopLimitTimeInForce: TimeInForce.GoodTillCancel);
+            return response;
         }
 
         private async ValueTask<decimal> GetPriceAlignedToTickSizeAsync(string currency, decimal price)
@@ -93,7 +114,7 @@ namespace Services
             {
                 BinanceClient client = m_currencyClientFactory.Create();
                 var response = await client.Spot.System.GetExchangeInfoAsync();
-                ResponseHandler.AssertSuccessResponse(response, "GetBinanceSymbol");
+                ResponseHandler.AssertSuccessResponse(response, "GetExchangeInfo");
                 BinanceSymbol binanceSymbol = ExtractBinanceSymbol(currency, response);
                 tickSizes = ExtractTickSizes(binanceSymbol);
                 m_symbolToTickSizesMapping[currency] = tickSizes;
@@ -102,7 +123,7 @@ namespace Services
             return tickSizes;
         }
 
-        private decimal ExtractTickSizes(BinanceSymbol binanceSymbol)
+        private static decimal ExtractTickSizes(BinanceSymbol binanceSymbol)
         {
             BinanceSymbolFilter priceFilter = binanceSymbol.Filters.SingleOrDefault(m => m.FilterType== SymbolFilterType.Price);
             if (priceFilter is null)
