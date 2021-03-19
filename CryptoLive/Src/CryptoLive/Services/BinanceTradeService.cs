@@ -32,7 +32,7 @@ namespace Services
             {
                 BinanceClient client = m_currencyClientFactory.Create();
                 var response = await client.Spot.Order.PlaceOrderAsync(currency, OrderSide.Buy, OrderType.Market,
-                    quoteOrderQuantity);
+                    quoteOrderQuantity:quoteOrderQuantity);
                 ResponseHandler.AssertSuccessResponse(response, $"{currency} Buy Market {quoteOrderQuantity}$");
                 return ExtractPriceAndFilledQuantity(response);
             }
