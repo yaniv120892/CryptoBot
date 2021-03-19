@@ -28,15 +28,7 @@ namespace CryptoBot.CryptoValidators
             {
                 return false;
             }
-            s_logger.LogInformation($"{currency}: Candle is green, {currCandle} ,{currentTime}");
-            
-            // if (currCandle.Close < currCandle.Open * (decimal)1.005)
-            // {
-            //     s_logger.LogDebug($"{currency}: Candle increase is less than 1%, {currCandle} ,{time}");
-            //     return false;
-            // }
-            // s_logger.LogInformation($"{currency}: Candle increase is above 1%, {currCandle} ,{currentTime}");
-            
+
             if (prevCandle.High < currCandle.Close)
             {
                 message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime}";
