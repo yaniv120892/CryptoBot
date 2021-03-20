@@ -51,10 +51,7 @@ namespace CryptoBot
             m_phasesDescription = new List<string>();
         }
         
-        public async Task<(BotResultDetails, DateTime)> StartAsync()
-        {
-            return await StartAsyncImpl();
-        }
+        public async Task<(BotResultDetails, DateTime)> StartAsync() => await StartAsyncImpl();
 
         private BotResultDetails CreateBotResultDetails(int res, decimal newQuoteOrderQuantity)
         {
