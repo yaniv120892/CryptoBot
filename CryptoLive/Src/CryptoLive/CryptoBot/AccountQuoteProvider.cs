@@ -6,7 +6,7 @@ namespace CryptoBot
 {
     public class AccountQuoteProvider : IAccountQuoteProvider
     {
-        private static readonly int s_percentToUse = 50;
+        private static readonly double s_percentToUse = 0.5;
         
         private readonly IAccountService m_accountService;
 
@@ -18,7 +18,7 @@ namespace CryptoBot
         public async Task<decimal> GetAvailableQuote()
         {
             decimal availableUsdt = await m_accountService.GetAvailableUsdt();
-            return s_percentToUse * availableUsdt;
+            return (decimal) ((double)availableUsdt * s_percentToUse);
         }
     }
 }
