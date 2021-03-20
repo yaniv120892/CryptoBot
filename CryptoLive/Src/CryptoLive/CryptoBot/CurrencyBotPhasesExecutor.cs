@@ -9,6 +9,7 @@ using Common.PollingResponses;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoValidators;
+using CryptoBot.Exceptions;
 using Infra;
 using Microsoft.Extensions.Logging;
 
@@ -54,28 +55,6 @@ namespace CryptoBot
             m_currencyToPriceAndRsiQueueMapping = new Dictionary<string, ICryptoPriceAndRsiQueue<PriceAndRsi>>();
         }
 
-        public async Task<PollingResponseBase> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            int age,
-            int phaseNumber, 
-            List<string> phasesDescription)
-        {
-            s_logger.LogInformation($"{currency}_{age}: {currentTime} Start phase {phaseNumber}: wait until RSI is below {m_maxRsiToNotify}");
-            CryptoPollingBase rsiPolling = m_cryptoBotPhasesFactory.CreateRsiPolling(m_maxRsiToNotify);
-            PollingResponseBase responseBase = await rsiPolling.StartAsync(currency, cancellationToken, currentTime);
-            if (responseBase.IsSuccess)
-            {
-                s_logger.LogInformation(
-                    $"{currency}_{age}: Done phase 1: RSI is below {m_maxRsiToNotify} {responseBase.Time}");
-                phasesDescription.Add(
-                    $"{currency} {responseBase.Time}\n{phaseNumber}.Found RSI that is below {m_maxRsiToNotify}, \n" +
-                    $"\tRsi: {((RsiPollingResponse) responseBase).Rsi}\n");
-            }
-            
-            return responseBase;
-        }
-        
         public async Task<PollingResponseBase> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
@@ -83,20 +62,21 @@ namespace CryptoBot
             int phaseNumber,
             List<string> phasesDescription)
         {
-            s_logger.LogInformation($"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
+            s_logger.LogInformation(
+                $"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue = GetPriceAndRsiQueue(currency);
-            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory.CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, cryptoPriceAndRsiQueue);
-            PollingResponseBase responseBase = await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
-            if (responseBase.IsSuccess)
-            {
-                s_logger.LogInformation(
-                    $"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}");
-                phasesDescription.Add(
-                    $"{currency} {responseBase.Time}\n{phaseNumber}.Found candle with lower price and greater RSI, \n" +
-                    $"\tNew: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
-                    $"\tOld: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
-            }
-            
+            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory
+                .CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, cryptoPriceAndRsiQueue);
+            PollingResponseBase responseBase =
+                await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
+            AssertSuccessPolling(responseBase);
+            s_logger.LogInformation(
+                $"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}");
+            phasesDescription.Add(
+                $"{currency} {responseBase.Time}\n{phaseNumber}.Found candle with lower price and greater RSI, \n" +
+                $"\tNew: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
+                $"\tOld: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
+
             return responseBase;
         }
 
@@ -154,10 +134,8 @@ namespace CryptoBot
             CancellationToken cancellationToken,
             string currency, 
             int timeToWaitInSeconds,
-            string action)
-        {
-            return m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken,currency,timeToWaitInSeconds, action, currentTime);
-        }
+            string action) =>
+            m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken,currency,timeToWaitInSeconds, action, currentTime);
 
         public async Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
             string currency,
@@ -199,6 +177,14 @@ namespace CryptoBot
             }
 
             return queue;
+        }
+        
+        private static void AssertSuccessPolling(PollingResponseBase pollingResponseBase)
+        {
+            if (!pollingResponseBase.IsSuccess)
+            {
+                throw new PollingResponseException(pollingResponseBase);
+            }
         }
     }
 }

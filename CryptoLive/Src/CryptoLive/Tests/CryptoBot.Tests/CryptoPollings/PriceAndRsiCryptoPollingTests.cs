@@ -5,7 +5,6 @@ using Common;
 using Common.Abstractions;
 using Common.PollingResponses;
 using CryptoBot.CryptoPollings;
-using Infra;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Storage.Abstractions.Providers;
@@ -20,7 +19,6 @@ namespace CryptoBot.Tests.CryptoPollings
         private static readonly string s_currency = "CurrencyName";
         private static readonly decimal s_maxRsiToNotify = 35;
 
-        private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
         private readonly Mock<ICurrencyDataProvider> m_currencyDataProviderMock = new Mock<ICurrencyDataProvider>();
         private readonly Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>> m_cryptoPriceAndRsiQueueMock = new Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>>();
         private readonly ISystemClock m_systemClock = new DummySystemClock();

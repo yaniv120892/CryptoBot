@@ -128,8 +128,8 @@ namespace CryptoLive
             {
                 var botCancellationTokenSource = new CancellationTokenSource();
                 ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, botStartTime, quoteOrderQuantity);
-                BotResultDetails botResultDetails;
-                (botResultDetails, botStartTime) = await currencyBot.StartAsync();
+                BotResultDetails botResultDetails = await currencyBot.StartAsync();
+                botStartTime = botResultDetails.EndTime;
                 quoteOrderQuantity = botResultDetails.NewQuoteOrderQuantity;
                 if (botResultDetails.BotResult == BotResult.Even)
                 {

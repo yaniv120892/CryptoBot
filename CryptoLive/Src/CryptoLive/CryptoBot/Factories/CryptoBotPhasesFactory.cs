@@ -1,6 +1,6 @@
-﻿using Common;
+﻿using System.Threading;
+using Common;
 using Common.Abstractions;
-using Common.CryptoQueue;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.CryptoPollings;
@@ -39,10 +39,8 @@ namespace CryptoBot.Factories
 
         public CryptoPollingBase CreatePriceAndRsiPolling(int candleSize,
             decimal maxRsiToNotify,
-            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue)
-        {
-            return new PriceAndRsiCryptoPolling(CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, maxRsiToNotify);
-        }
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue) =>
+            new PriceAndRsiCryptoPolling(CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, maxRsiToNotify);
 
         public CryptoPollingBase CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
             new MacdHistogramCryptoPolling(CurrencyDataProvider, SystemClock, maxMacdPollingTime);
