@@ -92,7 +92,8 @@ namespace DemoCryptoLive
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, appParameters);
-            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, new EmptyNotificationService());
+            var accountQuoteProvider = new AccountQuoteProvider(new DemoAccountService());
+            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, new EmptyNotificationService(), accountQuoteProvider);
             return currencyBotFactory;
         }
 
@@ -263,7 +264,7 @@ namespace DemoCryptoLive
                 {
                     var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(appParametersRsiMemorySize);
                     var cancellationTokenSource = new CancellationTokenSource();
-                    ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, cancellationTokenSource, currentTime, quoteOrderQuantity);
+                    ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, cancellationTokenSource, currentTime);
                     BotResultDetails botResultDetails = await currencyBot.StartAsync();
                     currentTime = botResultDetails.EndTime;
                     switch (botResultDetails.BotResult)
@@ -284,8 +285,6 @@ namespace DemoCryptoLive
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
-
-                    quoteOrderQuantity = botResultDetails.NewQuoteOrderQuantity;
                 }
                 catch (Exception e)
                 {

@@ -8,7 +8,7 @@ namespace Services
 {
     public class ResponseHandler
     {
-        internal static void AssertSuccessResponse<T>(WebCallResult<T> response, string requestDescription)
+        public static void AssertSuccessResponse<T>(WebCallResult<T> response, string requestDescription)
         {
             if (response.Success)
             {

@@ -7,11 +7,10 @@ namespace CryptoBot.Abstractions.Factories
 {
     public interface ICurrencyBotFactory
     {
-        ICurrencyBot Create(ICryptoPriceAndRsiQueue<PriceAndRsi> queue, 
+        ICurrencyBot Create(ICryptoPriceAndRsiQueue<PriceAndRsi> queue,
             string currency,
             CancellationTokenSource cancellationTokenSource,
             DateTime botStartTime,
-            decimal quoteOrderQuantity,
-            int age=0);
+            int age = 0);
     }
 }
