@@ -19,8 +19,8 @@ namespace CryptoBot.Tests
         private static readonly string s_currency = "CurrencyName";
         private static readonly decimal s_quoteOrderQuantity = 100;
         private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
-        private readonly Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>> m_queueMock =
-            new Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>>();
+        private readonly Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>> m_queueMock = new Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>>();
+        private readonly Mock<IAccountQuoteProvider> m_accountQuoteProvider = new Mock<IAccountQuoteProvider>();
 
         [TestMethod]
         public async Task When_StartAsync_Given_ParentWin_And_ChildLoss_Return_Win()
@@ -35,11 +35,12 @@ namespace CryptoBot.Tests
             var pricePollingEndTime = validateCandleIsGreenStartTime.AddMinutes(20);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99, childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime);
             var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
-            
+
+            SetupAccountQuoteProvider();
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
@@ -77,18 +78,23 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity,
-                m_queueMock.Object);
+                m_queueMock.Object,
+                m_accountQuoteProvider.Object);
             
             // Act
            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Win, botResult.BotResult);
-            Assert.AreEqual(101, botResult.NewQuoteOrderQuantity);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
-        
+
+        private void SetupAccountQuoteProvider()
+        {
+            m_accountQuoteProvider.Setup(m => m.GetAvailableQuote())
+                .Returns(Task.FromResult(s_quoteOrderQuantity));
+        }
+
         [TestMethod]
         public async Task When_StartAsync_Given_RsiAndPricePolling_GotException_Return_Faulted()
         {
@@ -99,6 +105,7 @@ namespace CryptoBot.Tests
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
             var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             var gotExceptionPollingResponse = new DummyPollingResponse(rsiPollingEndTime, false, new Exception());
+            SetupAccountQuoteProvider();
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
@@ -111,15 +118,14 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity,
-                m_queueMock.Object);
+                m_queueMock.Object,
+                m_accountQuoteProvider.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Faulted, botResult.BotResult);
-            Assert.AreEqual(s_quoteOrderQuantity, botResult.NewQuoteOrderQuantity);
             Assert.AreEqual(rsiPollingEndTime, botResult.EndTime);
         }
         
@@ -133,6 +139,7 @@ namespace CryptoBot.Tests
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
             var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             var gotExceptionPollingResponse = new DummyPollingResponse(rsiPollingEndTime, true);
+            SetupAccountQuoteProvider();
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
@@ -145,15 +152,14 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity,
-                m_queueMock.Object);
+                m_queueMock.Object,
+                m_accountQuoteProvider.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Faulted, botResult.BotResult);
-            Assert.AreEqual(s_quoteOrderQuantity, botResult.NewQuoteOrderQuantity);
             Assert.AreEqual(rsiPollingEndTime, botResult.EndTime);
         }
         
@@ -170,11 +176,12 @@ namespace CryptoBot.Tests
             var pricePollingEndTime = validateCandleIsGreenStartTime.AddMinutes(20);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), 101, childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), childBotEndTime);
             var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             SetupWaitAsyncMethod(currencyBotPhasesExecutorMock, rsiPollingEndTime, cancellationTokenSource, childStartTime, validateCandleIsGreenStartTime);
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
+            SetupAccountQuoteProvider();
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
@@ -211,15 +218,14 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity,
-                m_queueMock.Object);
+                m_queueMock.Object,
+                m_accountQuoteProvider.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Loss, botResult.BotResult);
-            Assert.AreEqual(99, botResult.NewQuoteOrderQuantity);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
 
@@ -234,9 +240,10 @@ namespace CryptoBot.Tests
             var validateCandleIsGreenStartTime = childStartTime.AddMinutes(14);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99, childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime);
             var childCurrencyBotMock = new Mock<ICurrencyBot>();
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
+            SetupAccountQuoteProvider();
             childCurrencyBotMock
                 .Setup(m => m.StartAsync())
                 .Returns(Task.FromResult(childBotDetailsResult));
@@ -280,8 +287,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity,
-                m_queueMock.Object);
+                m_queueMock.Object,
+                m_accountQuoteProvider.Object);
             
 
             // Act
@@ -289,7 +296,6 @@ namespace CryptoBot.Tests
             
             // Assert
             Assert.AreEqual(childBotDetailsResult.BotResult, botResult.BotResult);
-            Assert.AreEqual(childBotDetailsResult.NewQuoteOrderQuantity, botResult.NewQuoteOrderQuantity);
             Assert.AreEqual(childBotEndTime, botResult.EndTime);
         }
 
@@ -304,7 +310,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult(childBotDetailsResult));
             
             currencyBotFactoryMock
-                .Setup(m => m.Create(It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>(), s_currency, cancellationTokenSource, childStartTime, 100,1))
+                .Setup(m => m.Create(It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>(), s_currency, cancellationTokenSource, childStartTime,1))
                 .Returns(childCurrencyBotMock.Object);
         }
         
