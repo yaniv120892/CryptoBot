@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using Common;
+using Common.Abstractions;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using Infra;
@@ -18,11 +20,8 @@ namespace CryptoBot.Factories
             m_notificationService = notificationService;
         }
 
-        public ICurrencyBot Create(string currency,
-            CancellationTokenSource cancellationTokenSource,
-            DateTime botStartTime, 
-            decimal quoteOrderQuantity,
-            int age=0) 
+        public ICurrencyBot Create(ICryptoPriceAndRsiQueue<PriceAndRsi> queue, string currency, CancellationTokenSource cancellationTokenSource,
+            DateTime botStartTime, decimal quoteOrderQuantity, int age)
             => new CurrencyBot(this, 
                 m_notificationService,
                 m_currencyBotPhasesExecutor, 
@@ -30,6 +29,7 @@ namespace CryptoBot.Factories
                 cancellationTokenSource, 
                 botStartTime,
                 quoteOrderQuantity,
+                queue,
                 age);
     }
 }

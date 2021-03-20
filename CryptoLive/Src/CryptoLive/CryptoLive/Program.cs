@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.CryptoQueue;
 using Common.DataStorageObjects;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
@@ -84,7 +85,11 @@ namespace CryptoLive
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
                 await systemClock.Wait(CancellationToken.None, currency, cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, storageStartTime, storageCancellationTokenSource);
+                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, 
+                    currency, 
+                    storageStartTime, 
+                    storageCancellationTokenSource,
+                    cryptoLiveParameters.RsiMemorySize);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -120,14 +125,16 @@ namespace CryptoLive
         private static async Task RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
             string currency,
             DateTime storageStartTime,
-            CancellationTokenSource storageCancellationTokenSource)
+            CancellationTokenSource storageCancellationTokenSource,
+            int rsiMemorySize)
         {
             DateTime botStartTime = storageStartTime;
             decimal quoteOrderQuantity = s_initialQuoteOrderQuantity;
             while(!storageCancellationTokenSource.IsCancellationRequested)
             {
                 var botCancellationTokenSource = new CancellationTokenSource();
-                ICurrencyBot currencyBot = currencyBotFactory.Create(currency, botCancellationTokenSource, botStartTime, quoteOrderQuantity);
+                var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
+                ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, botCancellationTokenSource, botStartTime, quoteOrderQuantity);
                 BotResultDetails botResultDetails = await currencyBot.StartAsync();
                 botStartTime = botResultDetails.EndTime;
                 quoteOrderQuantity = botResultDetails.NewQuoteOrderQuantity;

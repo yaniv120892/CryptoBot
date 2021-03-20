@@ -14,8 +14,9 @@ namespace CryptoBot.Abstractions
             string currency,
             int age,
             int phaseNumber,
-            List<string> phasesDescription);
-        
+            List<string> phasesDescription, 
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue);
+
         Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,

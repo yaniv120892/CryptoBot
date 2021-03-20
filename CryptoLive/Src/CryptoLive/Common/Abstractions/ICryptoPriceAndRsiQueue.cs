@@ -4,5 +4,6 @@ namespace Common.Abstractions
     {
         void Enqueue(T currentPriceAndRsi);
         T GetLowerRsiAndHigherPrice(T priceAndRsi);
+        ICryptoPriceAndRsiQueue<T> Clone();
     }
 }
