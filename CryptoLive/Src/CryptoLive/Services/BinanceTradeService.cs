@@ -31,33 +31,39 @@ namespace Services
         {
             var action = new Func<Task<WebCallResult<BinancePlacedOrder>>>(async () =>
                 await PlaceBuyMarketOrderImplAsync(currency, quoteOrderQuantity));
-            var response = await ExecuteTradeAndAssert(action, currency,
-                $"Buy Market {quoteOrderQuantity}$");
-            return ExtractPriceAndFilledQuantity(response);
+            string actionDescription = $"Place Market Buy {quoteOrderQuantity}$ of {currency}";
+            var response = await ExecuteTradeAndAssert(action, actionDescription);
+            (decimal buyPrice, decimal quantity) = ExtractPriceAndFilledQuantity(response);
+            s_logger.LogDebug($"{currency}: buy Price: {buyPrice}, quantity: {quantity}");
+            return (buyPrice, quantity);
         }
 
         public async Task PlaceSellOcoOrderAsync(string currency, decimal quantity, decimal price,
             decimal stopAndLimitPrice)
         {
+            decimal priceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, price);
+            decimal stopAndLimitPriceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, stopAndLimitPrice);
             var action = new Func<Task<WebCallResult<BinanceOrderOcoList>>>(async () =>
-                await PlaceSellOcoOrderImplAsync(currency, quantity, price, stopAndLimitPrice));
-            _ = await ExecuteTradeAndAssert(action, currency,
-                $"Sell OCO {quantity}");
-
+                await PlaceSellOcoOrderImplAsync(currency, quantity, priceByTickSize, stopAndLimitPriceByTickSize));
+            string actionDescription = $"place OCO sell {quantity} {currency}, " +
+                                       $"price {priceByTickSize}, StopAndLimit: {stopAndLimitPriceByTickSize}";
+            _ = await ExecuteTradeAndAssert(action, actionDescription);
         }
 
         private static async Task<WebCallResult<T>> ExecuteTradeAndAssert<T>(
-            Func<Task<WebCallResult<T>>> action, string currency, string description)
+            Func<Task<WebCallResult<T>>> action, string actionDescription)
         {
             try
             {
+                s_logger.LogDebug($"Start {actionDescription}");
                 var response = await action.Invoke();
-                ResponseHandler.AssertSuccessResponse(response, $"{currency} {description}");
+                ResponseHandler.AssertSuccessResponse(response, actionDescription);
+                s_logger.LogDebug($"Success {actionDescription}");
                 return response;
             }
             catch (Exception e)
             {
-                string message = $"Failed to place {description} for {currency}";
+                string message = $"Failed {actionDescription}";
                 s_logger.LogError(e, message);
                 throw new Exception(message);
             }
@@ -71,18 +77,18 @@ namespace Services
             return response;
         }
         
-        private async Task<WebCallResult<BinanceOrderOcoList>> PlaceSellOcoOrderImplAsync(string currency, decimal quantity, decimal price,
+        private async Task<WebCallResult<BinanceOrderOcoList>> PlaceSellOcoOrderImplAsync(string currency, 
+            decimal quantity, 
+            decimal price,
             decimal stopAndLimitPrice)
         {
             BinanceClient client = m_currencyClientFactory.Create();
-            decimal priceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, price);
-            decimal stopAndLimitPriceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, stopAndLimitPrice);
             var response = await client.Spot.Order.PlaceOcoOrderAsync(currency,
                 OrderSide.Sell,
                 quantity,
-                priceByTickSize,
-                stopAndLimitPriceByTickSize,
-                stopAndLimitPriceByTickSize,
+                price,
+                stopAndLimitPrice,
+                stopAndLimitPrice,
                 stopLimitTimeInForce: TimeInForce.GoodTillCancel);
             return response;
         }
