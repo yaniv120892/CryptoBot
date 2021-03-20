@@ -6,6 +6,7 @@ using Common;
 using Common.Abstractions;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
+using CryptoBot.Exceptions;
 using Infra;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -31,12 +32,12 @@ namespace CryptoBot.Tests
             var validateCandleIsGreenStartTime = childStartTime.AddMinutes(14);
             var pricePollingEndTime = validateCandleIsGreenStartTime.AddMinutes(20);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99);
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var currencyBotFactoryMock = SetupChildCurrencyBotMock(childBotDetailsResult, childBotEndTime, cancellationTokenSource, childStartTime);
-            SetupWaitAsyncMethod(currencyBotPhasesExecutorMock, rsiPollingEndTime, cancellationTokenSource, childStartTime, validateCandleIsGreenStartTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99, childBotEndTime);
+            var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
+            
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
@@ -63,22 +64,25 @@ namespace CryptoBot.Tests
                     It.IsAny<CancellationToken>(), s_currency, basePrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((true,pricePollingResponse)));
-
+            SetupChildCurrencyBotMock(childBotDetailsResult, cancellationTokenSource, childStartTime,currencyBotFactoryMock);
+            SetupWaitAsyncMethod(currencyBotPhasesExecutorMock, rsiPollingEndTime, cancellationTokenSource, childStartTime, 
+                validateCandleIsGreenStartTime);
+            
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
-                currencyBotPhasesExecutorMock.Object, 
+                currencyBotPhasesExecutorMock.Object,
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
                 s_quoteOrderQuantity);
-
+            
             // Act
-           (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+           BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Win, botResult.BotResult);
             Assert.AreEqual(101, botResult.NewQuoteOrderQuantity);
-            Assert.AreEqual(pricePollingEndTime, endTime);
+            Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
         
         [TestMethod]
@@ -95,7 +99,7 @@ namespace CryptoBot.Tests
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
                         s_currency, 0, 1, It.IsAny<List<string>>()))
-                .Returns(Task.FromResult<PollingResponseBase>(gotExceptionPollingResponse));
+                .Throws(new PollingResponseException(gotExceptionPollingResponse));
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
                 currencyBotPhasesExecutorMock.Object, 
@@ -105,12 +109,12 @@ namespace CryptoBot.Tests
                 s_quoteOrderQuantity);
 
             // Act
-           (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Faulted, botResult.BotResult);
             Assert.AreEqual(s_quoteOrderQuantity, botResult.NewQuoteOrderQuantity);
-            Assert.AreEqual(rsiPollingEndTime, endTime);
+            Assert.AreEqual(rsiPollingEndTime, botResult.EndTime);
         }
         
         [TestMethod]
@@ -127,7 +131,7 @@ namespace CryptoBot.Tests
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
                         s_currency, 0, 1, It.IsAny<List<string>>()))
-                .Returns(Task.FromResult<PollingResponseBase>(gotExceptionPollingResponse));
+                .Throws(new PollingResponseException(gotExceptionPollingResponse));
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
                 currencyBotPhasesExecutorMock.Object, 
@@ -137,12 +141,12 @@ namespace CryptoBot.Tests
                 s_quoteOrderQuantity);
 
             // Act
-            (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Faulted, botResult.BotResult);
             Assert.AreEqual(s_quoteOrderQuantity, botResult.NewQuoteOrderQuantity);
-            Assert.AreEqual(rsiPollingEndTime, endTime);
+            Assert.AreEqual(rsiPollingEndTime, botResult.EndTime);
         }
         
         [TestMethod]
@@ -157,9 +161,9 @@ namespace CryptoBot.Tests
             var validateCandleIsGreenStartTime = childStartTime.AddMinutes(14);
             var pricePollingEndTime = validateCandleIsGreenStartTime.AddMinutes(20);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
-            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), 101);
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var currencyBotFactoryMock = SetupChildCurrencyBotMock(childBotDetailsResult, childBotEndTime, cancellationTokenSource, childStartTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), 101, childBotEndTime);
+            var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
             SetupWaitAsyncMethod(currencyBotPhasesExecutorMock, rsiPollingEndTime, cancellationTokenSource, childStartTime, validateCandleIsGreenStartTime);
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
@@ -189,7 +193,9 @@ namespace CryptoBot.Tests
                     It.IsAny<CancellationToken>(), s_currency, basePrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((false,pricePollingResponse)));
-
+            SetupChildCurrencyBotMock(childBotDetailsResult, cancellationTokenSource, childStartTime,
+                currencyBotFactoryMock);
+            
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
                 currencyBotPhasesExecutorMock.Object, 
@@ -199,16 +205,16 @@ namespace CryptoBot.Tests
                 s_quoteOrderQuantity);
 
             // Act
-           (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(BotResult.Loss, botResult.BotResult);
             Assert.AreEqual(99, botResult.NewQuoteOrderQuantity);
-            Assert.AreEqual(pricePollingEndTime, endTime);
+            Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
 
         [TestMethod]
-        public async Task When_StartAsync_Given_ParentNotFinished_Child1Loss_Return_Loss()
+        public async Task When_StartAsync_Given_ParentFinishWithoutBuy_ChildLoss_Return_Loss()
         {
              // Arrange
             var cancellationTokenSource = new CancellationTokenSource();
@@ -217,34 +223,18 @@ namespace CryptoBot.Tests
             var childStartTime = rsiPollingEndTime.AddMinutes(1);
             var validateCandleIsGreenStartTime = childStartTime.AddMinutes(14);
             var currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99);
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), 99, childBotEndTime);
             var childCurrencyBotMock = new Mock<ICurrencyBot>();
             var rsiPollingResponse = new DummyPollingResponse(rsiPollingEndTime);
             childCurrencyBotMock
                 .Setup(m => m.StartAsync())
-                .Returns(Task.FromResult<(BotResultDetails, DateTime)>((childBotDetailsResult, childBotEndTime)));
+                .Returns(Task.FromResult(childBotDetailsResult));
 
             var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
-            currencyBotFactoryMock
-                .Setup(m => m.Create(s_currency, cancellationTokenSource, childStartTime, 100,1))
-                .Returns(childCurrencyBotMock.Object);
-            currencyBotPhasesExecutorMock
-                .Setup(m =>
-                    m.WaitAsync(rsiPollingEndTime,
-                        cancellationTokenSource.Token,
-                        s_currency,
-                        60,
-                        "FullMode_WaitBeforeStartChild"))
-                .Returns(Task.FromResult(childStartTime));
-            currencyBotPhasesExecutorMock
-                .Setup(m =>
-                    m.WaitAsync(childStartTime,
-                        cancellationTokenSource.Token,
-                        s_currency,
-                        14*60,
-                        "FullMode_WaitAfterCandleIsRed"))
-                .Returns(Task.FromResult(validateCandleIsGreenStartTime));
+
+            SetupWaitAsyncMethod(currencyBotPhasesExecutorMock, rsiPollingEndTime, cancellationTokenSource, childStartTime,
+                validateCandleIsGreenStartTime);
 
             currencyBotPhasesExecutorMock
                 .Setup(m =>
@@ -271,7 +261,8 @@ namespace CryptoBot.Tests
                         3,
                         It.IsAny<List<string>>()))
                 .Returns(false);
-
+            SetupChildCurrencyBotMock(childBotDetailsResult, cancellationTokenSource, childStartTime,
+                currencyBotFactoryMock);
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
                 currencyBotPhasesExecutorMock.Object, 
@@ -279,29 +270,30 @@ namespace CryptoBot.Tests
                 cancellationTokenSource, 
                 botStartTime,
                 s_quoteOrderQuantity);
+            
 
             // Act
-           (BotResultDetails botResult, DateTime endTime) = await sut.StartAsync();
+           BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
             Assert.AreEqual(childBotDetailsResult.BotResult, botResult.BotResult);
             Assert.AreEqual(childBotDetailsResult.NewQuoteOrderQuantity, botResult.NewQuoteOrderQuantity);
-            Assert.AreEqual(childBotEndTime, endTime);
+            Assert.AreEqual(childBotEndTime, botResult.EndTime);
         }
 
-        private static Mock<ICurrencyBotFactory> SetupChildCurrencyBotMock(BotResultDetails childBotDetailsResult, DateTime childBotEndTime,
-            CancellationTokenSource cancellationTokenSource, DateTime childStartTime)
+        private void SetupChildCurrencyBotMock(BotResultDetails childBotDetailsResult,
+            CancellationTokenSource cancellationTokenSource, 
+            DateTime childStartTime,
+            Mock<ICurrencyBotFactory> currencyBotFactoryMock)
         {
             var childCurrencyBotMock = new Mock<ICurrencyBot>();
             childCurrencyBotMock
                 .Setup(m => m.StartAsync())
-                .Returns(Task.FromResult<(BotResultDetails, DateTime)>((childBotDetailsResult, childBotEndTime)));
-
-            var currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
+                .Returns(Task.FromResult(childBotDetailsResult));
+            
             currencyBotFactoryMock
                 .Setup(m => m.Create(s_currency, cancellationTokenSource, childStartTime, 100,1))
                 .Returns(childCurrencyBotMock.Object);
-            return currencyBotFactoryMock;
         }
         
         private static void SetupWaitAsyncMethod(Mock<ICurrencyBotPhasesExecutor> currencyBotPhasesExecutorMock, DateTime rsiPollingEndTime,
@@ -310,12 +302,12 @@ namespace CryptoBot.Tests
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitAsync(rsiPollingEndTime, cancellationTokenSource.Token,
-                        s_currency, 60, "FullMode_WaitBeforeStartChild"))
+                        s_currency, 60, "WaitAfterValidateCandleIsRed"))
                 .Returns(Task.FromResult(childStartTime));
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitAsync(childStartTime, cancellationTokenSource.Token, s_currency,
-                        14 * 60, "FullMode_WaitAfterCandleIsRed"))
+                        14 * 60, "WaitBeforeValidateCandleIsGreen"))
                 .Returns(Task.FromResult(validateCandleIsGreenStartTime));
         }
     }

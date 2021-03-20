@@ -9,13 +9,6 @@ namespace CryptoBot.Abstractions
 {
     public interface ICurrencyBotPhasesExecutor
     {
-        Task<PollingResponseBase> WaitUntilRsiIsBelowMaxValueAsync(DateTime currentTime,
-            CancellationToken cancellationToken,
-            string currency,
-            int age,
-            int phaseNumber,
-            List<string> phasesDescription);
-        
         Task<PollingResponseBase> WaitUntilLowerPriceAndHigherRsiAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,

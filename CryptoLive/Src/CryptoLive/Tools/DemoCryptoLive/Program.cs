@@ -105,7 +105,7 @@ namespace DemoCryptoLive
             
             foreach (string currency in appParameters.Currencies)
             {
-                (int winCounter, int lossCounter, string winAndLossDescriptions, decimal quoteOrderQuantity) = await tasks[currency];
+                (int winCounter, int lossCounter, string _, decimal quoteOrderQuantity) = await tasks[currency];
                 total = winCounter + lossCounter;
                 s_logger.LogInformation(
                     $"{currency} Summary: " +
@@ -261,8 +261,8 @@ namespace DemoCryptoLive
                 {
                     var cancellationTokenSource = new CancellationTokenSource();
                     ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime, quoteOrderQuantity);
-                    BotResultDetails botResultDetails;
-                    (botResultDetails, currentTime) = await currencyBot.StartAsync();
+                    BotResultDetails botResultDetails = await currencyBot.StartAsync();
+                    currentTime = botResultDetails.EndTime;
                     switch (botResultDetails.BotResult)
                     {
                         case BotResult.Win:
@@ -286,7 +286,7 @@ namespace DemoCryptoLive
                 }
                 catch (Exception e)
                 {
-                    s_logger.LogError(e.Message);
+                    s_logger.LogError(e, "Bot Failure");
                     gotException = true;
                 }
             }
