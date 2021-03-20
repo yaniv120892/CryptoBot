@@ -19,6 +19,8 @@ namespace CryptoBot.Tests
         private static readonly string s_currency = "CurrencyName";
         private static readonly decimal s_quoteOrderQuantity = 100;
         private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
+        private readonly Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>> m_queueMock =
+            new Mock<ICryptoPriceAndRsiQueue<PriceAndRsi>>();
 
         [TestMethod]
         public async Task When_StartAsync_Given_ParentWin_And_ChildLoss_Return_Win()
@@ -41,7 +43,8 @@ namespace CryptoBot.Tests
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
-                        s_currency, 0, 1, It.IsAny<List<string>>()))
+                        s_currency, 0, 1, It.IsAny<List<string>>(),
+                        It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>()))
                 .Returns(Task.FromResult<PollingResponseBase>(rsiPollingResponse));
             currencyBotPhasesExecutorMock
                 .Setup(m =>
@@ -74,7 +77,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity);
+                s_quoteOrderQuantity,
+                m_queueMock.Object);
             
             // Act
            BotResultDetails botResult = await sut.StartAsync();
@@ -98,7 +102,8 @@ namespace CryptoBot.Tests
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
-                        s_currency, 0, 1, It.IsAny<List<string>>()))
+                        s_currency, 0, 1, It.IsAny<List<string>>(),
+                        It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>()))
                 .Throws(new PollingResponseException(gotExceptionPollingResponse));
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
@@ -106,7 +111,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity);
+                s_quoteOrderQuantity,
+                m_queueMock.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
@@ -130,7 +136,8 @@ namespace CryptoBot.Tests
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
-                        s_currency, 0, 1, It.IsAny<List<string>>()))
+                        s_currency, 0, 1, It.IsAny<List<string>>(),
+                    It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>()))
                 .Throws(new PollingResponseException(gotExceptionPollingResponse));
             var sut = new CurrencyBot(currencyBotFactoryMock.Object, 
                 m_notificationServiceMock.Object,
@@ -138,7 +145,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity);
+                s_quoteOrderQuantity,
+                m_queueMock.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
@@ -170,7 +178,8 @@ namespace CryptoBot.Tests
             currencyBotPhasesExecutorMock
                 .Setup(m =>
                     m.WaitUntilLowerPriceAndHigherRsiAsync(botStartTime, cancellationTokenSource.Token,
-                        s_currency, 0, 1, It.IsAny<List<string>>()))
+                        s_currency, 0, 1, It.IsAny<List<string>>(),
+                        It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>()))
                 .Returns(Task.FromResult<PollingResponseBase>(rsiPollingResponse));
             currencyBotPhasesExecutorMock
                 .Setup(m =>
@@ -202,7 +211,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity);
+                s_quoteOrderQuantity,
+                m_queueMock.Object);
 
             // Act
             BotResultDetails botResult = await sut.StartAsync();
@@ -243,7 +253,8 @@ namespace CryptoBot.Tests
                         s_currency,
                         0,
                         1,
-                        It.IsAny<List<string>>()))
+                        It.IsAny<List<string>>(),
+                        It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>()))
                 .Returns(Task.FromResult<PollingResponseBase>(rsiPollingResponse));
             currencyBotPhasesExecutorMock
                 .Setup(m =>
@@ -269,7 +280,8 @@ namespace CryptoBot.Tests
                 s_currency, 
                 cancellationTokenSource, 
                 botStartTime,
-                s_quoteOrderQuantity);
+                s_quoteOrderQuantity,
+                m_queueMock.Object);
             
 
             // Act
@@ -292,7 +304,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult(childBotDetailsResult));
             
             currencyBotFactoryMock
-                .Setup(m => m.Create(s_currency, cancellationTokenSource, childStartTime, 100,1))
+                .Setup(m => m.Create(It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>(), s_currency, cancellationTokenSource, childStartTime, 100,1))
                 .Returns(childCurrencyBotMock.Object);
         }
         

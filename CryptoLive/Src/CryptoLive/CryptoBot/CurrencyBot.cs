@@ -21,6 +21,7 @@ namespace CryptoBot
         private static readonly int s_waitInSecondsBeforeValidateCandleIsGreen = (15-1)*60;
 
         private readonly ICurrencyBotPhasesExecutor m_currencyBotPhasesExecutor;
+        private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
         private readonly ICurrencyBotFactory m_currencyBotFactory;
         private readonly INotificationService m_notificationService;
         private readonly CancellationTokenSource m_cancellationTokenSource;
@@ -39,6 +40,7 @@ namespace CryptoBot
             CancellationTokenSource cancellationTokenSource,
             DateTime botStartTime, 
             decimal quoteOrderQuantity, 
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
             int age = 0)
         {
             m_currency = currency;
@@ -47,6 +49,7 @@ namespace CryptoBot
             m_cancellationTokenSource = cancellationTokenSource;
             m_currentTime = botStartTime;
             m_quoteOrderQuantity = quoteOrderQuantity;
+            m_cryptoPriceAndRsiQueue = cryptoPriceAndRsiQueue;
             m_age = age;
             m_currencyBotPhasesExecutor = currencyBotPhasesExecutor;
         }
@@ -80,7 +83,7 @@ namespace CryptoBot
                 m_phaseNumber = 0;
                 PollingResponseBase pollingResponseBase = await m_currencyBotPhasesExecutor
                     .WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,
-                        m_age, ++m_phaseNumber, m_phasesDescription);
+                        m_age, ++m_phaseNumber, m_phasesDescription, m_cryptoPriceAndRsiQueue);
                 m_currentTime = pollingResponseBase.Time;
 
                 // Validator
@@ -160,7 +163,8 @@ namespace CryptoBot
         private async Task<BotResultDetails> StartChildAsync()
         {
             s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");
-            ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(m_currency, m_cancellationTokenSource, m_currentTime, m_quoteOrderQuantity, m_age+1);
+            var queue = m_cryptoPriceAndRsiQueue.Clone();
+            ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(queue, m_currency, m_cancellationTokenSource, m_currentTime, m_quoteOrderQuantity, m_age+1);
             return await childCurrencyBot.StartAsync();
         }
     }

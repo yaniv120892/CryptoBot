@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.CryptoQueue;
 using Common.DataStorageObjects;
 using CryptoBot;
 using CryptoBot.Abstractions;
@@ -73,7 +74,7 @@ namespace DemoCryptoLive
             var tasks = new Dictionary<string,Task<(int, int, string, decimal)>>();
             foreach (string currency in appParameters.Currencies)
             {
-                tasks[currency] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency);
+                tasks[currency] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency, appParameters.RsiMemorySize);
             }
 
             await Task.WhenAll(tasks.Values);
@@ -245,7 +246,8 @@ namespace DemoCryptoLive
 
         private static async Task<(int winCounter, int lossCounter, string winAndLossDescriptions, decimal quoteOrderQuantity)>
             RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
-                string currency)
+                string currency, 
+                int appParametersRsiMemorySize)
         {
             int winCounter = 0;
             int lossCounter = 0;
@@ -259,8 +261,9 @@ namespace DemoCryptoLive
             {
                 try
                 {
+                    var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(appParametersRsiMemorySize);
                     var cancellationTokenSource = new CancellationTokenSource();
-                    ICurrencyBot currencyBot = currencyBotFactory.Create(currency, cancellationTokenSource, currentTime, quoteOrderQuantity);
+                    ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, cancellationTokenSource, currentTime, quoteOrderQuantity);
                     BotResultDetails botResultDetails = await currencyBot.StartAsync();
                     currentTime = botResultDetails.EndTime;
                     switch (botResultDetails.BotResult)
