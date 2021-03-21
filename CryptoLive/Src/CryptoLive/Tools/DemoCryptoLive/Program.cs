@@ -273,8 +273,6 @@ namespace DemoCryptoLive
                             winCounter++;
                             winPhaseDetails.Add(botResultDetails.PhasesDescription);
                             break;
-                        case BotResult.Even:
-                            break;
                         case BotResult.Loss:
                             lossCounter++;
                             lossesPhaseDetails.Add(botResultDetails.PhasesDescription);
