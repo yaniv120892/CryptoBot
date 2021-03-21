@@ -8,9 +8,9 @@ using Common.Abstractions;
 using CryptoBot.Abstractions;
 using CryptoBot.Abstractions.Factories;
 using CryptoBot.Exceptions;
+using CryptoBot.Factories;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Utils.Converters;
 
 namespace CryptoBot
 {
@@ -62,14 +62,12 @@ namespace CryptoBot
             }
             catch (PollingResponseException pollingResponseException)
             {
-                return CreateNotSuccessBotResultDetails(pollingResponseException.PollingResponse);
+                return BotResultDetailsFactory.CreateFailureBotResultDetails(pollingResponseException.PollingResponse);
             }
-        }
-
-        private BotResultDetails CreateBotResultDetails(int res, DateTime botEndTime)
-        {
-            BotResult botResult = BotResultConverter.ConvertIntToBotResult(res);
-            return new BotResultDetails(botResult, m_phasesDescription, botEndTime);
+            catch (Exception exception)
+            {
+                return BotResultDetailsFactory.CreateFailureBotResultDetails(m_currentTime, exception);
+            }
         }
 
         private async Task<BotResultDetails> StartAsyncImpl()
@@ -132,28 +130,13 @@ namespace CryptoBot
                 newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnWin;
                 s_logger.LogInformation(
                     $"{m_currency}_{m_age}: Done iteration - Win , NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
-                return CreateBotResultDetails(1, m_currentTime);
+                return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Win, m_currentTime, m_phasesDescription);
             }
 
             newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnLoss;
             s_logger.LogInformation(
                 $"{m_currency}_{m_age}: Done iteration - Loss, NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
-            return CreateBotResultDetails(-1, m_currentTime);
-        }
-
-        private BotResultDetails CreateNotSuccessBotResultDetails(PollingResponseBase pollingResponseBase)
-        {
-            if (pollingResponseBase.IsCancelled)
-            {
-                return CreateBotResultDetails(-2, pollingResponseBase.Time);
-            }
-
-            if (pollingResponseBase.Exception != null)
-            {
-                return CreateBotResultDetails(-2, pollingResponseBase.Time);
-            }
-
-            throw new Exception("Polling is not success but did not got cancellation request or exception");
+            return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Loss, m_currentTime, m_phasesDescription);
         }
 
         private async Task<BotResultDetails> StartChildAsync()

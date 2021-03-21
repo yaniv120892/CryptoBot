@@ -3,7 +3,6 @@
     public enum BotResult
     {
         Loss,
-        Even,
         Win,
         Faulted
     }

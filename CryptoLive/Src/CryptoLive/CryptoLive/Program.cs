@@ -77,7 +77,7 @@ namespace CryptoLive
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
             
-            notificationService.Notify($"Start CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
+            //notificationService.Notify($"Start CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
             for (int i = 0; i < currencyBotTasks.Length; i++)
             {
                 string currency = cryptoLiveParameters.Currencies[i];
@@ -91,7 +91,8 @@ namespace CryptoLive
                     currency, 
                     storageStartTime, 
                     storageCancellationTokenSource,
-                    cryptoLiveParameters.RsiMemorySize);
+                    cryptoLiveParameters.RsiMemorySize, 
+                    notificationService);
             }
 
             await Task.WhenAll(currencyBotTasks);
@@ -128,7 +129,8 @@ namespace CryptoLive
             string currency,
             DateTime storageStartTime,
             CancellationTokenSource storageCancellationTokenSource,
-            int rsiMemorySize)
+            int rsiMemorySize, 
+            INotificationService notificationService)
         {
             DateTime botStartTime = storageStartTime;
             while(!storageCancellationTokenSource.IsCancellationRequested)
@@ -138,13 +140,10 @@ namespace CryptoLive
                 ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, botCancellationTokenSource, botStartTime);
                 BotResultDetails botResultDetails = await currencyBot.StartAsync();
                 botStartTime = botResultDetails.EndTime;
-                if (botResultDetails.BotResult == BotResult.Even)
-                {
-                    continue;
-                }
                 if (botResultDetails.BotResult == BotResult.Faulted)
                 {
                     s_logger.LogWarning("Bot execution was faulted");
+                    notificationService.Notify($"{currency} Bot failed, Error: {botResultDetails.Exception.Message}");
                     break;
                 }
 

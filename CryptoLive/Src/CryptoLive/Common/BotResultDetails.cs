@@ -8,6 +8,7 @@ namespace Common
         public BotResult BotResult { get; }
         public List<string> PhasesDescription { get; }
         public DateTime EndTime { get; }
+        public Exception Exception { get; }
 
         public BotResultDetails(BotResult botResult, 
             List<string> phasesDescription, 
@@ -16,12 +17,24 @@ namespace Common
             BotResult = botResult;
             PhasesDescription = phasesDescription;
             EndTime = endTime;
+            Exception = null;
+        }
+        
+        public BotResultDetails(BotResult botResult,
+            DateTime endTime, Exception exception)
+        {
+            BotResult = botResult;
+            PhasesDescription = new List<string>();
+            EndTime = endTime;
+            Exception = exception;
         }
 
         public override string ToString()
         {
             return $"BotResult: {BotResult}, " +
-                   $"End time: {EndTime}, \nPhases description: {string.Join(",\n", PhasesDescription)}, ";
+                   $"End time: {EndTime}, " +
+                   $"Exception: {Exception?.Message}" +
+                   $"\nPhases description: {string.Join(",\n", PhasesDescription)}, ";
         }
     }
 }
