@@ -145,7 +145,7 @@ namespace CryptoBot
             var queue = m_cryptoPriceAndRsiQueue.Clone();
             ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(queue, 
                 m_currency, 
-                m_cancellationTokenSource,
+                CancellationTokenSource.CreateLinkedTokenSource(m_cancellationTokenSource.Token),
                 m_currentTime, 
                 m_age+1);
             return await childCurrencyBot.StartAsync();
