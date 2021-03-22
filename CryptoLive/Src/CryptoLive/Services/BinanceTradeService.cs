@@ -31,9 +31,10 @@ namespace Services
         public async Task<(decimal buyPrice, decimal quantity)> PlaceBuyMarketOrderAsync(string currency,
             decimal quoteOrderQuantity, DateTime currentTime)
         {
+            decimal quoteOrderQuantityByTickSize = await GetPriceAlignedToTickSizeAsync(currency, quoteOrderQuantity);
             var action = new Func<Task<WebCallResult<BinancePlacedOrder>>>(async () =>
-                await PlaceBuyMarketOrderImplAsync(currency, quoteOrderQuantity));
-            string actionDescription = $"Place Market Buy {quoteOrderQuantity}$ of {currency}";
+                await PlaceBuyMarketOrderImplAsync(currency, quoteOrderQuantityByTickSize));
+            string actionDescription = $"Place Market Buy {quoteOrderQuantityByTickSize}$ of {currency}";
             var response = await ExecuteTradeAndAssert(action, actionDescription);
             (decimal buyPrice, decimal quantity) = ExtractPriceAndFilledQuantity(response);
             s_logger.LogDebug($"{currency}: buy Price: {buyPrice}, quantity: {quantity}");
