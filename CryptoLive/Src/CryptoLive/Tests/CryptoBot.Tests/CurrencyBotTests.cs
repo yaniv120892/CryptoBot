@@ -232,7 +232,7 @@ namespace CryptoBot.Tests
                     It.IsAny<CancellationToken>(), s_currency, s_basePrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((true,pricePollingResponse)));
-            SetupChildCurrencyBotMock(childBotDetailsResult, m_cancellationTokenSource, s_childStartTime,m_currencyBotFactoryMock);
+            SetupChildCurrencyBotMock(childBotDetailsResult, s_childStartTime,m_currencyBotFactoryMock);
             SetupWaitAsyncMethod(m_currencyBotPhasesExecutorMock, s_rsiPollingEndTime, m_cancellationTokenSource, s_childStartTime, 
                 s_validateCandleIsGreenStartTime);
             
@@ -335,7 +335,7 @@ namespace CryptoBot.Tests
                     It.IsAny<CancellationToken>(), s_currency, s_basePrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((false,pricePollingResponse)));
-            SetupChildCurrencyBotMock(childBotDetailsResult, m_cancellationTokenSource, s_childStartTime,
+            SetupChildCurrencyBotMock(childBotDetailsResult, s_childStartTime,
                 m_currencyBotFactoryMock);
             
             ICurrencyBot sut = CreateCurrencyBot();
@@ -389,7 +389,7 @@ namespace CryptoBot.Tests
                         3,
                         It.IsAny<List<string>>()))
                 .Returns(false);
-            SetupChildCurrencyBotMock(childBotDetailsResult, m_cancellationTokenSource, s_childStartTime,
+            SetupChildCurrencyBotMock(childBotDetailsResult, s_childStartTime,
                 m_currencyBotFactoryMock);
             
             ICurrencyBot sut = CreateCurrencyBot();
@@ -416,7 +416,6 @@ namespace CryptoBot.Tests
         }
 
         private static void SetupChildCurrencyBotMock(BotResultDetails childBotDetailsResult,
-            CancellationTokenSource cancellationTokenSource, 
             DateTime childStartTime,
             Mock<ICurrencyBotFactory> currencyBotFactoryMock)
         {
@@ -426,7 +425,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult(childBotDetailsResult));
             
             currencyBotFactoryMock
-                .Setup(m => m.Create(It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>(), s_currency, cancellationTokenSource, childStartTime,1))
+                .Setup(m => m.Create(It.IsAny<ICryptoPriceAndRsiQueue<PriceAndRsi>>(), s_currency, It.IsAny<CancellationTokenSource>(), childStartTime,1))
                 .Returns(childCurrencyBotMock.Object);
         }
         
