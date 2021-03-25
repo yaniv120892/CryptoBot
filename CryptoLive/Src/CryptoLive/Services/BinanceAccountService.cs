@@ -27,8 +27,9 @@ namespace Services
             try
             {
                 BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.General.GetUserCoinsAsync();
-                ResponseHandler.AssertSuccessResponse(response, "GetAvailableUsdt");
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () => await client.General.GetUserCoinsAsync(),
+                    "GetAvailableUsdt");
                 return ExtractAvailableUsdtFromResponse(response);
             }
             catch (Exception e)

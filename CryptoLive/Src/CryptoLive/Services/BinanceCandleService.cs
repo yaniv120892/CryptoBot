@@ -32,8 +32,11 @@ namespace Services
             try
             {
                 BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.Spot.Market.GetKlinesAsync(currency, s_klineInterval, limit: candlesAmount);
-                ResponseHandler.AssertSuccessResponse(response, "GetOneMinuteCandles");
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () => await client.Spot.Market.GetKlinesAsync(currency, 
+                        s_klineInterval, 
+                        limit: candlesAmount)
+                    ,"GetOneMinuteCandles");
                 return ExtractCandlesFromResponse(response, candlesAmount);
             }
             catch (Exception e)
@@ -49,9 +52,10 @@ namespace Services
             try
             {
                 BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.Spot.Market.GetKlinesAsync(currency, s_klineInterval, 
-                    limit:candlesAmount, startTime: startTime);
-                ResponseHandler.AssertSuccessResponse(response, "GetOneMinuteCandles");
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () => await client.Spot.Market.GetKlinesAsync(currency, s_klineInterval, 
+                        limit:candlesAmount, startTime: startTime),
+                    "GetOneMinuteCandles");
                 return ExtractCandlesFromResponse(response, candlesAmount);
             }
             catch (Exception e)
