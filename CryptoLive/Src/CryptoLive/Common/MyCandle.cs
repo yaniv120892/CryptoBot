@@ -80,5 +80,11 @@ namespace Common
                 $"Low = {Low}, " +
                 $"High = {High}";
         }
+
+        public static MyCandle CloneWithNewTime(MyCandle prevCandle, int minutesToAdd)
+        {
+            return new MyCandle(prevCandle.Open, prevCandle.Close, prevCandle.OpenTime.AddMinutes(minutesToAdd), prevCandle.CloseTime.AddMinutes(minutesToAdd),
+                prevCandle.Low, prevCandle.High);
+        }
     }
 }

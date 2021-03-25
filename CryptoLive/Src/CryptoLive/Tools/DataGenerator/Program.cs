@@ -39,23 +39,22 @@ namespace DataGenerator
         {
             string fileName = GetFileName(currency, dataGeneratorParameters.CandlesDataFolder);
             DateTime startTime = dataGeneratorParameters.CandlesStartTime;
-            for (int i = 0; i < 31; i++)
+            for (int i = 0; i < 24; i++)
             {
+                s_logger.LogInformation($"{currency}: Start Download data for {startTime}");
                 MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, startTime)).ToArray();
                 MyCandle[] additionalCandles = (await candleService.GetOneMinuteCandles(currency, startTime.AddHours(12))).ToArray();
             
                 if (File.Exists(fileName))
                 {
                     MyCandle[] oldCandles = CsvFileAccess.ReadCsv<MyCandle>(fileName);
-                    s_logger.LogInformation($"Merge old and new data");
                     var mergedCandles = (oldCandles.Union(newCandles).Union(additionalCandles)).Distinct().ToArray();
                     CsvFileAccess.DeleteFile(fileName);
                     newCandles = mergedCandles;
                 }
 
-                s_logger.LogInformation($"Start write new data to {fileName}");
                 await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Union(additionalCandles).Distinct().ToArray());
-                s_logger.LogInformation($"Done create {fileName}");
+                s_logger.LogInformation($"{currency}: Done Download data for {startTime}");
                 startTime = startTime.AddDays(1);
                 await Task.Delay(s_requestsIntervalInMilliseconds);
             }

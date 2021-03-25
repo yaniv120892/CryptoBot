@@ -62,7 +62,8 @@ namespace DemoCryptoLive
                 deleteOldData: false);
 
             var demoCandleService = new DemoCandleService(appParameters.Currencies, 
-                appParameters.CandlesDataFolder);
+                appParameters.CandlesDataFolder, 
+                StorageWorkerInitialTimeProvider.DefaultStorageEndTime);
             var tradeService = new DemoTradeService(demoCandleService);
 
 
