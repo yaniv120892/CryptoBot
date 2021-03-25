@@ -60,8 +60,9 @@ namespace Services
             try
             {
                 s_logger.LogDebug($"Start {actionDescription}");
-                var response = await action.Invoke();
-                ResponseHandler.AssertSuccessResponse(response, actionDescription);
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () => await action.Invoke(),
+                    actionDescription);
                 s_logger.LogDebug($"Success {actionDescription}");
                 return response;
             }
@@ -129,8 +130,9 @@ namespace Services
             if (!m_symbolToTickSizesMapping.TryGetValue(currency, out decimal tickSizes))
             {
                 BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.Spot.System.GetExchangeInfoAsync();
-                ResponseHandler.AssertSuccessResponse(response, "GetExchangeInfo");
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () =>  await client.Spot.System.GetExchangeInfoAsync(),
+                    "GetExchangeInfo");
                 BinanceSymbol binanceSymbol = ExtractBinanceSymbol(currency, response);
                 tickSizes = ExtractTickSizes(binanceSymbol);
                 m_symbolToTickSizesMapping[currency] = tickSizes;
@@ -144,8 +146,9 @@ namespace Services
             if (!m_symbolToStepSizesMapping.TryGetValue(currency, out decimal stepSizes))
             {
                 BinanceClient client = m_currencyClientFactory.Create();
-                var response = await client.Spot.System.GetExchangeInfoAsync();
-                ResponseHandler.AssertSuccessResponse(response, "GetExchangeInfo");
+                var response = await HttpRequestRetryHandler.RetryOnFailure(
+                    async () =>  await client.Spot.System.GetExchangeInfoAsync(),
+                    "GetExchangeInfo");
                 BinanceSymbol binanceSymbol = ExtractBinanceSymbol(currency, response);
                 stepSizes = ExtractStepSizes(binanceSymbol);
                 m_symbolToStepSizesMapping[currency] = stepSizes;
