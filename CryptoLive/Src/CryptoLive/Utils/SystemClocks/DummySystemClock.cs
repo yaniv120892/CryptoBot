@@ -15,11 +15,14 @@ namespace Utils.SystemClocks
             DateTime currentTime)
         {
             s_logger.LogTrace($"{currency}_{action}: dummy wait for next candle {timeToWaitInSeconds} seconds");
-            if (cancellationToken.IsCancellationRequested)
-            {
-                throw new OperationCanceledException();
-            }
-            //await Task.Delay(1, cancellationToken);
+             //if (cancellationToken.IsCancellationRequested)
+             //{
+             //    throw new OperationCanceledException();
+             //}
+             //return Task.FromResult(currentTime.AddSeconds(timeToWaitInSeconds));
+
+
+            await Task.Delay(1, cancellationToken);
             return currentTime.AddSeconds(timeToWaitInSeconds);
         }
     }
