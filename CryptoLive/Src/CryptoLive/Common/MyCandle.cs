@@ -83,8 +83,35 @@ namespace Common
 
         public static MyCandle CloneWithNewTime(MyCandle prevCandle, int minutesToAdd)
         {
-            return new MyCandle(prevCandle.Open, prevCandle.Close, prevCandle.OpenTime.AddMinutes(minutesToAdd), prevCandle.CloseTime.AddMinutes(minutesToAdd),
+            var candle = new MyCandle(prevCandle.Open, prevCandle.Close, 
+                prevCandle.OpenTime.AddMinutes(minutesToAdd), prevCandle.CloseTime.AddMinutes(minutesToAdd), 
                 prevCandle.Low, prevCandle.High);
+            return GetCandleWithFixedSecondsRange(candle);
+        }
+        
+        public static MyCandle GetCandleWithFixedSecondsRange(MyCandle candle)
+        {
+            if (candle.OpenTime.Second != 0 || candle.CloseTime.Second != 59)
+            {
+                DateTime alignedOpenTime = AlignDateTimeSeconds(candle.OpenTime, 0);
+                DateTime alignedCloseTime = AlignDateTimeSeconds(candle.CloseTime, 59);
+                return new MyCandle(candle.Open, candle.Close, 
+                    alignedOpenTime, alignedCloseTime, 
+                    candle.Low, candle.High);
+            }
+
+            return candle;
+        }
+
+        private static DateTime AlignDateTimeSeconds(DateTime time, int seconds)
+        {
+            if (time.Second != seconds)
+            {
+                return new DateTime(time.Year, time.Month, time.Day, time.Hour, time.Minute,
+                    seconds);
+            }
+            
+            return time;
         }
     }
 }
