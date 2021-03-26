@@ -33,19 +33,20 @@ namespace DemoCryptoLive
                 foreach (MyCandle candle in candles)
                 {
                     int minutesToAdd = 1;
-                    while (prevCandle.CloseTime.AddMinutes(minutesToAdd) < candle.CloseTime)
+                    MyCandle candleWithFixedSecondsRange = MyCandle.GetCandleWithFixedSecondsRange(candle);
+                    while (prevCandle.CloseTime.AddMinutes(minutesToAdd) < candleWithFixedSecondsRange.CloseTime)
                     {
                         dateTimeToCandle[prevCandle.CloseTime.AddMinutes(minutesToAdd)] = 
                             MyCandle.CloneWithNewTime(prevCandle, minutesToAdd);
                         minutesToAdd++;
                     }
-                    dateTimeToCandle[candle.CloseTime] = candle;
-                    prevCandle = candle;
+                    dateTimeToCandle[candleWithFixedSecondsRange.CloseTime] = candleWithFixedSecondsRange;
+                    prevCandle = candleWithFixedSecondsRange;
                 }
                 m_mapCurrencyToCandle[currency] = dateTimeToCandle;
             }
         }
-        
+
         public Task<Memory<MyCandle>> GetOneMinuteCandles(string currency, int candlesAmount, DateTime currentTime)
         {
             Memory<MyCandle> ans = new MyCandle[candlesAmount];
