@@ -23,7 +23,7 @@ namespace CryptoBot.CryptoValidators
         {
             string message;
             MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, currentTime);
-            if (currCandle.Close < currCandle.Open)
+            if (currCandle.Close < currCandle.Open * (decimal)0.98)
             {
                 message = $"{currency} {s_actionName} done, {currCandle} ,{currentTime}";
                 s_logger.LogInformation(message);
