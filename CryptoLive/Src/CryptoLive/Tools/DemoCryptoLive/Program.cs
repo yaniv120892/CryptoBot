@@ -265,7 +265,9 @@ namespace DemoCryptoLive
                 {
                     var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(appParametersRsiMemorySize);
                     var cancellationTokenSource = new CancellationTokenSource();
-                    ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, cancellationTokenSource, currentTime);
+                    var parentCancellationToken = new Queue<CancellationToken>();
+                    ICurrencyBot currencyBot = currencyBotFactory.Create(queue, parentCancellationToken,
+                        currency, cancellationTokenSource, currentTime);
                     BotResultDetails botResultDetails = await currencyBot.StartAsync();
                     currentTime = botResultDetails.EndTime;
                     switch (botResultDetails.BotResult)
