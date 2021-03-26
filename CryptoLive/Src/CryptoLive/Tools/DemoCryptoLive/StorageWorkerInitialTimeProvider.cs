@@ -1,25 +1,28 @@
 using System;
-using System.Globalization;
 using Common.DataStorageObjects;
 using Storage.Abstractions.Repository;
-using Utils;
 
 namespace DemoCryptoLive
 {
     internal class StorageWorkerInitialTimeProvider
     {
-        internal static readonly DateTime DefaultStorageInitialTime = DateTime.ParseExact("01/01/2021 12:00:00", CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
-        internal static readonly DateTime DefaultStorageEndTime = DateTime.ParseExact("25/03/2021 02:00:00", CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
-
-        internal static DateTime GetStorageInitialTime(string currency, IRepository<CandleStorageObject> candleRepository)
+        internal static DateTime GetStorageInitialTime(string currency, 
+            IRepository<CandleStorageObject> candleRepository,
+            DateTime defaultStorageInitialTime,
+            DateTime storageWorkerEndTime)
         {
             DateTime lastSavedCandleTime = candleRepository.GetLastByTime(currency);
             if (default == lastSavedCandleTime)
             {
-                return DefaultStorageInitialTime;
+                return defaultStorageInitialTime;
             }
 
-            return lastSavedCandleTime;
+            if (lastSavedCandleTime < storageWorkerEndTime)
+            {
+                return lastSavedCandleTime;
+            }
+            
+            return storageWorkerEndTime;
         }
     }
 }

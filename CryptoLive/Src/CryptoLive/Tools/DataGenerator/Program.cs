@@ -16,7 +16,8 @@ namespace DataGenerator
     {
         private static readonly string s_configFile = "appsettings.json";
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
-        private static readonly int s_requestsIntervalInMilliseconds = 5 * 1000;
+        private static readonly int s_requestsIntervalInMilliseconds = 1 * 1000;
+        
         public static async Task Main(string[] args)
         {
             DataGeneratorParameters dataGeneratorParameters = AppParametersLoader<DataGeneratorParameters>.Load(s_configFile);
@@ -38,24 +39,24 @@ namespace DataGenerator
             ICandlesService candleService)
         {
             string fileName = GetFileName(currency, dataGeneratorParameters.CandlesDataFolder);
-            DateTime startTime = dataGeneratorParameters.CandlesStartTime;
-            for (int i = 0; i < 24; i++)
+            DateTime currentTime = dataGeneratorParameters.CandlesStartTime;
+            DateTime endTime = dataGeneratorParameters.CandlesEndTime;
+            while(currentTime < endTime)
             {
-                s_logger.LogInformation($"{currency}: Start Download data for {startTime}");
-                MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, startTime)).ToArray();
-                MyCandle[] additionalCandles = (await candleService.GetOneMinuteCandles(currency, startTime.AddHours(12))).ToArray();
+                s_logger.LogInformation($"{currency}: Start Download data for {currentTime}");
+                MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, currentTime)).ToArray();
             
                 if (File.Exists(fileName))
                 {
                     MyCandle[] oldCandles = CsvFileAccess.ReadCsv<MyCandle>(fileName);
-                    var mergedCandles = (oldCandles.Union(newCandles).Union(additionalCandles)).Distinct().ToArray();
+                    var mergedCandles = oldCandles.Union(newCandles).Distinct().ToArray();
                     CsvFileAccess.DeleteFile(fileName);
                     newCandles = mergedCandles;
                 }
 
-                await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Union(additionalCandles).Distinct().ToArray());
-                s_logger.LogInformation($"{currency}: Done Download data for {startTime}");
-                startTime = startTime.AddDays(1);
+                await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Distinct().ToArray());
+                s_logger.LogInformation($"{currency}: Done Download data for {currentTime}");
+                currentTime = currentTime.AddMinutes(999);
                 await Task.Delay(s_requestsIntervalInMilliseconds);
             }
         }

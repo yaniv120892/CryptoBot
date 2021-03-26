@@ -12,6 +12,7 @@ namespace DataGenerator
         public string CandlesDataFolder { get; }
         public string[] Currencies { get; }
         public DateTime CandlesStartTime { get; }
+        public DateTime CandlesEndTime { get; }
 
         public DataGeneratorParameters(IConfigurationSection applicationSection)
         {
@@ -20,6 +21,8 @@ namespace DataGenerator
             CandlesDataFolder = applicationSection[nameof(CandlesDataFolder)];
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             CandlesStartTime = DateTime.ParseExact(applicationSection[nameof(CandlesStartTime)], 
+                CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
+            CandlesEndTime = DateTime.ParseExact(applicationSection[nameof(CandlesEndTime)], 
                 CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
         }
     }
