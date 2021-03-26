@@ -17,6 +17,7 @@ namespace CryptoBot
     public class CurrencyBotPhasesExecutor : ICurrencyBotPhasesExecutor
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CurrencyBotPhasesExecutor>();
+        private static readonly decimal s_transactionFee = new decimal(0.2);
 
         private readonly ICryptoBotPhasesFactory m_cryptoBotPhasesFactory;
         private readonly int m_redCandleSize;
@@ -142,8 +143,8 @@ namespace CryptoBot
             IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateMarketBuyCryptoTrader();
             (decimal buyPrice, decimal quantity) = await buyCryptoTrader.Buy(currency, quoteOrderQuantity, currentTime);
             ISellCryptoTrader sellCryptoTrader = m_cryptoBotPhasesFactory.CreateOcoSellCryptoTrader();
-            decimal sellPrice = buyPrice * (100 + m_priceChangeToNotify) / 100;
-            decimal stopAndLimitPrice = buyPrice * (100 - m_priceChangeToNotify) / 100;
+            decimal sellPrice = buyPrice * (100 + m_priceChangeToNotify + s_transactionFee) / 100;
+            decimal stopAndLimitPrice = buyPrice * (100 - m_priceChangeToNotify + s_transactionFee) / 100;
             await sellCryptoTrader.PlaceSellOcoOrderAsync(currency, quantity, sellPrice, stopAndLimitPrice);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
                                     $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice} {currentTime}");
