@@ -37,5 +37,10 @@ namespace Common.Abstractions
         {
             return HashCode.Combine(Time, IsCancelled, Exception);
         }
+
+        public override string ToString()
+        {
+            return $"Time: {Time}";
+        }
     }
 }

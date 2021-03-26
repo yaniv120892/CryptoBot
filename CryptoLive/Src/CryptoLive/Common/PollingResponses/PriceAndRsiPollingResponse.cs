@@ -21,7 +21,7 @@ namespace Common.PollingResponses
         
         public override string ToString()
         {
-            return $"New: {NewPriceAndRsi}, Old: {OldPriceAndRsi}";
+            return $"{base.ToString()}, New: {NewPriceAndRsi}, Old: {OldPriceAndRsi}";
         }
 
         public bool Equals(PriceAndRsiPollingResponse other)
