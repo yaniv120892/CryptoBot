@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Common.Abstractions;
 using Common.PollingResponses;
 using CryptoBot.Abstractions;
+using CryptoExchange.Net;
 using Infra;
 using Microsoft.Extensions.Logging;
 using Storage.Abstractions.Providers;
@@ -22,15 +24,23 @@ namespace CryptoBot.CryptoPollings
         private readonly ISystemClock m_systemClock;
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
         private readonly decimal m_maxRsiToNotify;
-        
+        private readonly Queue<CancellationToken> m_parentRunningCancellationToken;
+        private readonly int m_iterationUntilWaitForParentCancellationToken;
+
+        private int m_doneIterations;
+
         public PriceAndRsiCryptoPolling(ICurrencyDataProvider currencyDataProvider,
             ISystemClock systemClock,
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
-            decimal maxRsiToNotify)
+            decimal maxRsiToNotify,
+            Queue<CancellationToken> parentRunningCancellationToken,
+            int iterationUntilWaitForParentCancellationToken)
         {
             m_currencyDataProvider = currencyDataProvider;
             m_systemClock = systemClock;
             m_maxRsiToNotify = maxRsiToNotify;
+            m_parentRunningCancellationToken = parentRunningCancellationToken;
+            m_iterationUntilWaitForParentCancellationToken = iterationUntilWaitForParentCancellationToken;
             m_cryptoPriceAndRsiQueue = cryptoPriceAndRsiQueue;
             PollingType = nameof(PriceAndRsiCryptoPolling);
         }
@@ -45,6 +55,7 @@ namespace CryptoBot.CryptoPollings
                 m_cryptoPriceAndRsiQueue.Enqueue(currentPriceAndRsi);
                 CurrentTime = await m_systemClock.Wait(cancellationToken, Currency, s_timeToWaitInSeconds, s_actionName,
                     CurrentTime);
+                await WaitForParentToFinishIfNeeded(cancellationToken);
                 currentPriceAndRsi = m_currencyDataProvider.GetRsiAndClosePrice(Currency, CurrentTime);
                 s_logger.LogTrace($"{Currency}: {currentPriceAndRsi}");
             }
@@ -52,7 +63,20 @@ namespace CryptoBot.CryptoPollings
             var rsiAndPricePollingResponse = new PriceAndRsiPollingResponse(CurrentTime, oldPriceAndRsi ,currentPriceAndRsi);
             return rsiAndPricePollingResponse;
         }
-        
+
+        private async ValueTask WaitForParentToFinishIfNeeded(CancellationToken cancellationToken)
+        {
+            m_doneIterations++;
+            int runningParentsCount = m_parentRunningCancellationToken.Count;
+            if (runningParentsCount == 0 
+                || runningParentsCount + m_doneIterations < m_iterationUntilWaitForParentCancellationToken)
+            {
+                return;
+            }
+
+            await m_parentRunningCancellationToken.Dequeue().WaitHandle.WaitOneAsync(int.MaxValue, cancellationToken);
+        }
+
         private bool ShouldContinuePolling(PriceAndRsi priceAndRsi, out PriceAndRsi oldPriceAndRsi)
         {
             oldPriceAndRsi = null;

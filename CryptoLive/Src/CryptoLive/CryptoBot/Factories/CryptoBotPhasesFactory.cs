@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using Common;
 using Common.Abstractions;
 using CryptoBot.Abstractions;
@@ -36,27 +37,23 @@ namespace CryptoBot.Factories
             decimal maxPrice = basePrice * (100 + priceChangeToNotify) / 100;
             return new CandleCryptoPolling(CurrencyDataProvider, SystemClock, delayTimeIterationsInSeconds, candleSize, minPrice, maxPrice);
         }
-
-        public CryptoPollingBase CreatePriceAndRsiPolling(int candleSize,
-            decimal maxRsiToNotify,
-            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue) =>
-            new PriceAndRsiCryptoPolling(CurrencyDataProvider, SystemClock, cryptoPriceAndRsiQueue, maxRsiToNotify);
-
-        public CryptoPollingBase CreateMacdPolling(int macdCandleSize, int maxMacdPollingTime) => 
-            new MacdHistogramCryptoPolling(CurrencyDataProvider, SystemClock, maxMacdPollingTime);
-
-        public CryptoPollingBase CreateRsiPolling(decimal maxRsiToNotify) => 
-            new RsiCryptoPolling(CurrencyDataProvider, SystemClock, maxRsiToNotify);
         
-        
+        public CryptoPollingBase CreatePriceAndRsiPolling(decimal maxRsiToNotify,
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
+            Queue<CancellationToken> parentRunningCancellationToken,
+            int iterationToRunBeforeWaitingForParentToFinish) =>
+            new PriceAndRsiCryptoPolling(CurrencyDataProvider, 
+                SystemClock, 
+                cryptoPriceAndRsiQueue, 
+                maxRsiToNotify, 
+                parentRunningCancellationToken,
+                iterationToRunBeforeWaitingForParentToFinish);
+
         public RedCandleValidator CreateRedCandleValidator(int candleSize) =>
             new RedCandleValidator(CurrencyDataProvider);
 
         public GreenCandleValidator CreateGreenCandleValidator(int candleSize) =>
             new GreenCandleValidator(CurrencyDataProvider);
-
-        public MacdHistogramNegativeValidator CreateMacdNegativeValidator(int macdCandleSize) => 
-            new MacdHistogramNegativeValidator(CurrencyDataProvider);
 
         public IBuyCryptoTrader CreateMarketBuyCryptoTrader() => new MarketBuyCryptoTrader(m_tradeService);
         public ISellCryptoTrader CreateOcoSellCryptoTrader() => new OcoSellCryptoTrader(m_tradeService);

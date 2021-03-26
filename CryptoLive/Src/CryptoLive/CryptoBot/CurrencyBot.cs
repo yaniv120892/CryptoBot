@@ -26,9 +26,12 @@ namespace CryptoBot
         private readonly INotificationService m_notificationService;
         private readonly IAccountQuoteProvider m_accountQuoteProvider;
         private readonly CancellationTokenSource m_cancellationTokenSource;
+        private readonly CancellationTokenSource m_isRunningCancellationTokenSource;
         private readonly int m_age;
         private readonly string m_currency;
+        private readonly Queue<CancellationToken> m_parentRunningCancellationToken;
 
+        private Task<BotResultDetails> m_child;
         private DateTime m_currentTime;
         private int m_phaseNumber;
         private List<string> m_phasesDescription;
@@ -41,6 +44,7 @@ namespace CryptoBot
             DateTime botStartTime, 
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue, 
             IAccountQuoteProvider accountQuoteProvider, 
+            Queue<CancellationToken> parentRunningCancellationToken, 
             int age = 0)
         {
             m_currency = currency;
@@ -50,30 +54,51 @@ namespace CryptoBot
             m_currentTime = botStartTime;
             m_cryptoPriceAndRsiQueue = cryptoPriceAndRsiQueue;
             m_accountQuoteProvider = accountQuoteProvider;
+            m_parentRunningCancellationToken = parentRunningCancellationToken;
             m_age = age;
             m_currencyBotPhasesExecutor = currencyBotPhasesExecutor;
+            m_isRunningCancellationTokenSource = new CancellationTokenSource();
         }
         
         public async Task<BotResultDetails> StartAsync()
         {
+            BotResultDetails botResultDetails;
             try
             {
-                return await StartAsyncImpl();
+                botResultDetails = await StartAsyncImpl();
             }
             catch (PollingResponseException pollingResponseException)
             {
-                return BotResultDetailsFactory.CreateFailureBotResultDetails(pollingResponseException.PollingResponse);
+                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(pollingResponseException.PollingResponse);
             }
             catch (Exception exception)
             {
-                return BotResultDetailsFactory.CreateFailureBotResultDetails(m_currentTime, exception);
+                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(m_currentTime, exception);
             }
+            finally
+            {
+                StopRunningChildren();
+            }
+
+            return botResultDetails;
         }
 
         private async Task<BotResultDetails> StartAsyncImpl()
         {
             s_logger.LogInformation($"{m_currency}_{m_age}: Start iteration");
 
+            if (await WaitForSignal())
+            {
+                StopRunningChildren();
+                return await OnFoundSignal();
+            }
+
+            ReleaseWaitingChildren();
+            return await m_child;
+        }
+
+        private async Task<bool> WaitForSignal()
+        {
             bool isCandleRed = false;
             while (!isCandleRed)
             {
@@ -81,7 +106,8 @@ namespace CryptoBot
                 m_phaseNumber = 0;
                 PollingResponseBase pollingResponseBase = await m_currencyBotPhasesExecutor
                     .WaitUntilLowerPriceAndHigherRsiAsync(m_currentTime, m_cancellationTokenSource.Token, m_currency,
-                        m_age, ++m_phaseNumber, m_phasesDescription, m_cryptoPriceAndRsiQueue);
+                        m_age, ++m_phaseNumber, m_phasesDescription, m_cryptoPriceAndRsiQueue,
+                        m_parentRunningCancellationToken);
                 m_currentTime = pollingResponseBase.Time;
 
                 // Validator
@@ -92,37 +118,35 @@ namespace CryptoBot
                     "WaitAfterValidateCandleIsRed");
             }
 
-            Task<BotResultDetails> child = StartChildAsync();
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime, 
+            m_child = StartChildAsync();
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime,
                 m_cancellationTokenSource.Token,
                 m_currency,
-                s_waitInSecondsBeforeValidateCandleIsGreen, 
+                s_waitInSecondsBeforeValidateCandleIsGreen,
                 "WaitBeforeValidateCandleIsGreen");
-            
-            bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age, 
-                ++m_phaseNumber, m_phasesDescription);
-            if(!isCandleGreen)
-            {
-                s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is not green");
-                return await child;
-            }
 
-            return await OnParentStopRunning();
+            bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age,
+                ++m_phaseNumber, m_phasesDescription);
+            s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is green {isCandleGreen}");
+
+            return isCandleGreen;
         }
 
-        private async Task<BotResultDetails> OnParentStopRunning()
+        private void ReleaseWaitingChildren()
         {
-            m_cancellationTokenSource.Cancel();
+            m_isRunningCancellationTokenSource.Cancel();
+        }
+
+        private async Task<BotResultDetails> OnFoundSignal()
+        {
             // Enter
-            decimal availableQuote = await m_accountQuoteProvider.GetAvailableQuote();
-            BuyAndSellTradeInfo buyAndSellTradeInfo = await m_currencyBotPhasesExecutor.BuyAndPlaceSellOrder(m_currentTime,
-                m_currency, m_age, ++m_phaseNumber, m_phasesDescription, availableQuote);
-            m_notificationService.Notify($"{string.Join("\n\n", m_phasesDescription)}\n\n" +
-                                         $"\tBot buy {m_currency} at price: {buyAndSellTradeInfo.BuyPrice}");
-            (bool isWin, PollingResponseBase pollingResponseBase) = 
-                await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None, 
-                    m_currency, buyAndSellTradeInfo.BuyPrice, m_age, ++m_phaseNumber, m_phasesDescription);
-            m_currentTime = pollingResponseBase.Time;
+            var buyAndSellTradeInfo = await PlaceBuyAndSellOrder();
+            var isWin = await WaitForOpenOrdersToBeFilled(buyAndSellTradeInfo);
+            return GetBotResultDetails(isWin, buyAndSellTradeInfo);
+        }
+
+        private BotResultDetails GetBotResultDetails(bool isWin, BuyAndSellTradeInfo buyAndSellTradeInfo)
+        {
             decimal newQuoteOrderQuantity;
             m_notificationService.Notify(m_phasesDescription.LastOrDefault());
             if (isWin)
@@ -139,15 +163,44 @@ namespace CryptoBot
             return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Loss, m_currentTime, m_phasesDescription);
         }
 
+        private async Task<bool> WaitForOpenOrdersToBeFilled(BuyAndSellTradeInfo buyAndSellTradeInfo)
+        {
+            (bool isWin, PollingResponseBase pollingResponseBase) =
+                await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None,
+                    m_currency, buyAndSellTradeInfo.BuyPrice, m_age, ++m_phaseNumber, m_phasesDescription);
+            m_currentTime = pollingResponseBase.Time;
+            return isWin;
+        }
+
+        private async Task<BuyAndSellTradeInfo> PlaceBuyAndSellOrder()
+        {
+            decimal availableQuote = await m_accountQuoteProvider.GetAvailableQuote();
+            BuyAndSellTradeInfo buyAndSellTradeInfo = await m_currencyBotPhasesExecutor.BuyAndPlaceSellOrder(m_currentTime,
+                m_currency, m_age, ++m_phaseNumber, m_phasesDescription, availableQuote);
+            m_notificationService.Notify($"{string.Join("\n\n", m_phasesDescription)}\n\n" +
+                                         $"\tBot buy {m_currency} at price: {buyAndSellTradeInfo.BuyPrice}");
+            return buyAndSellTradeInfo;
+        }
+
+        private void StopRunningChildren()
+        {
+            m_cancellationTokenSource.Cancel();
+        }
+
         private async Task<BotResultDetails> StartChildAsync()
         {
             s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");
-            var queue = m_cryptoPriceAndRsiQueue.Clone();
-            ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(queue, 
+            var cryptoPriceAndRsiQueue = m_cryptoPriceAndRsiQueue.Clone();
+            var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(m_cancellationTokenSource.Token);
+            m_parentRunningCancellationToken.Enqueue(m_isRunningCancellationTokenSource.Token);
+            int childAge = m_age + 1;
+            
+            ICurrencyBot childCurrencyBot = m_currencyBotFactory.Create(cryptoPriceAndRsiQueue,
+                m_parentRunningCancellationToken,
                 m_currency, 
-                CancellationTokenSource.CreateLinkedTokenSource(m_cancellationTokenSource.Token),
+                linkedCancellationTokenSource,
                 m_currentTime, 
-                m_age+1);
+                childAge);
             return await childCurrencyBot.StartAsync();
         }
     }

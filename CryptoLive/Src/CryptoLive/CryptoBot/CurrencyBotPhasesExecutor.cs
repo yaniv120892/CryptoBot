@@ -19,7 +19,6 @@ namespace CryptoBot
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CurrencyBotPhasesExecutor>();
 
         private readonly ICryptoBotPhasesFactory m_cryptoBotPhasesFactory;
-        private readonly int m_rsiCandleSize;
         private readonly int m_redCandleSize;
         private readonly int m_greenCandleSize;
         private readonly int m_priceChangeDelayTimeIterationsInSeconds;
@@ -30,7 +29,6 @@ namespace CryptoBot
 
         public CurrencyBotPhasesExecutor(ICryptoBotPhasesFactory cryptoBotPhasesFactory, 
             decimal maxRsiToNotify, 
-            int rsiCandleSize, 
             int redCandleSize, 
             int greenCandleSize, 
             int priceChangeDelayTimeIterationsInSeconds, 
@@ -40,7 +38,6 @@ namespace CryptoBot
         {
             m_cryptoBotPhasesFactory = cryptoBotPhasesFactory;
             m_maxRsiToNotify = maxRsiToNotify;
-            m_rsiCandleSize = rsiCandleSize;
             m_redCandleSize = redCandleSize;
             m_greenCandleSize = greenCandleSize;
             m_priceChangeDelayTimeIterationsInSeconds = priceChangeDelayTimeIterationsInSeconds;
@@ -55,12 +52,14 @@ namespace CryptoBot
             int age, 
             int phaseNumber, 
             List<string> phasesDescription, 
-            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue)
+            ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
+            Queue<CancellationToken> parentRunningCancellationToken)
         {
             s_logger.LogInformation(
                 $"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
             CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory
-                .CreatePriceAndRsiPolling(m_rsiCandleSize, m_maxRsiToNotify, cryptoPriceAndRsiQueue);
+                .CreatePriceAndRsiPolling(m_maxRsiToNotify, cryptoPriceAndRsiQueue, parentRunningCancellationToken, 
+                    m_greenCandleSize-parentRunningCancellationToken.Count);
             PollingResponseBase responseBase =
                 await priceAndRsiPolling.StartAsync(currency, cancellationToken, currentTime);
             AssertSuccessPolling(responseBase);

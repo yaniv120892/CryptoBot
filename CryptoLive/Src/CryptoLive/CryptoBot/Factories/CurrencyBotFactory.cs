@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Common;
 using Common.Abstractions;
@@ -23,17 +24,42 @@ namespace CryptoBot.Factories
             m_accountQuoteProvider = accountQuoteProvider;
         }
 
-        public ICurrencyBot Create(ICryptoPriceAndRsiQueue<PriceAndRsi> queue, string currency,
+        public ICurrencyBot Create(ICryptoPriceAndRsiQueue<PriceAndRsi> queue,
+            Queue<CancellationToken> parentRunningCancellationToken,
+            string currency,
             CancellationTokenSource cancellationTokenSource,
-            DateTime botStartTime, int age)
-            => new CurrencyBot(this, 
+            DateTime botStartTime, 
+            int age)
+        {
+            var currencyBot = new CurrencyBot(this,
                 m_notificationService,
-                m_currencyBotPhasesExecutor, 
-                currency, 
-                cancellationTokenSource, 
+                m_currencyBotPhasesExecutor,
+                currency,
+                cancellationTokenSource,
                 botStartTime,
                 queue,
                 m_accountQuoteProvider,
+                CreateCloneQueue(parentRunningCancellationToken),
                 age);
+            return currencyBot;
+        }
+
+        private static Queue<CancellationToken> CreateCloneQueue(Queue<CancellationToken> parentRunningCancellationToken)
+        {
+            var cloneQueue = new Queue<CancellationToken>();
+            if (parentRunningCancellationToken.Count == 0)
+            {
+                return cloneQueue;
+            }
+            var arr = new CancellationToken[parentRunningCancellationToken.Count];
+            parentRunningCancellationToken.CopyTo(arr, 0);
+            int i = 0;
+            while (i < arr.Length)
+            {
+                cloneQueue.Enqueue(arr[i]);
+                i++;
+            }
+            return cloneQueue;
+        }
     }
 }

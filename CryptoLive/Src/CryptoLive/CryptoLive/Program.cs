@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -137,7 +138,9 @@ namespace CryptoLive
             {
                 var botCancellationTokenSource = new CancellationTokenSource();
                 var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
-                ICurrencyBot currencyBot = currencyBotFactory.Create(queue, currency, botCancellationTokenSource, botStartTime);
+                var isParentsRunningCancellationToken = new Queue<CancellationToken>();
+                ICurrencyBot currencyBot = currencyBotFactory.Create(queue, isParentsRunningCancellationToken, 
+                    currency, botCancellationTokenSource, botStartTime);
                 BotResultDetails botResultDetails = await currencyBot.StartAsync();
                 botStartTime = botResultDetails.EndTime;
                 if (botResultDetails.BotResult == BotResult.Faulted)
