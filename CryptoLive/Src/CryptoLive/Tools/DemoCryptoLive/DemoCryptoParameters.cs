@@ -1,5 +1,8 @@
-﻿using Common.Abstractions;
+﻿using System;
+using System.Globalization;
+using Common.Abstractions;
 using Microsoft.Extensions.Configuration;
+using Utils;
 
 namespace DemoCryptoLive
 {
@@ -8,13 +11,15 @@ namespace DemoCryptoLive
         public string BinanceApiKey { get; }
         public string BinanceApiSecretKey { get; }
         public string[] Currencies { get; }
-        public string CandlesDataFolder { get; set; }
-        public int RsiSize { get; set; }
-        public int FastEmaSize { get; set; }
-        public int SlowEmaSize { get; set; }
-        public int SignalSize { get; set; }
-        public int MaxMacdPollingTime { get; set; }
-        public string CalculatedDataFolder { get; set; }
+        public string CandlesDataFolder { get; }
+        public int RsiSize { get; }
+        public int FastEmaSize { get;  }
+        public int SlowEmaSize { get;  }
+        public int SignalSize { get; }
+        public int MaxMacdPollingTime { get; }
+        public string CalculatedDataFolder { get; }
+        public DateTime BotStartTime { get; }
+        public DateTime BotEndTime { get; }
 
 
         public DemoCryptoParameters(IConfigurationSection applicationSection):base(applicationSection)
@@ -29,11 +34,17 @@ namespace DemoCryptoLive
             SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
             SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
             MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
+            BotStartTime = DateTime.ParseExact(applicationSection[nameof(BotStartTime)], 
+                CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
+            BotEndTime = DateTime.ParseExact(applicationSection[nameof(BotEndTime)], 
+                CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
         }
 
         public override string ToString()
         {
-            return $"Candle size in minutes: {CandleSize}, " +
+            return $"Bot start time: {BotStartTime}, " +
+                   $"Bot end time: {BotEndTime}, " +
+                   $"Candle size in minutes: {CandleSize}, " +
                    $"Price change to notify: {PriceChangeToNotify}, " +
                    $"Max rsi to notify: {MaxRsiToNotify}, " +
                    $"Rsi size : {RsiSize}, " +
