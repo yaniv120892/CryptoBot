@@ -76,7 +76,7 @@ namespace DemoCryptoLive
             }
 
             await Task.WhenAll(tasks.Values);
-            await PrintResults(tasks);
+            await ReportGenerator.GenerateReport(tasks, s_appParameters.Currencies, s_appParameters.PriceChangeToNotify);
         }
 
         private static ICurrencyBotFactory CreateCurrencyBotFactory(RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository,
@@ -93,63 +93,6 @@ namespace DemoCryptoLive
             var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, new EmptyNotificationService(), accountQuoteProvider);
             return currencyBotFactory;
         }
-
-        private static async Task PrintResults(Dictionary<string, Task<(int, int, string, decimal)>> tasks)
-        {
-            int totalWinCounter = 0;
-            int totalLossCounter = 0;
-            decimal totalEndQuoteOrderQuantity = 0;
-            decimal totalInitialQuoteOrderQuantity = s_initialQuoteOrderQuantity * s_appParameters.Currencies.Length;
-            int total;
-            
-            foreach (string currency in s_appParameters.Currencies)
-            {
-                (int winCounter, int lossCounter, string _, decimal quoteOrderQuantity) = await tasks[currency];
-                total = winCounter + lossCounter;
-                s_logger.LogInformation(
-                    $"{currency} Summary: " +
-                    $"Success {CalculateSuccess(winCounter, total)}%, " +
-                    $"Return {CalculateReturn(quoteOrderQuantity, s_initialQuoteOrderQuantity)}%, " +
-                    $"QuoteOrderQuantity: {quoteOrderQuantity}$, " +
-                    $"Win - {winCounter}, " +
-                    $"Loss {lossCounter}, " +
-                    $"Total {total}");
-                //s_logger.LogInformation(winAndLossDescriptions);
-                totalWinCounter += winCounter;
-                totalLossCounter += lossCounter;
-                totalEndQuoteOrderQuantity += quoteOrderQuantity;
-            }
-
-            total = totalWinCounter + totalLossCounter;
-            decimal totalSuccess = CalculateSuccess(totalWinCounter, total);
-            decimal totalReturn = CalculateReturn(totalEndQuoteOrderQuantity, totalInitialQuoteOrderQuantity);
-            s_logger.LogInformation(
-                $"Final Summary: " +
-                $"Success: {totalSuccess}%, " +
-                $"Return: {totalReturn}%, " +
-                $"QuoteOrderQuantity: {totalEndQuoteOrderQuantity}$, " +
-                $"Win - {totalWinCounter}, " +
-                $"Loss {totalLossCounter}, " +
-                $"Total {total}");
-        }
-
-        private static decimal CalculateReturn(decimal endQuantity,
-            decimal initialQuantity)
-        {
-            if (endQuantity == initialQuantity)
-            {
-                return 0;
-            }
-            if (endQuantity > initialQuantity)
-            {
-                return Math.Round(((endQuantity - initialQuantity) / initialQuantity) * 100, 3);
-            }
-            
-            return Math.Round(((initialQuantity - endQuantity) / initialQuantity) * 100, 3)*(-1);
-        }
-
-        private static decimal CalculateSuccess(int winCounter, int winAndLossCounter) => 
-            winAndLossCounter == 0 ? 0 : winCounter * 100 / winAndLossCounter;
 
         private static async Task RunStorageWorkers(IRepository<MacdStorageObject> macdRepository,
             IRepository<RsiStorageObject> rsiRepository,
