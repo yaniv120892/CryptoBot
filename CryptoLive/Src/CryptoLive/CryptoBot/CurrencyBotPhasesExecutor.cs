@@ -134,6 +134,9 @@ namespace CryptoBot
             string action) =>
             m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken,currency,timeToWaitInSeconds, action, currentTime);
 
+        public Task<DateTime> WaitForNextCandleAsync(DateTime currentTime, CancellationToken token, string currency) => 
+            WaitAsync(currentTime, token, currency, (m_greenCandleSize-1) * 60, "WaitBeforeValidateCandleIsGreen");
+
         public async Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
             string currency,
             int age,

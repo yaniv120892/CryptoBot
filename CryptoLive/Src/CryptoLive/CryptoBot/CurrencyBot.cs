@@ -18,7 +18,6 @@ namespace CryptoBot
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CurrencyBot>();
         private static readonly int s_waitInSecondsAfterValidateReadCandle = 60;
-        private static readonly int s_waitInSecondsBeforeValidateCandleIsGreen = (15-1)*60;
 
         private readonly ICurrencyBotPhasesExecutor m_currencyBotPhasesExecutor;
         private readonly ICryptoPriceAndRsiQueue<PriceAndRsi> m_cryptoPriceAndRsiQueue;
@@ -119,11 +118,9 @@ namespace CryptoBot
             }
 
             m_child = StartChildAsync();
-            m_currentTime = await m_currencyBotPhasesExecutor.WaitAsync(m_currentTime,
+            m_currentTime = await m_currencyBotPhasesExecutor.WaitForNextCandleAsync(m_currentTime,
                 m_cancellationTokenSource.Token,
-                m_currency,
-                s_waitInSecondsBeforeValidateCandleIsGreen,
-                "WaitBeforeValidateCandleIsGreen");
+                m_currency);
 
             bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age,
                 ++m_phaseNumber, m_phasesDescription);
