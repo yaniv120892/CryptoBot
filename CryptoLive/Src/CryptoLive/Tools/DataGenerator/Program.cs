@@ -21,7 +21,6 @@ namespace DataGenerator
         public static async Task Main(string[] args)
         {
             DataGeneratorParameters dataGeneratorParameters = AppParametersLoader<DataGeneratorParameters>.Load(s_configFile);
-            s_logger.LogInformation($"{dataGeneratorParameters.CandlesStartTime}");
             ICandlesService candleService = CreateCandleService(dataGeneratorParameters);
             CreateDirectoryIfNotExist(dataGeneratorParameters.CandlesDataFolder);
             List<Task> tasks = new List<Task>();
@@ -43,7 +42,7 @@ namespace DataGenerator
             DateTime endTime = dataGeneratorParameters.CandlesEndTime;
             while(currentTime < endTime)
             {
-                s_logger.LogInformation($"{currency}: Start Download data for {currentTime}");
+                s_logger.LogInformation($"{currency}: Start Download data for {currentTime:dd/MM/yyyy}");
                 MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, currentTime)).ToArray();
             
                 if (File.Exists(fileName))
@@ -55,7 +54,7 @@ namespace DataGenerator
                 }
 
                 await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Distinct().ToArray());
-                s_logger.LogInformation($"{currency}: Done Download data for {currentTime}");
+                s_logger.LogInformation($"{currency}: Done Download data for {currentTime:dd/MM/yyyy}");
                 currentTime = currentTime.AddMinutes(999);
                 await Task.Delay(s_requestsIntervalInMilliseconds);
             }
