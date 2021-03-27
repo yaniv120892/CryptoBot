@@ -11,6 +11,7 @@ namespace CryptoBot.CryptoValidators
     {        
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<RedCandleValidator>();
         private static readonly string s_actionName = "Red Candle Validator";
+        private static readonly double s_candlePercentSize = 0.01;
 
         private readonly ICurrencyDataProvider m_currencyDataProvider;
 
@@ -23,7 +24,7 @@ namespace CryptoBot.CryptoValidators
         {
             string message;
             MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, currentTime);
-            if (currCandle.Close < currCandle.Open * (decimal)0.98)
+            if (currCandle.Close < currCandle.Open * (decimal) (1 - s_candlePercentSize))
             {
                 message = $"{currency} {s_actionName} done, {currCandle} ,{currentTime}";
                 s_logger.LogInformation(message);
