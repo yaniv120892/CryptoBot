@@ -65,7 +65,6 @@ namespace Storage.Workers
         {
             m_currentTime = startTime;
             s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
-            //m_notificationService.Notify($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
 
             WorkerStatus = WorkerStatus.Running;
             try
