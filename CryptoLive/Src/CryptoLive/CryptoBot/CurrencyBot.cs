@@ -177,8 +177,7 @@ namespace CryptoBot
             decimal availableQuote = await m_accountQuoteProvider.GetAvailableQuote();
             BuyAndSellTradeInfo buyAndSellTradeInfo = await m_currencyBotPhasesExecutor.BuyAndPlaceSellOrder(m_currentTime,
                 m_currency, m_age, ++m_phaseNumber, m_phasesDescription, availableQuote);
-            m_notificationService.Notify($"{string.Join("\n\n", m_phasesDescription)}\n\n" +
-                                         $"\tBot buy {m_currency} at price: {buyAndSellTradeInfo.BuyPrice}");
+            m_notificationService.Notify($"{string.Join("\n", m_phasesDescription)}\n\n");
             return buyAndSellTradeInfo;
         }
 

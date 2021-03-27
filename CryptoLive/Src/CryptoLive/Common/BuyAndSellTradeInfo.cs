@@ -18,6 +18,7 @@ namespace Common
         public decimal Quantity { get; }
         public decimal QuoteOrderQuantityOnWin => decimal.Parse((Quantity * SellPrice).ToString("F"));
         public decimal QuoteOrderQuantityOnLoss => decimal.Parse((Quantity * StopLossLimitPrice).ToString("F"));
+        public decimal QuoteOrderQuantityPaid => decimal.Parse((Quantity * BuyPrice).ToString("F"));
 
         public bool Equals(BuyAndSellTradeInfo other)
         {
