@@ -43,6 +43,10 @@ namespace CryptoBot.Abstractions
             int timeToWaitInSeconds,
             string action);
 
+        Task<DateTime> WaitForNextCandleAsync(DateTime currentTime, 
+            CancellationToken token, 
+            string currency);
+        
         Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
             string currency,
             int age,

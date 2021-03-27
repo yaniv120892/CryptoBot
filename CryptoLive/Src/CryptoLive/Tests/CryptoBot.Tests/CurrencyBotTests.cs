@@ -19,10 +19,11 @@ namespace CryptoBot.Tests
         private static readonly string s_currency = "CurrencyName";
         private static readonly decimal s_quoteOrderQuantity = 100;
         private static readonly decimal s_basePrice = 1;
+        private static readonly int s_candleSize = 15;
         private static readonly DateTime s_botStartTime =  new DateTime(2020, 1, 1, 10, 10, 0);
         private static readonly DateTime s_rsiPollingEndTime = s_botStartTime.AddMinutes(10);
         private static readonly DateTime s_childStartTime = s_rsiPollingEndTime.AddMinutes(1);
-        private static readonly DateTime s_validateCandleIsGreenStartTime = s_childStartTime.AddMinutes(14);
+        private static readonly DateTime s_validateCandleIsGreenStartTime = s_childStartTime.AddMinutes(s_candleSize-1);
 
         private readonly Mock<ICurrencyBotPhasesExecutor> m_currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
         private readonly Mock<ICurrencyBotFactory> m_currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
@@ -456,8 +457,7 @@ namespace CryptoBot.Tests
                 .Returns(Task.FromResult(childStartTime));
             currencyBotPhasesExecutorMock
                 .Setup(m =>
-                    m.WaitAsync(childStartTime, cancellationTokenSource.Token, s_currency,
-                        14 * 60, "WaitBeforeValidateCandleIsGreen"))
+                    m.WaitForNextCandleAsync(childStartTime, cancellationTokenSource.Token, s_currency))
                 .Returns(Task.FromResult(validateCandleIsGreenStartTime));
         }
     }
