@@ -1,28 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Common;
-using Common.CryptoQueue;
-using Common.DataStorageObjects;
-using CryptoBot;
-using CryptoBot.Abstractions;
-using CryptoBot.Abstractions.Factories;
-using CryptoBot.Factories;
+using CryptoLive.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
-using Services;
-using Services.Abstractions;
-using Storage.Abstractions.Repository;
-using Storage.Providers;
-using Storage.Repository;
-using Storage.Updaters;
-using Storage.Workers;
-using Utils.Abstractions;
 using Utils.Notifications;
-using Utils.StopWatches;
-using Utils.SystemClocks;
 
 namespace CryptoLive
 {
@@ -30,147 +12,56 @@ namespace CryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<Program>();
         private static readonly string s_configFile = "appsettings.json";
+        private static IBotListener s_botListener;
+        private static ITradingSystem s_tradingSystem;
+        private static INotificationService s_notificationService;
+        private static CancellationTokenSource s_systemCancellationTokenSource;
 
-        public static void Main()
+        public static async Task Main()
         {
             CryptoLiveParameters appParameters = AppParametersLoader<CryptoLiveParameters>.Load(s_configFile);
-            s_logger.LogInformation(appParameters.ToString());
-            RunMultiplePhases(appParameters).Wait();
+            s_systemCancellationTokenSource = new CancellationTokenSource();
+            s_notificationService = CreateNotificationService(appParameters);
+            s_botListener = CreateBotListener(appParameters);
+            s_tradingSystem = CreateTradingSystem(appParameters);
+            try
+            {
+                s_logger.LogInformation($"CryptoLive {appParameters.CryptoBotName} starting...");
+                s_botListener.Start();
+                Task tradingSystemTask = s_tradingSystem.Run();
+                s_notificationService.Notify($"CryptoLive {appParameters.CryptoBotName} started");
+                await tradingSystemTask;
+            }
+            catch (Exception e)
+            {
+                s_logger.LogError(e, $"CryptoLive {appParameters.CryptoBotName} got exception");
+            }
+            finally
+            {
+                s_logger.LogInformation($"CryptoLive {appParameters.CryptoBotName} stopping...");
+                s_botListener.Stop();
+                s_tradingSystem.Stop();
+                s_notificationService.Notify($"CryptoLive {appParameters.CryptoBotName} stopped");
+            }
         }
 
-        private static async Task RunMultiplePhases(CryptoLiveParameters cryptoLiveParameters)
+        private static ITradingSystem CreateTradingSystem(CryptoLiveParameters appParameters) => 
+            new TradingSystem(s_botListener, s_notificationService, appParameters, s_systemCancellationTokenSource);
+
+        private static IBotListener CreateBotListener(CryptoLiveParameters appParameters) =>
+            new TelegramBotListener(appParameters.TelegramAuthToken,
+                s_systemCancellationTokenSource,
+                appParameters.CryptoBotName,
+                appParameters.Currencies);
+        
+        private static INotificationService CreateNotificationService(CryptoLiveParameters cryptoLiveParameters)
         {
-            var systemClock = new SystemClock();
-            var stopWatchWrapper = new StopWatchWrapper();
-            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,cryptoLiveParameters.BotDelayTime);
             var notificationServiceFactory =
                 new NotificationServiceFactory(cryptoLiveParameters.TwilioWhatsAppSender,
                     cryptoLiveParameters.WhatsAppRecipient, cryptoLiveParameters.TwilioSsid,
-                    cryptoLiveParameters.TwilioAuthToken, cryptoLiveParameters.TelegramChatId, cryptoLiveParameters.TelegramAuthToken);
-            INotificationService notificationService = notificationServiceFactory.Create(cryptoLiveParameters.NotificationType);
-
-            CurrencyClientFactory currencyClientFactory = new CurrencyClientFactory(cryptoLiveParameters.BinanceApiKey, 
-                cryptoLiveParameters.BinanceApiSecretKey);
-            var candlesService = new BinanceCandleService(currencyClientFactory);
-            var tradeService = new BinanceTradeService(currencyClientFactory);
-            var storageCancellationTokenSource = new CancellationTokenSource();
-
-            var candleRepository = new RepositoryImpl<CandleStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var rsiRepository = new RepositoryImpl<RsiStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var wsmRepository = new RepositoryImpl<WsmaStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var macdRepository = new RepositoryImpl<MacdStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            
-            int rsiSize = cryptoLiveParameters.RsiSize;
-            int fastEmaSize = cryptoLiveParameters.FastEmaSize;
-            int slowEmaSize = cryptoLiveParameters.SlowEmaSize;
-            int signalSize = cryptoLiveParameters.SignalSize;
-            int candleSize = cryptoLiveParameters.CandleSize;
-            
-            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay, tradeService);
-            var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
-            ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, cryptoLiveParameters);
-            IAccountQuoteProvider accountQuoteProvider =
-                new AccountQuoteProvider(new BinanceAccountService(currencyClientFactory));
-            var currencyBotFactory = new CurrencyBotFactory(currencyBotPhasesExecutor, notificationService, accountQuoteProvider);
-            
-            var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
-            var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
-            
-            for (int i = 0; i < currencyBotTasks.Length; i++)
-            {
-                string currency = cryptoLiveParameters.Currencies[i];
-                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
-                    emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
-                    systemClock, stopWatchWrapper, notificationService, storageCancellationTokenSource, candleSize);
-                DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
-                storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
-                await systemClock.Wait(CancellationToken.None, currency, cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
-                currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, 
-                    currency, 
-                    storageStartTime, 
-                    storageCancellationTokenSource,
-                    cryptoLiveParameters.RsiMemorySize, 
-                    notificationService);
-            }
-
-            await Task.WhenAll(currencyBotTasks);
-            notificationService.Notify($"Done CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
-        }
-
-        private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
-            string currency, int rsiSize, IRepository<MacdStorageObject> macdRepository, IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject,
-            int fastEmaSize, int slowEmaSize, int signalSize, IRepository<CandleStorageObject> candleRepository,
-            ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper, INotificationService notificationService, CancellationTokenSource cancellationTokenSource,
-            int candleSize)
-        {
-            var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
-            var macdRepositoryUpdater = new MacdRepositoryUpdater(macdRepository, emaAndSignalStorageObject,
-                currency, fastEmaSize, slowEmaSize, signalSize, string.Empty);
-            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency, candleSize,string.Empty);
-            
-            var storageWorker = new StorageWorker(notificationService,
-                candlesService,
-                systemClock,
-                stopWatchWrapper,
-                rsiRepositoryUpdater,
-                candleRepositoryUpdater,
-                macdRepositoryUpdater,
-                cancellationTokenSource.Token,
-                candleSize,
-                currency,
-                false,
-                30);
-            return storageWorker;
-        }
-
-        private static async Task RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
-            string currency,
-            DateTime storageStartTime,
-            CancellationTokenSource storageCancellationTokenSource,
-            int rsiMemorySize, 
-            INotificationService notificationService)
-        {
-            DateTime botStartTime = storageStartTime;
-            while(!storageCancellationTokenSource.IsCancellationRequested)
-            {
-                var botCancellationTokenSource = new CancellationTokenSource();
-                var queue = new CryptoFixedSizeQueueImpl<PriceAndRsi>(rsiMemorySize);
-                var isParentsRunningCancellationToken = new Queue<CancellationToken>();
-                ICurrencyBot currencyBot = currencyBotFactory.Create(queue, isParentsRunningCancellationToken, 
-                    currency, botCancellationTokenSource, botStartTime);
-                BotResultDetails botResultDetails = await currencyBot.StartAsync();
-                botStartTime = botResultDetails.EndTime;
-                if (botResultDetails.BotResult == BotResult.Faulted)
-                {
-                    s_logger.LogWarning("Bot execution was faulted");
-                    notificationService.Notify($"{currency} Bot failed, Error: {botResultDetails.Exception.Message}");
-                    break;
-                }
-
-                s_logger.LogInformation(botResultDetails.ToString());
-            }
-            s_logger.LogInformation($"{currency} Storage worker got cancellation request");
-        }
-        
-        private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
-            IRepository<CandleStorageObject> candleRepository,
-            IRepository<RsiStorageObject> rsiRepository,
-            IRepository<MacdStorageObject> macdRepository,
-            ISystemClock systemClock, 
-            ITradeService tradeService)
-        {
-            var candlesProvider = new CandlesProvider(candleRepository);
-            var rsiProvider = new RsiProvider(rsiRepository);
-            var macdProvider = new MacdProvider(macdRepository);
-            var cryptoBotPhasesFactoryCreator = new CryptoBotPhasesFactoryCreator(
-                systemClock, 
-                rsiProvider, 
-                candlesProvider, 
-                macdProvider,
-                tradeService);
-            return cryptoBotPhasesFactoryCreator.Create();
+                    cryptoLiveParameters.TwilioAuthToken, cryptoLiveParameters.TelegramChatId,
+                    cryptoLiveParameters.TelegramAuthToken);
+            return notificationServiceFactory.Create(cryptoLiveParameters.NotificationType);
         }
     }
 }

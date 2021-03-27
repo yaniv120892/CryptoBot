@@ -15,6 +15,7 @@ namespace Infra
             object appParameters = LoadFromConfigFile(configFileName);
             if (appParameters is T parameters)
             {
+                s_logger.LogInformation(parameters.ToString());
                 return parameters;
             }
             throw new Exception($"Failed to load app parameters from config file {configFileName}, " +
