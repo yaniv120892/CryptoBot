@@ -68,8 +68,8 @@ namespace CryptoBot
                 $"{currency}_{age}: Done phase {phaseNumber}: wait until lower price and higher RSI {responseBase.Time}");
             phasesDescription.Add(
                 $"{currency} {responseBase.Time}\n{phaseNumber}.Found candle with lower price and greater RSI, \n" +
-                $"\tNew: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
-                $"\tOld: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
+                $"\tCurrent candle: {((PriceAndRsiPollingResponse) responseBase).NewPriceAndRsi}, \n" +
+                $"\tOld candle: {((PriceAndRsiPollingResponse) responseBase).OldPriceAndRsi}\n");
 
             return responseBase;        
         }
@@ -89,12 +89,14 @@ namespace CryptoBot
             AssertSuccessPolling(responseBase);
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";
-            s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} {m_priceChangeToNotify}%, {candlePollingResponse.Time}");
-            phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
-                                  $"\tBuy price: {basePrice}, \n" +
-                                  $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
-                                  $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
-                                  $"\tLast Candle: {candlePollingResponse.Candle}\n");
+            s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} " +
+                                    $"{m_priceChangeToNotify}%, " + $"{candlePollingResponse.Time}");
+            // phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
+            //                       $"\tBuy price: {basePrice}, \n" +
+            //                       $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
+            //                       $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
+            //                       $"\tLast Candle: {candlePollingResponse.Candle}\n");
+            phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{(candlePollingResponse.IsWin ? "WIN": "LOSS")}\n");
             return (candlePollingResponse.IsWin, candlePollingResponse);
         }
 
@@ -148,9 +150,17 @@ namespace CryptoBot
             await sellCryptoTrader.PlaceSellOcoOrderAsync(currency, quantity, sellPrice, stopAndLimitPrice);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
                                     $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice} {currentTime}");
-            phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
-                                  $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice}\n");
-            return new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity);
+            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity);
+            string currencyWithoutUsdt = currency.Replace("USDT", String.Empty);
+            phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Buy {currencyWithoutUsdt}\n" +
+                                  $"Amount:{quantity:F8}\n" +
+                                  $"Price:{buyPrice:F8}\n" +
+                                  $"Sell Price: {sellPrice:F8}\n" +
+                                  $"Stop Loss: {stopAndLimitPrice:F8}\n" +
+                                  $"Total Paid: {buyAndSellTradeInfo.QuoteOrderQuantityPaid:F2}\n" +
+                                  $"Total on WIN: {buyAndSellTradeInfo.QuoteOrderQuantityOnWin:F2}\n" +
+                                  $"Total on LOSS: {buyAndSellTradeInfo.QuoteOrderQuantityOnLoss:F2}");
+            return buyAndSellTradeInfo;
         }
 
         private static CandlePollingResponse AssertIsCandlePollingResponse(PollingResponseBase pollingResponseBase)

@@ -18,7 +18,7 @@ namespace Common.PollingResponses
 
         public override string ToString()
         {
-            return $"Rsi: {Rsi}";
+            return $"Rsi: {Rsi:F2}";
         }
     }
 }

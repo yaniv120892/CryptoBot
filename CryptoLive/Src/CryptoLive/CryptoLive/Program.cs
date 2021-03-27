@@ -78,7 +78,6 @@ namespace CryptoLive
             var currencyBotTasks = new Task[cryptoLiveParameters.Currencies.Length];
             var storageWorkersTasks = new Task[cryptoLiveParameters.Currencies.Length];
             
-            //notificationService.Notify($"Start CryptoLive {Environment.MachineName} for currencies {string.Join(", ",cryptoLiveParameters.Currencies)}");
             for (int i = 0; i < currencyBotTasks.Length; i++)
             {
                 string currency = cryptoLiveParameters.Currencies[i];

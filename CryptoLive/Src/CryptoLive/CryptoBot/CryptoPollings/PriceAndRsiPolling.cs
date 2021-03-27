@@ -91,7 +91,7 @@ namespace CryptoBot.CryptoPollings
             }
             
             s_logger.LogDebug($"Current PriceAndRsi: {priceAndRsi}, " +
-                              $"OldPriceAndRsi : {oldPriceAndRsi}");
+                              $"Old PriceAndRsi : {oldPriceAndRsi}");
             return false;
         }
 
