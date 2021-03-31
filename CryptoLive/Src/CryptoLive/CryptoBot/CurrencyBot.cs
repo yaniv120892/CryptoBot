@@ -64,15 +64,16 @@ namespace CryptoBot
             BotResultDetails botResultDetails;
             try
             {
+                
                 botResultDetails = await StartAsyncImpl();
             }
             catch (PollingResponseException pollingResponseException)
             {
-                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(pollingResponseException.PollingResponse);
+                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(pollingResponseException.PollingResponse, m_currency);
             }
             catch (Exception exception)
             {
-                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(m_currentTime, exception);
+                botResultDetails = BotResultDetailsFactory.CreateFailureBotResultDetails(m_currentTime, exception, m_currency);
             }
             finally
             {
@@ -151,13 +152,13 @@ namespace CryptoBot
                 newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnWin;
                 s_logger.LogInformation(
                     $"{m_currency}_{m_age}: Done iteration - Win , NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
-                return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Win, m_currentTime, m_phasesDescription);
+                return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Win, m_currentTime, m_phasesDescription, m_currency);
             }
 
             newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnLoss;
             s_logger.LogInformation(
                 $"{m_currency}_{m_age}: Done iteration - Loss, NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
-            return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Loss, m_currentTime, m_phasesDescription);
+            return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Loss, m_currentTime, m_phasesDescription, m_currency);
         }
 
         private async Task<bool> WaitForOpenOrdersToBeFilled(BuyAndSellTradeInfo buyAndSellTradeInfo)

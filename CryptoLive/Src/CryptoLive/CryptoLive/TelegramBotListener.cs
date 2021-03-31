@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,6 +7,7 @@ using Common;
 using CryptoLive.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
+using Storage.Abstractions.Repository;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
@@ -20,27 +20,22 @@ namespace CryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<TelegramBotListener>();
 
+        private readonly IBotResultDetailsRepository m_botResultDetailsRepository;
         private readonly CancellationTokenSource m_systemCancellationTokenSource;
         private readonly string m_cryptoBotName;
         private readonly TelegramBotClient m_bot;
-        private readonly ConcurrentDictionary<string, List<BotResultDetails>> m_mapCurrencyToBotResultDetails;
 
         private DateTime m_startTime;
-
-
-        public TelegramBotListener(string token, 
+        
+        public TelegramBotListener(IBotResultDetailsRepository botResultDetailsRepository,
             CancellationTokenSource systemCancellationTokenSource,
-            string cryptoBotName,
-            string[] currencies)
+            string token,
+            string cryptoBotName)
         {
             m_systemCancellationTokenSource = systemCancellationTokenSource;
             m_cryptoBotName = cryptoBotName;
+            m_botResultDetailsRepository = botResultDetailsRepository;
             m_bot = new TelegramBotClient(token);
-            m_mapCurrencyToBotResultDetails = new ConcurrentDictionary<string, List<BotResultDetails>>();
-            foreach (var currency in currencies)
-            {
-                m_mapCurrencyToBotResultDetails[currency] = new List<BotResultDetails>();
-            }
         }
 
         public void Start()
@@ -54,11 +49,6 @@ namespace CryptoLive
         public void Stop()
         {
             m_systemCancellationTokenSource.Cancel();
-        }
-
-        public void AddResults(string currency, BotResultDetails botResultDetails)
-        {
-            m_mapCurrencyToBotResultDetails[currency].Add(botResultDetails);
         }
 
         private async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
@@ -101,31 +91,53 @@ namespace CryptoLive
 
         private async Task SendBotResults(string chatId)
         {
-            string replyBody = CalculateBotResults();
+            await m_bot.SendTextMessageAsync(
+                chatId: chatId,
+                text: "Processing results...");
+            string replyBody = await CalculateBotResults();
             await m_bot.SendTextMessageAsync(
                 chatId: chatId,
                 text: replyBody);
         }
 
-        private string CalculateBotResults()
+        private async Task<string> CalculateBotResults()
         {
-            string botResults = "Results:\n";
+            Dictionary<string, List<BotResultDetails>> mapCurrencyToBotResultDetails = await GetMappingCurrencyToBotResultDetails();
+
             int totalWin = 0;
             int totalLoss = 0;
-            foreach (var currency in m_mapCurrencyToBotResultDetails.Keys)
+            string botResultDescription = "Results:\n";
+            foreach (string currency in mapCurrencyToBotResultDetails.Keys)
             {
-                int winAmount = m_mapCurrencyToBotResultDetails[currency]
+                int winAmount = mapCurrencyToBotResultDetails[currency]
                     .Count(m => m.BotResult.Equals(BotResult.Win));
-                int lossAmount = m_mapCurrencyToBotResultDetails[currency]
+                int lossAmount = mapCurrencyToBotResultDetails[currency]
                     .Count(m => m.BotResult.Equals(BotResult.Win));
                 string currencyResult = $"{currency} Win: {winAmount}, Loss: {lossAmount}\n";
-                botResults += currencyResult;
+                botResultDescription += currencyResult;
                 totalWin += winAmount;
                 totalLoss += lossAmount;
             }
 
-            botResults += $"Summary Win:{totalWin}, Loss: {totalLoss}";
-            return botResults;
+            botResultDescription += $"Summary Win:{totalWin}, Loss: {totalLoss}";
+            return botResultDescription;
+        }
+
+        private async Task<Dictionary<string, List<BotResultDetails>>> GetMappingCurrencyToBotResultDetails()
+        {
+            List<BotResultDetails> botResults = await m_botResultDetailsRepository.GetAllAsync();
+            var mapCurrencyToBotResultDetails = new Dictionary<string, List<BotResultDetails>>();
+            foreach (var botResult in botResults)
+            {
+                if (!mapCurrencyToBotResultDetails.ContainsKey(botResult.Currency))
+                {
+                    mapCurrencyToBotResultDetails[botResult.Currency] = new List<BotResultDetails>();
+                }
+
+                mapCurrencyToBotResultDetails[botResult.Currency].Add(botResult);
+            }
+
+            return mapCurrencyToBotResultDetails;
         }
 
         private async Task StopBot(string chatId)
