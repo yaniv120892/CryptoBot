@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using CryptoLive.Abstractions;
 using Infra;
 using Microsoft.Extensions.Logging;
+using Storage.Repository;
 using Utils.Notifications;
 
 namespace CryptoLive
@@ -46,14 +47,19 @@ namespace CryptoLive
         }
 
         private static ITradingSystem CreateTradingSystem(CryptoLiveParameters appParameters) => 
-            new TradingSystem(s_botListener, s_notificationService, appParameters, s_systemCancellationTokenSource);
+            new TradingSystem(s_notificationService, appParameters, s_systemCancellationTokenSource);
 
-        private static IBotListener CreateBotListener(CryptoLiveParameters appParameters) =>
-            new TelegramBotListener(appParameters.TelegramAuthToken,
+        private static IBotListener CreateBotListener(CryptoLiveParameters appParameters)
+        {
+            var botResultDetailsRepository = BotResultsRepositoryFactory.Create(appParameters.MongoDbHost, 
+                    appParameters.CryptoBotName,
+                    appParameters.MongoDbDataBase);
+            return new TelegramBotListener(botResultDetailsRepository, 
                 s_systemCancellationTokenSource,
-                appParameters.CryptoBotName,
-                appParameters.Currencies);
-        
+                appParameters.TelegramAuthToken,
+                appParameters.CryptoBotName);
+        }
+
         private static INotificationService CreateNotificationService(CryptoLiveParameters cryptoLiveParameters)
         {
             var notificationServiceFactory =

@@ -207,7 +207,7 @@ namespace CryptoBot.Tests
             // Arrange
             var pricePollingEndTime = s_validateCandleIsGreenStartTime.AddMinutes(20);
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime, s_currency);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
 
             SetupAccountQuoteProvider();
@@ -313,7 +313,7 @@ namespace CryptoBot.Tests
             // Arrange
             var pricePollingEndTime = s_validateCandleIsGreenStartTime.AddMinutes(20);
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Win, new List<string>(), childBotEndTime, s_currency);
             SetupWaitAsyncMethod(m_currencyBotPhasesExecutorMock, s_rsiPollingEndTime, m_cancellationTokenSource, s_childStartTime, s_validateCandleIsGreenStartTime);
             var pricePollingResponse = new DummyPollingResponse(pricePollingEndTime);
             SetupAccountQuoteProvider();
@@ -363,7 +363,7 @@ namespace CryptoBot.Tests
         {
              // Arrange
             var childBotEndTime = new DateTime(2020, 1, 1, 11, 10, 0);
-            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime);
+            var childBotDetailsResult = new BotResultDetails(BotResult.Loss, new List<string>(), childBotEndTime, s_currency);
             var childCurrencyBotMock = new Mock<ICurrencyBot>();
             SetupAccountQuoteProvider();
             childCurrencyBotMock

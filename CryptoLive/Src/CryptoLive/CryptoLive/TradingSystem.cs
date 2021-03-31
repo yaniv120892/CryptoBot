@@ -33,16 +33,14 @@ namespace CryptoLive
         private readonly INotificationService m_notificationService;
         private readonly CryptoLiveParameters m_cryptoLiveParameters;
         private readonly CancellationTokenSource m_systemCancellationTokenSource;
-        private readonly IBotListener m_botListener;
+        private IBotResultDetailsRepository m_botResultsRepository;
 
-        public TradingSystem(IBotListener botListener,
-            INotificationService notificationService,
+        public TradingSystem(INotificationService notificationService,
             CryptoLiveParameters cryptoLiveParameters, 
             CancellationTokenSource systemCancellationTokenSource)
         {
             m_notificationService = notificationService;
             m_systemCancellationTokenSource = systemCancellationTokenSource;
-            m_botListener = botListener;
             m_cryptoLiveParameters = cryptoLiveParameters;
         }
 
@@ -62,7 +60,8 @@ namespace CryptoLive
             var wsmRepository = new RepositoryImpl<WsmaStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var macdRepository = new RepositoryImpl<MacdStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            
+            m_botResultsRepository = new MongoBotResultDetailsRepository(m_cryptoLiveParameters.CryptoBotName,
+                m_cryptoLiveParameters.MongoDbHost, m_cryptoLiveParameters.MongoDbDataBase);
             int rsiSize = m_cryptoLiveParameters.RsiSize;
             int fastEmaSize = m_cryptoLiveParameters.FastEmaSize;
             int slowEmaSize = m_cryptoLiveParameters.SlowEmaSize;
@@ -143,12 +142,12 @@ namespace CryptoLive
                 ICurrencyBot currencyBot = currencyBotFactory.Create(queue, isParentsRunningCancellationToken, 
                     currency, botCancellationTokenSource, botStartTime);
                 BotResultDetails botResultDetails = await currencyBot.StartAsync();
-                m_botListener.AddResults(currency, botResultDetails);
+                await m_botResultsRepository.AddAsync(botResultDetails);
                 botStartTime = botResultDetails.EndTime;
                 if (botResultDetails.BotResult == BotResult.Faulted)
                 {
-                    s_logger.LogWarning("Bot execution was faulted");
-                    m_notificationService.Notify($"{currency} Bot failed, Error: {botResultDetails.Exception.Message}");
+                    s_logger.LogWarning($"Bot execution was faulted, Error:{botResultDetails.Exception.Message}");
+                    m_notificationService.Notify($"CurrencyBot {currency} stopped");
                     break;
                 }
 

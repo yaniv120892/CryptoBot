@@ -80,13 +80,13 @@ namespace Storage.Workers
             {
                 s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
                 WorkerStatus = WorkerStatus.Cancelled;
-                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
+                m_notificationService.Notify($"StorageWorker {m_currency} got cancellation request");
             }
             catch (Exception e)
             {
                 WorkerStatus = WorkerStatus.Faulted;
                 s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}");
-                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}, {e.Message}");
+                m_notificationService.Notify($"StorageWorker {m_currency} failure");
             }
 
             await PersistRepositoriesDataIfNeeded();

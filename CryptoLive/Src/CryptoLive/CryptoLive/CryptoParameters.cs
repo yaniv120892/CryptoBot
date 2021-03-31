@@ -24,6 +24,8 @@ namespace CryptoLive
         public string TelegramChatId { get; }
         public string TelegramAuthToken { get; }
         public string CryptoBotName { get; }
+        public string MongoDbHost { get; }
+        public string MongoDbDataBase { get; }
 
         public CryptoLiveParameters(IConfigurationSection applicationSection) : base(applicationSection)
         {
@@ -44,6 +46,8 @@ namespace CryptoLive
             TelegramChatId = applicationSection[nameof(TelegramChatId)];
             TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];
             CryptoBotName = applicationSection[nameof(CryptoBotName)];
+            MongoDbHost = applicationSection[nameof(MongoDbHost)];
+            MongoDbDataBase = applicationSection[nameof(MongoDbDataBase)];
         }
 
         public override string ToString()
