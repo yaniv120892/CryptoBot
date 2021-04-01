@@ -4,6 +4,7 @@ using Common.DataStorageObjects;
 using Storage.Abstractions.Providers;
 using Storage.Abstractions.Repository;
 using Storage.Repository;
+using Utils.Converters;
 
 namespace Storage.Providers
 {
@@ -16,13 +17,11 @@ namespace Storage.Providers
             m_repository = repository;
         }
 
-        public Memory<MyCandle> GetCandles(string currency, 
-            int amountOfCandles, 
-            DateTime currentTime)
+        public Memory<MyCandle> GetCandles(string currency, int amountOfCandles, int candleSize, DateTime currentTime)
         {
-            Memory<MyCandle> ans = new MyCandle[amountOfCandles];
+            Memory<MyCandle> ans = new MyCandle[amountOfCandles*candleSize];
             DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);
-            int counter = amountOfCandles -1;
+            int counter = ans.Length -1;
             while (counter >= 0)
             {
                 MyCandle candle = m_repository.Get(currency, time).Candle;
@@ -31,12 +30,12 @@ namespace Storage.Providers
                 time = candle.OpenTime.AddSeconds(-1);
             }
 
-            return ans;
+            return CandleConverter.ConvertByCandleSize(ans.Span, candleSize, amountOfCandles);
         }
 
-        public MyCandle GetLastCandle(string currency, DateTime currentTime)
+        public MyCandle GetLastCandle(string currency, int candleSize, DateTime currentTime)
         {
-            Memory<MyCandle> candles = GetCandles(currency, 1, currentTime);
+            Memory<MyCandle> candles = GetCandles(currency, 1, candleSize, currentTime);
             return candles.Span[0];
         }
     }

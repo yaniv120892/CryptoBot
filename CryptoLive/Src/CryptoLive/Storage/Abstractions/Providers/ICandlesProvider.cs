@@ -5,10 +5,7 @@ namespace Storage.Abstractions.Providers
 {
     public interface ICandlesProvider
     {
-        Memory<MyCandle> GetCandles(string currency,
-            int amountOfCandles,
-            DateTime currentTime);
-
-        MyCandle GetLastCandle(string currency, DateTime currentTime);
+        Memory<MyCandle> GetCandles(string currency, int amountOfCandles, int candleSize, DateTime currentTime);
+        MyCandle GetLastCandle(string currency, int candleSize, DateTime currentTime);
     }
 }

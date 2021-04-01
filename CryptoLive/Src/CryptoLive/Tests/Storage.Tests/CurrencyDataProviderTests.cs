@@ -14,7 +14,6 @@ namespace Storage.Tests
 
         private Mock<ICandlesProvider> m_candlesProviderMock;
         private Mock<IRsiProvider> m_rsiProviderMock;
-        private static int s_candleSize = 5;
 
         [TestMethod]
         public void When_GetRsiAndClosePrice_Given_CurrentTimeIsEndOfMinute_Return_RsiAndPriceOfLastCandleCloseTime()
@@ -26,17 +25,17 @@ namespace Storage.Tests
             DateTime requestedTimeEndOfMinute = expectedCandleCloseTime;
             
             m_candlesProviderMock = new Mock<ICandlesProvider>();
-            m_candlesProviderMock.Setup(m => m.GetLastCandle(s_currency, expectedCandleCloseTime))
+            m_candlesProviderMock
+                .Setup(m => m.GetLastCandle(s_currency, 1, expectedCandleCloseTime))
                 .Returns(CreateMyCandle(expectedCandleCloseTime, expectedPrice));
             
             m_rsiProviderMock = new Mock<IRsiProvider>();
-            m_rsiProviderMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
+            m_rsiProviderMock
+                .Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
 
-            var macdProviderMock = new Mock<IMacdProvider>();
             var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
-                m_rsiProviderMock.Object, 
-                macdProviderMock.Object);
+                m_rsiProviderMock.Object);
 
             // Act
             PriceAndRsi priceAndRsi = sut.GetRsiAndClosePrice(s_currency, requestedTimeEndOfMinute);
@@ -56,17 +55,16 @@ namespace Storage.Tests
             DateTime requestedTimeEndOfMinute = new DateTime(2020,1,1,10,1,30);
             
             m_candlesProviderMock = new Mock<ICandlesProvider>();
-            m_candlesProviderMock.Setup(m => m.GetLastCandle(s_currency, requestedTimeEndOfMinute))
+            m_candlesProviderMock
+                .Setup(m => m.GetLastCandle(s_currency, 1, requestedTimeEndOfMinute))
                 .Returns(CreateMyCandle(expectedCandleCloseTime, expectedPrice));
             
             m_rsiProviderMock = new Mock<IRsiProvider>();
             m_rsiProviderMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
 
-            var macdProviderMock = new Mock<IMacdProvider>();
             var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
-                m_rsiProviderMock.Object, 
-                macdProviderMock.Object);
+                m_rsiProviderMock.Object);
 
             // Act
             PriceAndRsi priceAndRsi = sut.GetRsiAndClosePrice(s_currency, requestedTimeEndOfMinute);
@@ -86,6 +84,6 @@ namespace Storage.Tests
                     2);
 
         private static DateTime GetCandleOpenTime(DateTime closeTime) => 
-            closeTime.Subtract(TimeSpan.FromMinutes(s_candleSize-1)).AddSeconds(-closeTime.Second);
+            closeTime.AddSeconds(-closeTime.Second);
     }
 }

@@ -29,13 +29,14 @@ namespace Storage.Updaters
             m_calculatedDataFolder = calculatedDataFolder;
         }
 
-        public void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime)
+        public void AddInfo(CandleStorageObject candle, DateTime newTime)
         {
             if (m_rsiRepository.TryGet(m_currency, newTime, out _))
             {
                 return;
             }
-            AddWsmaToRepository(candle, previousTime, newTime);
+            
+            AddWsmaToRepository(candle, newTime);
             AddRsiToRepository(newTime);
         }
 
@@ -56,9 +57,9 @@ namespace Storage.Updaters
             m_rsiRepository.Add(m_currency, newTime, rsiStorageObject);
         }
 
-        private void AddWsmaToRepository(CandleStorageObject candle, DateTime previousWsmTime, DateTime newWsmaTime)
+        private void AddWsmaToRepository(CandleStorageObject candle, DateTime newWsmaTime)
         {
-            WsmaStorageObject newWsma = CalculateNewWsma(previousWsmTime, candle, newWsmaTime);
+            WsmaStorageObject newWsma = CalculateNewWsma(candle, newWsmaTime);
             m_wsmaRepository.Add(m_currency, newWsmaTime, newWsma);
         }
 
@@ -68,8 +69,9 @@ namespace Storage.Updaters
             return RsiCalculator.Calculate(wsma.UpAverage, wsma.DownAverage);
         }
 
-        private WsmaStorageObject CalculateNewWsma(DateTime previousWsmaTime, CandleStorageObject candle, DateTime newTime)
+        private WsmaStorageObject CalculateNewWsma(CandleStorageObject candle, DateTime newTime)
         {
+            DateTime previousWsmaTime = newTime.Subtract(TimeSpan.FromMinutes(m_rsiSize));
             (decimal upValue, decimal downValue) = GetLastCandleUpAndDownValue(candle);
             if (m_wsmaRepository.TryGet(m_currency,previousWsmaTime, out WsmaStorageObject previousWsma))
             {

@@ -70,7 +70,7 @@ namespace Services
         {
             IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
             Memory<MyCandle> candlesDescription =
-                BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
+                CandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
             return candlesDescription;
         }
     }

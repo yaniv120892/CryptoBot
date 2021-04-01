@@ -16,10 +16,6 @@ namespace CryptoLive
         public string[] Currencies { get; }
         public NotificationType NotificationType { get; set; }
         public int RsiSize { get; set; }
-        public int FastEmaSize { get; set; }
-        public int SlowEmaSize { get; set; }
-        public int SignalSize { get; set; }
-        public int MaxMacdPollingTime { get; set; }
         public int BotDelayTime { get; set; }
         public string TelegramChatId { get; }
         public string TelegramAuthToken { get; }
@@ -36,10 +32,6 @@ namespace CryptoLive
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             NotificationType = Enum.Parse<NotificationType>(applicationSection[nameof(NotificationType)]);
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
-            FastEmaSize = int.Parse(applicationSection[nameof(FastEmaSize)]);
-            SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
-            SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
-            MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
             BotDelayTime = int.Parse(applicationSection[nameof(BotDelayTime)]);
             TelegramChatId = applicationSection[nameof(TelegramChatId)];
             TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];

@@ -22,7 +22,6 @@ namespace Storage.Workers
         private readonly ICandlesService m_candlesService;
         private readonly IRepositoryUpdater m_rsiRepositoryUpdater;
         private readonly IRepositoryUpdater m_candleRepositoryUpdater;
-        private readonly IRepositoryUpdater m_macdRepositoryUpdater;
         private readonly CancellationToken m_cancellationToken;
         private readonly int m_candleSize;
         private readonly string m_currency;
@@ -39,7 +38,6 @@ namespace Storage.Workers
             IStopWatch stopWatch,
             IRepositoryUpdater rsiRepositoryUpdater, 
             IRepositoryUpdater candleRepositoryUpdater, 
-            IRepositoryUpdater macdRepositoryUpdater,
             CancellationToken cancellationToken,
             int candleSize,
             string currency,
@@ -55,7 +53,6 @@ namespace Storage.Workers
             m_iterationTimeInSeconds = iterationTimeInSeconds;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
-            m_macdRepositoryUpdater = macdRepositoryUpdater;
             m_candlesService = candlesService;
             m_cancellationToken = cancellationToken;
             WorkerStatus = WorkerStatus.Created;
@@ -126,26 +123,17 @@ namespace Storage.Workers
         {
             await m_candleRepositoryUpdater.PersistDataToFileAsync();
             await m_rsiRepositoryUpdater.PersistDataToFileAsync();
-            await m_macdRepositoryUpdater.PersistDataToFileAsync();
-        }
-
-        private (DateTime previousTime, DateTime newTime) GetNewAndPreviousCandleTimes(CandleStorageObject candleDescription)
-        {
-            DateTime newTime = candleDescription.Candle.CloseTime;
-            DateTime previousTime = newTime.Subtract(TimeSpan.FromMinutes(m_candleSize));
-
-            return (previousTime, newTime);
         }
 
         private async Task AddDataToRepositories()
         {
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_currency, amountOfOneMinuteKlines, m_currentTime);
-            CandleStorageObject candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
-            (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
-            m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
-            m_rsiRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
-            //m_macdRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
+            CandleStorageObject candleForRsi = CandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candleOneMinute = CandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, 1);
+            DateTime newCandleTime = candleOneMinute.Candle.CloseTime;
+            m_candleRepositoryUpdater.AddInfo(candleOneMinute, newCandleTime);
+            m_rsiRepositoryUpdater.AddInfo(candleForRsi, newCandleTime);
         }
     }
 }

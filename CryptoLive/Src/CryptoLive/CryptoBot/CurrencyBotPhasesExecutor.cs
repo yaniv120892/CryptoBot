@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +23,6 @@ namespace CryptoBot
         private readonly ICryptoBotPhasesFactory m_cryptoBotPhasesFactory;
         private readonly int m_redCandleSize;
         private readonly int m_greenCandleSize;
-        private readonly int m_priceChangeDelayTimeIterationsInSeconds;
         private readonly int m_minutesToWaitBeforePollingPrice;
         private readonly int m_priceChangeCandleSize;
         private readonly decimal m_maxRsiToNotify;
@@ -32,7 +32,6 @@ namespace CryptoBot
             decimal maxRsiToNotify, 
             int redCandleSize, 
             int greenCandleSize, 
-            int priceChangeDelayTimeIterationsInSeconds, 
             int minutesToWaitBeforePollingPrice, 
             decimal priceChangeToNotify, 
             int priceChangeCandleSize)
@@ -41,7 +40,6 @@ namespace CryptoBot
             m_maxRsiToNotify = maxRsiToNotify;
             m_redCandleSize = redCandleSize;
             m_greenCandleSize = greenCandleSize;
-            m_priceChangeDelayTimeIterationsInSeconds = priceChangeDelayTimeIterationsInSeconds;
             m_minutesToWaitBeforePollingPrice = minutesToWaitBeforePollingPrice;
             m_priceChangeToNotify = priceChangeToNotify;
             m_priceChangeCandleSize = priceChangeCandleSize;
@@ -58,7 +56,7 @@ namespace CryptoBot
         {
             s_logger.LogInformation(
                 $"{currency}_{age}: Start phase {phaseNumber}: wait until lower price and higher RSI is {currentTime}");
-            CryptoPollingBase priceAndRsiPolling = m_cryptoBotPhasesFactory
+            ICryptoPolling priceAndRsiPolling = m_cryptoBotPhasesFactory
                 .CreatePriceAndRsiPolling(m_maxRsiToNotify, cryptoPriceAndRsiQueue, parentRunningCancellationToken, 
                     m_greenCandleSize-parentRunningCancellationToken.Count);
             PollingResponseBase responseBase =
@@ -82,20 +80,15 @@ namespace CryptoBot
             int phaseNumber,
             List<string> phasesDescription)
         {
-            s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: get price every {m_priceChangeDelayTimeIterationsInSeconds / 60} minutes until it changed by {m_priceChangeToNotify}%, price: {basePrice}, {currentTime}");
+            s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: get price every {m_priceChangeCandleSize} minutes until it changed by {m_priceChangeToNotify}%, price: {basePrice}, {currentTime}");
             currentTime = await m_cryptoBotPhasesFactory.SystemClock.Wait(cancellationToken, currency,m_minutesToWaitBeforePollingPrice*60, "FullMode_WaitBeforeStartPricePolling", currentTime);
-            CryptoPollingBase candlePolling = m_cryptoBotPhasesFactory.CreateCandlePolling(basePrice, m_priceChangeDelayTimeIterationsInSeconds, m_priceChangeCandleSize, m_priceChangeToNotify);
+            ICryptoPolling candlePolling = m_cryptoBotPhasesFactory.CreateCandlePolling(basePrice, m_priceChangeCandleSize, m_priceChangeToNotify);
             PollingResponseBase responseBase = await candlePolling.StartAsync(currency,cancellationToken, currentTime);
             AssertSuccessPolling(responseBase);
             var candlePollingResponse = AssertIsCandlePollingResponse(responseBase);
             string increaseOrDecreaseStr = candlePollingResponse.IsWin ? "increase by" : "decreased by";
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: price {increaseOrDecreaseStr} " +
                                     $"{m_priceChangeToNotify}%, " + $"{candlePollingResponse.Time}");
-            // phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{phaseNumber}.Done waiting for price change by {m_priceChangeToNotify}%, \n" +
-            //                       $"\tBuy price: {basePrice}, \n" +
-            //                       $"\tIs price increased by 1%: {candlePollingResponse.IsAbove}, \n" +
-            //                       $"\tIs price decreased by 1%: {candlePollingResponse.IsBelow}, \n" +
-            //                       $"\tLast Candle: {candlePollingResponse.Candle}\n");
             phasesDescription.Add($"{currency} {candlePollingResponse.Time}\n{(candlePollingResponse.IsWin ? "WIN": "LOSS")}\n");
             return (candlePollingResponse.IsWin, candlePollingResponse);
         }
@@ -107,8 +100,8 @@ namespace CryptoBot
             List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: validate current candle is red {currentTime}");
-            RedCandleValidator redCandleValidator = m_cryptoBotPhasesFactory.CreateRedCandleValidator(m_redCandleSize);
-            bool isCandleRed = redCandleValidator.Validate(currency, currentTime);
+            RedCandleValidator redCandleValidator = m_cryptoBotPhasesFactory.CreateRedCandleValidator();
+            bool isCandleRed = redCandleValidator.Validate(currency, m_redCandleSize, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is red: {isCandleRed} {currentTime}");
             phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Validate candle is Red: {isCandleRed}\n");
             return isCandleRed;        
@@ -120,8 +113,8 @@ namespace CryptoBot
             int phaseNumber, List<string> phasesDescription)
         {
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: validate current candle is green {currentTime}");
-            GreenCandleValidator greenCandleValidator = m_cryptoBotPhasesFactory.CreateGreenCandleValidator(m_greenCandleSize);
-            bool isCandleGreen = greenCandleValidator.Validate(currency, currentTime);
+            GreenCandleValidator greenCandleValidator = m_cryptoBotPhasesFactory.CreateGreenCandleValidator();
+            bool isCandleGreen = greenCandleValidator.Validate(currency, m_greenCandleSize, currentTime);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current candle is green: {isCandleGreen} {currentTime}");
             phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Validate candle is green: {isCandleGreen}\n");
             return isCandleGreen;
@@ -138,22 +131,37 @@ namespace CryptoBot
             WaitAsync(currentTime, token, currency, (m_greenCandleSize-1) * 60, "WaitBeforeValidateCandleIsGreen");
 
         public async Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
+            CancellationToken cancellationToken,
             string currency,
             int age,
             int phaseNumber,
             List<string> phasesDescription,
+            decimal buyPrice,
             decimal quoteOrderQuantity)
         {
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: Buy coin and place sell order {currentTime}");
-            IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateMarketBuyCryptoTrader();
-            (decimal buyPrice, decimal quantity) = await buyCryptoTrader.Buy(currency, quoteOrderQuantity, currentTime);
+            DateTime startTradeTime = currentTime;
+            IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateStopLimitBuyCryptoTrader();
+            decimal quantity = quoteOrderQuantity / buyPrice;
+            long orderId = await buyCryptoTrader.BuyAsync(currency, buyPrice, quantity, currentTime);
+            
+            ICryptoPolling orderCryptoPolling = m_cryptoBotPhasesFactory.CreateOrderStatusPolling(orderId);
+            PollingResponseBase pollingResponseBase = await orderCryptoPolling.StartAsync(currency, cancellationToken, currentTime);
+            if (!pollingResponseBase.IsSuccess)
+            {
+                await CancelBuyLimitOrder(orderId, currency);
+                phasesDescription.Add(
+                    $"{currency} {currentTime}\n{phaseNumber}.Place Buy limit order at {buyPrice} expired");
+                return new BuyAndSellTradeInfo(buyPrice,quantity, startTradeTime, pollingResponseBase.Time);
+            }
+
             ISellCryptoTrader sellCryptoTrader = m_cryptoBotPhasesFactory.CreateOcoSellCryptoTrader();
             decimal sellPrice = buyPrice * (100 + m_priceChangeToNotify + s_transactionFee) / 100;
             decimal stopAndLimitPrice = buyPrice * (100 - m_priceChangeToNotify + s_transactionFee) / 100;
-            await sellCryptoTrader.PlaceSellOcoOrderAsync(currency, quantity, sellPrice, stopAndLimitPrice);
+            await sellCryptoTrader.SellAsync(currency, quantity, sellPrice, stopAndLimitPrice);
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: Bought {quantity} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
                                     $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice} {currentTime}");
-            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity);
+            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity, startTradeTime, pollingResponseBase.Time);
             string currencyWithoutUsdt = currency.Replace("USDT", String.Empty);
             phasesDescription.Add($"{currency} {currentTime}\n{phaseNumber}.Buy {currencyWithoutUsdt}\n" +
                                   $"Amount:{quantity:F8}\n" +
@@ -164,6 +172,15 @@ namespace CryptoBot
                                   $"Total on WIN: {buyAndSellTradeInfo.QuoteOrderQuantityOnWin:F2}\n" +
                                   $"Total on LOSS: {buyAndSellTradeInfo.QuoteOrderQuantityOnLoss:F2}");
             return buyAndSellTradeInfo;
+        }
+
+        public decimal GetLastRecordedPrice(string currency, DateTime currentTime) => 
+            m_cryptoBotPhasesFactory.CurrencyDataProvider.GetPriceAsync(currency, currentTime);
+
+        private async Task CancelBuyLimitOrder(long orderId, string currency)
+        {
+            ICancelOrderCryptoTrader cancelOrderCryptoTrader = m_cryptoBotPhasesFactory.CreateCancelOrderCryptoTrader();
+            await cancelOrderCryptoTrader.CancelAsync(currency, orderId);
         }
 
         private static CandlePollingResponse AssertIsCandlePollingResponse(PollingResponseBase pollingResponseBase)

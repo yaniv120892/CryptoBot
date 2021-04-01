@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CryptoBot.Abstractions
 {
-    public abstract class CryptoPollingBase
+    public abstract class CryptoPollingBase : ICryptoPolling
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<CryptoPollingBase>();
         

@@ -13,7 +13,7 @@ namespace CryptoBot.CryptoTraders
             m_tradeService = tradeService;
         }
 
-        public Task PlaceSellOcoOrderAsync(string currency, decimal quantity, decimal sellPrice, decimal stopAndLimitPrice) => 
+        public Task SellAsync(string currency, decimal quantity, decimal sellPrice, decimal stopAndLimitPrice) => 
             m_tradeService.PlaceSellOcoOrderAsync(currency, quantity, sellPrice, stopAndLimitPrice);
     }
 }

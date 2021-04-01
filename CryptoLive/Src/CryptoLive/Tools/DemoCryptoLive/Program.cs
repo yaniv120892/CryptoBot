@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -54,22 +55,17 @@ namespace DemoCryptoLive
                         currency=> 
                             CalculatedFileProvider.GetCalculatedRsiFile(currency, s_appParameters.RsiSize  ,s_appParameters.CalculatedDataFolder)), 
                 deleteOldData: false);
-            var macdRepository = new RepositoryImpl<MacdStorageObject>(s_appParameters.Currencies
-                    .ToDictionary(currency=> currency, 
-                        currency=> 
-                            CalculatedFileProvider.GetCalculatedMacdFile(currency, s_appParameters.SlowEmaSize, 
-                                s_appParameters.FastEmaSize, s_appParameters.SignalSize ,s_appParameters.CalculatedDataFolder)), 
-                deleteOldData: false);
 
             var demoCandleService = new DemoCandleService(s_appParameters.Currencies, 
                 s_appParameters.CandlesDataFolder, 
                 s_appParameters.BotEndTime);
-            var tradeService = new DemoTradeService(demoCandleService);
+            var candlesProvider = new CandlesProvider(candleRepository);
+            var tradeService = new DemoTradeService(candlesProvider);
 
-            await RunStorageWorkers(macdRepository, rsiRepository, candleRepository, systemClock, stopWatch, demoCandleService);
-            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(candleRepository, rsiRepository, macdRepository, systemClock, tradeService);
+            await RunStorageWorkers(rsiRepository, candleRepository, systemClock, stopWatch, demoCandleService);
+            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(candleRepository, rsiRepository, systemClock, tradeService);
 
-            var tasks = new Dictionary<string,Task<(int, int, string, decimal)>>();
+            var tasks = new Dictionary<string,Task<(int, int, int, string, decimal)>>();
             foreach (string currency in s_appParameters.Currencies)
             {
                 tasks[currency] = RunMultiplePhasesPerCurrency(currencyBotFactory, currency);
@@ -80,12 +76,11 @@ namespace DemoCryptoLive
         }
 
         private static ICurrencyBotFactory CreateCurrencyBotFactory(RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository,
-            RepositoryImpl<MacdStorageObject> macdRepository,
             DummySystemClock systemClock, 
             ITradeService tradeService)
         {
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository,
-                macdRepository, systemClock, tradeService);
+                systemClock, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, s_appParameters);
@@ -94,8 +89,7 @@ namespace DemoCryptoLive
             return currencyBotFactory;
         }
 
-        private static async Task RunStorageWorkers(IRepository<MacdStorageObject> macdRepository,
-            IRepository<RsiStorageObject> rsiRepository,
+        private static async Task RunStorageWorkers(IRepository<RsiStorageObject> rsiRepository,
             IRepository<CandleStorageObject> candleRepository,
             ISystemClock systemClock,
             IStopWatch stopWatch,
@@ -105,18 +99,12 @@ namespace DemoCryptoLive
                     currency=> 
                         CalculatedFileProvider.GetCalculatedWsmaFile(currency, s_appParameters.RsiSize ,s_appParameters.CalculatedDataFolder)), 
                 deleteOldData: false);
-            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(s_appParameters.Currencies.ToDictionary(currency=> currency, 
-                    currency=> 
-                        CalculatedFileProvider.GetCalculatedEmaAndSignalFile(currency, s_appParameters.SlowEmaSize, 
-                            s_appParameters.FastEmaSize, s_appParameters.SignalSize ,s_appParameters.CalculatedDataFolder)),
-                deleteOldData: false);
 
             var storageWorkersTasks = new Task[s_appParameters.Currencies.Length];
             for (int i = 0; i < storageWorkersTasks.Length; i++)
             {
                 string currency = s_appParameters.Currencies[i];
-                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, macdRepository,
-                    emaAndSignalStorageObject, candleRepository, candlesService,
+                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, candleRepository, candlesService,
                     systemClock, stopWatch, CancellationToken.None);
                 DateTime storageInitialTime = StorageWorkerInitialTimeProvider.GetStorageInitialTime(currency, candleRepository,
                     s_appParameters.BotStartTime, s_appParameters.BotEndTime);
@@ -129,8 +117,6 @@ namespace DemoCryptoLive
         private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository,
             IRepository<WsmaStorageObject> wsmRepository,
             string currency,
-            IRepository<MacdStorageObject> macdRepository,
-            IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject,
             IRepository<CandleStorageObject> candleRepository,
             ICandlesService candlesService,
             ISystemClock systemClock,
@@ -139,9 +125,6 @@ namespace DemoCryptoLive
         {
             INotificationService notificationService = new EmptyNotificationService();
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, s_appParameters.RsiSize, s_appParameters.CalculatedDataFolder);
-            var macdRepositoryUpdater = new MacdRepositoryUpdater(macdRepository, emaAndSignalStorageObject,
-                currency,
-                s_appParameters.FastEmaSize, s_appParameters.SlowEmaSize, s_appParameters.SignalSize, s_appParameters.CalculatedDataFolder);
             var candleRepositoryUpdater =
                 new CandleRepositoryUpdater(candleRepository, currency, s_appParameters.CandleSize, s_appParameters.CalculatedDataFolder);
             var storageWorker = new StorageWorker(notificationService, candlesService,
@@ -149,7 +132,6 @@ namespace DemoCryptoLive
                 stopWatch,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
-                macdRepositoryUpdater,
                 cancellationToken,
                 s_appParameters.CandleSize,
                 currency,
@@ -160,30 +142,31 @@ namespace DemoCryptoLive
 
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
             IRepository<CandleStorageObject> candleRepository,
-            IRepository<RsiStorageObject> rsiRepository, IRepository<MacdStorageObject> macdRepository,
+            IRepository<RsiStorageObject> rsiRepository, 
             ISystemClock systemClock,
             ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
-            var macdProvider = new MacdProvider(macdRepository);
             var currencyDataProvider =
-                new CurrencyDataProvider(candlesProvider, rsiProvider, macdProvider);
+                new CurrencyDataProvider(candlesProvider, rsiProvider);
             var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock, tradeService);
             return cryptoBotPhasesFactory;
         }
 
-        private static async Task<(int winCounter, int lossCounter, string winAndLossDescriptions, decimal quoteOrderQuantity)>
+        private static async Task<(int winCounter, int lossCounter, int evenCounter, string winAndLossDescriptions, decimal quoteOrderQuantity)>
             RunMultiplePhasesPerCurrency(ICurrencyBotFactory currencyBotFactory,
                 string currency)
         {
             int winCounter = 0;
             int lossCounter = 0;
+            int evenCounter = 0;
             DateTime currentTime = s_appParameters.BotStartTime.AddMinutes(120);
             bool gotException = false;
             bool foundFaultedResult = false;
             var winPhaseDetails = new List<List<string>>();
             var lossesPhaseDetails = new List<List<string>>();
+            var evensPhaseDetails = new List<List<string>>();
             decimal quoteOrderQuantity = s_initialQuoteOrderQuantity;
             while(!gotException && !foundFaultedResult)
             {
@@ -206,6 +189,10 @@ namespace DemoCryptoLive
                             lossCounter++;
                             lossesPhaseDetails.Add(botResultDetails.PhasesDescription);
                             break;
+                        case BotResult.Even:
+                            evenCounter++;
+                            evensPhaseDetails.Add(botResultDetails.PhasesDescription);
+                            break;
                         case BotResult.Faulted:
                             foundFaultedResult = true;
                             break;
@@ -221,7 +208,7 @@ namespace DemoCryptoLive
             }
 
             string winAndLossDescriptions = TestResultsSummary.BuildWinAndLossDescriptions(lossesPhaseDetails, winPhaseDetails);
-            return (winCounter, lossCounter, winAndLossDescriptions, quoteOrderQuantity);
+            return (winCounter, lossCounter, evenCounter, winAndLossDescriptions, quoteOrderQuantity);
         }
     }
 }
