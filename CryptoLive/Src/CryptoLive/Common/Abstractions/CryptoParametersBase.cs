@@ -8,7 +8,6 @@ namespace Common.Abstractions
         {
             PriceChangeToNotify = int.Parse(applicationSection[nameof(PriceChangeToNotify)]);
             MaxRsiToNotify = int.Parse(applicationSection[nameof(MaxRsiToNotify)]);
-            DelayTimeIterationsInSeconds = int.Parse(applicationSection[nameof(DelayTimeIterationsInSeconds)]);
             CandleSize = int.Parse(applicationSection[nameof(CandleSize)]);
             RsiMemorySize = int.Parse(applicationSection[nameof(RsiMemorySize)]);
             MinutesToWaitBeforePollingPrice = int.Parse(applicationSection[nameof(MinutesToWaitBeforePollingPrice)]);        
@@ -17,7 +16,6 @@ namespace Common.Abstractions
         public int CandleSize { get; set; }
         public decimal MaxRsiToNotify { get; set; }
         public int RsiMemorySize { get; set; }
-        public int DelayTimeIterationsInSeconds { get; set; }
         public decimal PriceChangeToNotify { get; set; }
         public int MinutesToWaitBeforePollingPrice { get; set; }
         
@@ -27,8 +25,7 @@ namespace Common.Abstractions
                    $"Max Rsi To Notify: {MaxRsiToNotify},\n" +
                    $"Candle Size: {CandleSize},\n" +
                    $"Rsi Memory Size: {RsiMemorySize},\n" +
-                   $"Minutes To Wait Before Polling Price: {MinutesToWaitBeforePollingPrice},\n" +
-                   $"Delay Time Iterations In Seconds: {DelayTimeIterationsInSeconds}";
+                   $"Minutes To Wait Before Polling Price: {MinutesToWaitBeforePollingPrice}";
         }
     }
 }

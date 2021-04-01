@@ -10,16 +10,17 @@ namespace DemoCryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<ReportGenerator>();
 
-        public static async Task GenerateReport(Dictionary<string, Task<(int, int, string, decimal)>> tasks, 
+        public static async Task GenerateReport(Dictionary<string, Task<(int, int, int, string, decimal)>> tasks, 
             string[] currencies, decimal priceChangeToNotify)
         {
             int totalWinCounter = 0;
             int totalLossCounter = 0;
+            int totalEvenCounter = 0;
             int total;
             
             foreach (string currency in currencies)
             {
-                (int winCounter, int lossCounter, string _, decimal _) = await tasks[currency];
+                (int winCounter, int lossCounter, int evenCounter, string _, decimal _) = await tasks[currency];
                 total = winCounter + lossCounter;
                 s_logger.LogInformation(
                     $"{currency} Summary: " +
@@ -27,9 +28,11 @@ namespace DemoCryptoLive
                     $"Return {CalculateReturn(winCounter, lossCounter, priceChangeToNotify)}%, " +
                     $"Win - {winCounter}, " +
                     $"Loss {lossCounter}, " +
+                    $"Even {evenCounter}, " +
                     $"Total {total}");
                 totalWinCounter += winCounter;
                 totalLossCounter += lossCounter;
+                totalEvenCounter += evenCounter;
             }
 
             total = totalWinCounter + totalLossCounter;
@@ -41,6 +44,7 @@ namespace DemoCryptoLive
                 $"Return: {totalReturn:F2}%, " +
                 $"Win - {totalWinCounter}, " +
                 $"Loss {totalLossCounter}, " +
+                $"Even {totalEvenCounter}, " +
                 $"Total {total}");
         }
 

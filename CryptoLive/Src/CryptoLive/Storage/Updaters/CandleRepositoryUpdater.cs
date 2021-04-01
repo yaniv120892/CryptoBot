@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Common.DataStorageObjects;
-using Storage.Abstractions;
 using Storage.Abstractions.Repository;
 
 namespace Storage.Updaters
@@ -24,15 +23,15 @@ namespace Storage.Updaters
             m_calculatedDataFolder = calculatedDataFolder;
         }
 
-        public void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime)
+        public void AddInfo(CandleStorageObject candle, DateTime newTime)
         {
             m_candleRepository.Add(m_currency, newTime, candle);
         }
         
         public async Task PersistDataToFileAsync()
         {
-            string rsiStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, m_candleSize, m_calculatedDataFolder);
-            await m_candleRepository.SaveDataToFileAsync(m_currency, rsiStorageObjectsFileName);
+            string candleStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, m_candleSize, m_calculatedDataFolder);
+            await m_candleRepository.SaveDataToFileAsync(m_currency, candleStorageObjectsFileName);
         }
     }
 }

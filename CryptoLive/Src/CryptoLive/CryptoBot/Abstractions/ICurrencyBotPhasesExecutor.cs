@@ -48,10 +48,14 @@ namespace CryptoBot.Abstractions
             string currency);
         
         Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
+            CancellationToken cancellationToken,
             string currency,
             int age,
             int phaseNumber,
             List<string> phasesDescription,
+            decimal buyPrice,
             decimal quoteOrderQuantity);
+
+        decimal GetLastRecordedPrice(string currency, DateTime currentTime);
     }
 }

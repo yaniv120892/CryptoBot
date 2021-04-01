@@ -28,17 +28,16 @@ namespace CryptoBot.Factories
             m_tradeService = tradeService;
         }
 
-        public CryptoPollingBase CreateCandlePolling(decimal basePrice, 
-            int delayTimeIterationsInSeconds, 
+        public ICryptoPolling CreateCandlePolling(decimal basePrice, 
             int candleSize, 
             decimal priceChangeToNotify)
         {
             decimal minPrice = basePrice * (100 - priceChangeToNotify) / 100;
             decimal maxPrice = basePrice * (100 + priceChangeToNotify) / 100;
-            return new CandleCryptoPolling(CurrencyDataProvider, SystemClock, delayTimeIterationsInSeconds, candleSize, minPrice, maxPrice);
+            return new CandleCryptoPolling(CurrencyDataProvider, SystemClock, candleSize, minPrice, maxPrice);
         }
         
-        public CryptoPollingBase CreatePriceAndRsiPolling(decimal maxRsiToNotify,
+        public ICryptoPolling CreatePriceAndRsiPolling(decimal maxRsiToNotify,
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
             Queue<CancellationToken> parentRunningCancellationToken,
             int iterationToRunBeforeWaitingForParentToFinish) =>
@@ -48,14 +47,18 @@ namespace CryptoBot.Factories
                 maxRsiToNotify, 
                 parentRunningCancellationToken,
                 iterationToRunBeforeWaitingForParentToFinish);
+        
+        public ICryptoPolling CreateOrderStatusPolling(long orderId) =>
+            new OrderCryptoPolling(SystemClock, m_tradeService, orderId);
 
-        public RedCandleValidator CreateRedCandleValidator(int candleSize) =>
+        public RedCandleValidator CreateRedCandleValidator() =>
             new RedCandleValidator(CurrencyDataProvider);
 
-        public GreenCandleValidator CreateGreenCandleValidator(int candleSize) =>
+        public GreenCandleValidator CreateGreenCandleValidator() =>
             new GreenCandleValidator(CurrencyDataProvider);
 
-        public IBuyCryptoTrader CreateMarketBuyCryptoTrader() => new MarketBuyCryptoTrader(m_tradeService);
+        public IBuyCryptoTrader CreateStopLimitBuyCryptoTrader() => new LimitBuyCryptoTrader(m_tradeService);
         public ISellCryptoTrader CreateOcoSellCryptoTrader() => new OcoSellCryptoTrader(m_tradeService);
+        public ICancelOrderCryptoTrader CreateCancelOrderCryptoTrader() => new CancelOrderCryptoTrader(m_tradeService);
     }
 }

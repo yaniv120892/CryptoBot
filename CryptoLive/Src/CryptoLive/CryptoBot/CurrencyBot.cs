@@ -138,8 +138,15 @@ namespace CryptoBot
         {
             // Enter
             var buyAndSellTradeInfo = await PlaceBuyAndSellOrder();
-            var isWin = await WaitForOpenOrdersToBeFilled(buyAndSellTradeInfo);
-            return GetBotResultDetails(isWin, buyAndSellTradeInfo);
+            m_currentTime = buyAndSellTradeInfo.EndTradeTime;
+            
+            if (buyAndSellTradeInfo.IsDoneBuyAndSell)
+            {
+                var isWin = await WaitForOpenOrdersToBeFilled(buyAndSellTradeInfo);
+                return GetBotResultDetails(isWin, buyAndSellTradeInfo);
+            }
+            
+            return new BotResultDetails(BotResult.Even, m_phasesDescription, m_currentTime);
         }
 
         private BotResultDetails GetBotResultDetails(bool isWin, BuyAndSellTradeInfo buyAndSellTradeInfo)
@@ -172,8 +179,10 @@ namespace CryptoBot
         private async Task<BuyAndSellTradeInfo> PlaceBuyAndSellOrder()
         {
             decimal availableQuote = await m_accountQuoteProvider.GetAvailableQuote();
+            decimal buyPrice = m_currencyBotPhasesExecutor.GetLastRecordedPrice(m_currency, m_currentTime);
             BuyAndSellTradeInfo buyAndSellTradeInfo = await m_currencyBotPhasesExecutor.BuyAndPlaceSellOrder(m_currentTime,
-                m_currency, m_age, ++m_phaseNumber, m_phasesDescription, availableQuote);
+                CancellationToken.None, m_currency, m_age, ++m_phaseNumber, m_phasesDescription ,
+                buyPrice, availableQuote);
             m_notificationService.Notify($"{string.Join("\n", m_phasesDescription)}\n\n");
             return buyAndSellTradeInfo;
         }

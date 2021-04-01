@@ -5,7 +5,7 @@ using Common.DataStorageObjects;
 
 namespace Utils.Converters
 {
-    public class BinanceKlineToMyCandleConverter
+    public class CandleConverter
     {
         public static Memory<MyCandle> ConvertByCandleSize(Span<IBinanceKline> binanceKlines, int candleSizeInMinutes, int candlesAmount)
         {
