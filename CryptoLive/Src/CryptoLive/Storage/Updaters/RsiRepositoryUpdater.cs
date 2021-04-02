@@ -78,7 +78,7 @@ namespace Storage.Updaters
                 return CalculateWsmaUsingPreviousWsma(upValue, previousWsma, downValue, newTime);
             }
 
-            s_logger.LogInformation($"{m_currency}: CalculateFirstWsma {previousWsmaTime}");
+            s_logger.LogInformation($"{m_currency}: CalculateFirstWsma {previousWsmaTime:dd/MM/yyyy HH:mm:ss}");
             return CalculateFirstWsma(candle, newTime);
         }
 
