@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Binance.Net.Interfaces;
 using Common;
 using Common.DataStorageObjects;
@@ -31,6 +32,7 @@ namespace Utils.Converters
 
         public static Memory<MyCandle> ConvertByCandleSize(Span<MyCandle> candles, int candleSizeInMinutes, int candlesAmount)
         {
+            Debug.Assert(candles.Length == candleSizeInMinutes*candlesAmount);
             Memory<MyCandle> ans = new MyCandle[candlesAmount];
             for (int i = 0; i < ans.Length; i++)
             {
@@ -43,8 +45,9 @@ namespace Utils.Converters
             return ans;
         }
         
-        public static CandleStorageObject ConvertByCandleSize(Span<MyCandle> candles, int candleSizeInMinutes)
+        public static CandleStorageObject ConvertByCandleSizeAndIgnoreLastCandle(Span<MyCandle> candles, int candleSizeInMinutes)
         {
+            Debug.Assert(candles.Length == candleSizeInMinutes+1);
             const int start = 0;
             int end = start + candleSizeInMinutes - 1;
             (decimal low, decimal high) = GetHighAndLow(candles, start, end);

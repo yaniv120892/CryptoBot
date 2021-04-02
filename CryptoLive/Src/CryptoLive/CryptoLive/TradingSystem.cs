@@ -103,7 +103,7 @@ namespace CryptoLive
             int candleSize)
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
-            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency, candleSize,string.Empty);
+            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency,string.Empty);
             
             var storageWorker = new StorageWorker(m_notificationService,
                 candlesService,

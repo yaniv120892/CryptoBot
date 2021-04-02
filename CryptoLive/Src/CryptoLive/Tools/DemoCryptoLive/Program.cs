@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,7 +36,6 @@ namespace DemoCryptoLive
         public static void Main()
         {
             s_appParameters = AppParametersLoader<DemoCryptoParameters>.Load(s_configFile);
-            s_logger.LogInformation(s_appParameters.ToString());
             RunMultiplePhases().Wait();
         }
 
@@ -126,7 +124,7 @@ namespace DemoCryptoLive
             INotificationService notificationService = new EmptyNotificationService();
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, s_appParameters.RsiSize, s_appParameters.CalculatedDataFolder);
             var candleRepositoryUpdater =
-                new CandleRepositoryUpdater(candleRepository, currency, s_appParameters.CandleSize, s_appParameters.CalculatedDataFolder);
+                new CandleRepositoryUpdater(candleRepository, currency, s_appParameters.CalculatedDataFolder);
             var storageWorker = new StorageWorker(notificationService, candlesService,
                 systemClock,
                 stopWatch,

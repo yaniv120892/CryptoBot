@@ -26,7 +26,7 @@ namespace Common.PollingResponses
 
         public override string ToString()
         {
-            return $"Is Above {IsAbove}, Is Below {IsBelow}, Time {Time}";
+            return $"Is Above {IsAbove}, Is Below {IsBelow}, Time {Time:dd/MM/yyyy HH:mm:ss}";
         }
 
         public bool Equals(CandlePollingResponse other)

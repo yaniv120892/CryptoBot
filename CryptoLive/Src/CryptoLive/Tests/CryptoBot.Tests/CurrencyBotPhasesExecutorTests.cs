@@ -21,9 +21,7 @@ namespace CryptoBot.Tests
         private const int c_maxRsiToNotify = 35;
         private const int c_redCandleSize = 15;
         private const int c_greenCandleSize = 15;
-        private const int c_minutesToWaitBeforePollingPrice = 1;
         private const int c_priceChangeToNotify = 1;
-        private const int c_priceChangeCandleSize = 15;
         private const decimal c_buyPrice = 10;
         private const decimal c_quoteOrderQuantity = 100;
         private const long c_orderId = 1;
@@ -129,9 +127,7 @@ namespace CryptoBot.Tests
                 c_maxRsiToNotify, 
                 c_redCandleSize, 
                 c_greenCandleSize, 
-                c_minutesToWaitBeforePollingPrice, 
-                c_priceChangeToNotify, 
-                c_priceChangeCandleSize);
+                c_priceChangeToNotify);
         }
     }
 }

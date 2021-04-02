@@ -242,7 +242,7 @@ namespace CryptoBot.Tests
                 .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
                 .Returns(s_buyPrice);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, m_cancellationTokenSource.Token,
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, It.IsAny<CancellationToken>(),
                     s_currency, 0, 4, It.IsAny <List<string>>(), s_buyPrice, s_quoteOrderQuantity))
                 .Returns(Task.FromResult(buyAndSellTradeInfo));
             m_currencyBotPhasesExecutorMock
@@ -260,6 +260,7 @@ namespace CryptoBot.Tests
            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
+            Assert.IsNull(botResult.Exception, $"expected exception to be null but was {botResult.Exception?.StackTrace}");
             Assert.AreEqual(BotResult.Win, botResult.BotResult);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
@@ -346,7 +347,7 @@ namespace CryptoBot.Tests
                 .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
                 .Returns(s_buyPrice);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, m_cancellationTokenSource.Token,
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, It.IsAny<CancellationToken>(),
                     s_currency, 0, 4, It.IsAny <List<string>>(), s_buyPrice, s_quoteOrderQuantity))
                 .Returns(Task.FromResult(buyAndSellTradeInfo));
             m_currencyBotPhasesExecutorMock
@@ -363,6 +364,7 @@ namespace CryptoBot.Tests
             BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
+            Assert.IsNull(botResult.Exception, $"expected exception to be null but was {botResult.Exception?.StackTrace}");
             Assert.AreEqual(BotResult.Loss, botResult.BotResult);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
