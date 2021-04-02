@@ -41,7 +41,7 @@ namespace Storage.Tests
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmaRepository, s_currency, s_rsiSize, s_calculatedDataFolder);
             
             var candleRepository = new RepositoryImpl<CandleStorageObject>(s_currenciesToCalculatedDataFiles, false);
-            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_candleSize, s_calculatedDataFolder);
+            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,
@@ -102,7 +102,7 @@ namespace Storage.Tests
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmaRepository, s_currency, s_rsiSize, s_calculatedDataFolder);
             
             var candleRepository = new RepositoryImpl<CandleStorageObject>(s_currenciesToCalculatedDataFiles, false);
-            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_candleSize, s_calculatedDataFolder);
+            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,

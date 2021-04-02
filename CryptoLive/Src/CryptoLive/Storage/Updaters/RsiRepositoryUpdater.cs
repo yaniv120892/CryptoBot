@@ -71,7 +71,7 @@ namespace Storage.Updaters
 
         private WsmaStorageObject CalculateNewWsma(CandleStorageObject candle, DateTime newTime)
         {
-            DateTime previousWsmaTime = newTime.Subtract(TimeSpan.FromMinutes(m_rsiSize));
+            DateTime previousWsmaTime = newTime.Subtract(candle.Candle.CandleSizeInMinutes);
             (decimal upValue, decimal downValue) = GetLastCandleUpAndDownValue(candle);
             if (m_wsmaRepository.TryGet(m_currency,previousWsmaTime, out WsmaStorageObject previousWsma))
             {

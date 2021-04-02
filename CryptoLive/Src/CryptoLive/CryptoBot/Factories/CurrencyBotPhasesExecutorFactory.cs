@@ -12,8 +12,6 @@ namespace CryptoBot.Factories
                 cryptoParametersBase.MaxRsiToNotify,
                 cryptoParametersBase.CandleSize,
                 cryptoParametersBase.CandleSize,
-                cryptoParametersBase.MinutesToWaitBeforePollingPrice,
-                cryptoParametersBase.PriceChangeToNotify,
-                cryptoParametersBase.CandleSize);
+                cryptoParametersBase.PriceChangeToNotify);
     }
 }

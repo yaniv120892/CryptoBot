@@ -86,7 +86,7 @@ namespace Storage.Repository
         
         public void Add(string currency, DateTime time, T storedData)
         {
-            s_logger.LogTrace($"{currency}_{typeof(T)}: Add {currency}_{time.ToString(CultureInfo.InvariantCulture)}");
+            s_logger.LogTrace($"{currency}_{typeof(T)}: Add {currency}_{time.ToString(CultureInfo.InvariantCulture)} {storedData}");
             if (!m_mapCurrencyTimeToStoredData.TryGetValue(currency, out ConcurrentDictionary<string, T> mapTimeToStoredData))
             {
                 s_logger.LogError($"{currency}_{typeof(T)} Add failed, The given key '{currency}' was not present in the dictionary");

@@ -61,7 +61,7 @@ namespace Storage.Workers
         public async Task StartAsync(DateTime startTime)
         {
             m_currentTime = startTime;
-            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
+            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime:dd/MM/yyyy HH:mm:ss}");
 
             WorkerStatus = WorkerStatus.Running;
             try
@@ -129,8 +129,10 @@ namespace Storage.Workers
         {
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_currency, amountOfOneMinuteKlines, m_currentTime);
-            CandleStorageObject candleForRsi = CandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
-            CandleStorageObject candleOneMinute = CandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, 1);
+            CandleStorageObject candleForRsi = CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candleOneMinute = 
+                CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span.Slice(oneMinuteCandlesDescription.Length - 2),
+                    1);
             DateTime newCandleTime = candleOneMinute.Candle.CloseTime;
             m_candleRepositoryUpdater.AddInfo(candleOneMinute, newCandleTime);
             m_rsiRepositoryUpdater.AddInfo(candleForRsi, newCandleTime);

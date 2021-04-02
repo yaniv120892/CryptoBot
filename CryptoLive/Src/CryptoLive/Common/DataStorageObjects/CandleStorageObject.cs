@@ -35,5 +35,10 @@ namespace Common.DataStorageObjects
         {
             return HashCode.Combine(base.GetHashCode(), Candle);
         }
+
+        public override string ToString()
+        {
+            return Candle.ToString();
+        }
     }
 }

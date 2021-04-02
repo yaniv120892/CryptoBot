@@ -20,7 +20,8 @@ namespace DemoCryptoLive
             
             foreach (string currency in currencies)
             {
-                (int winCounter, int lossCounter, int evenCounter, string _, decimal _) = await tasks[currency];
+                (int winCounter, int lossCounter, int evenCounter, string winAndLossesDescription, decimal _) = await tasks[currency];
+                s_logger.LogInformation(winAndLossesDescription);
                 total = winCounter + lossCounter;
                 s_logger.LogInformation(
                     $"{currency} Summary: " +
