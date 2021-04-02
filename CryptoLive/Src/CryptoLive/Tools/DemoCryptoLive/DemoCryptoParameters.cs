@@ -34,13 +34,13 @@ namespace DemoCryptoLive
 
         public override string ToString()
         {
-            return $"Bot start time: {BotStartTime}, " +
-                   $"Bot end time: {BotEndTime}, " +
-                   $"Candle size in minutes: {CandleSize}, " +
-                   $"Price change to notify: {PriceChangeToNotify}, " +
-                   $"Max rsi to notify: {MaxRsiToNotify}, " +
-                   $"Rsi size : {RsiSize}, " +
-                   $"Rsi memory size: {RsiMemorySize}, " +
+            return $"{base.ToString()},\n" +
+                   $"Bot start time: {BotStartTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Bot end time: {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Price change to notify: {PriceChangeToNotify},\n" +
+                   $"Max rsi to notify: {MaxRsiToNotify},\n" +
+                   $"Rsi size : {RsiSize},\n" +
+                   $"Rsi memory size: {RsiMemorySize},\n" +
                    $"Currencies: {string.Join(", ", Currencies)}";
         }
     }
