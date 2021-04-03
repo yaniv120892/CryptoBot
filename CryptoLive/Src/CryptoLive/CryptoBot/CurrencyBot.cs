@@ -157,13 +157,13 @@ namespace CryptoBot
             {
                 newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnWin;
                 s_logger.LogInformation(
-                    $"{m_currency}_{m_age}: Done iteration - Win , NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
+                    $"{m_currency}_{m_age}: Done iteration - Win , NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime:dd/MM/yyyy HH:mm:ss}");
                 return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Win, m_currentTime, m_phasesDescription);
             }
 
             newQuoteOrderQuantity = buyAndSellTradeInfo.QuoteOrderQuantityOnLoss;
             s_logger.LogInformation(
-                $"{m_currency}_{m_age}: Done iteration - Loss, NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime}");
+                $"{m_currency}_{m_age}: Done iteration - Loss, NewQuoteOrderQuantity: {newQuoteOrderQuantity:f4} {m_currentTime:dd/MM/yyyy HH:mm:ss}");
             return BotResultDetailsFactory.CreateSuccessBotResultDetails(BotResult.Loss, m_currentTime, m_phasesDescription);
         }
 
@@ -171,7 +171,8 @@ namespace CryptoBot
         {
             (bool isWin, PollingResponseBase pollingResponseBase) =
                 await m_currencyBotPhasesExecutor.WaitUnitPriceChangeAsync(m_currentTime, CancellationToken.None,
-                    m_currency, buyAndSellTradeInfo.BuyPrice, m_age, ++m_phaseNumber, m_phasesDescription);
+                    m_currency, buyAndSellTradeInfo.StopLossLimitPrice, buyAndSellTradeInfo.SellPrice, 
+                    m_age, ++m_phaseNumber, m_phasesDescription);
             m_currentTime = pollingResponseBase.Time;
             return isWin;
         }
@@ -194,7 +195,7 @@ namespace CryptoBot
 
         private async Task<BotResultDetails> StartChildAsync()
         {
-            s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime}");
+            s_logger.LogDebug($"{m_currency}_{m_age}: Start child {m_currentTime:dd/MM/yyyy HH:mm:ss}");
             var cryptoPriceAndRsiQueue = m_cryptoPriceAndRsiQueue.Clone();
             var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(m_cancellationTokenSource.Token);
             m_parentRunningCancellationToken.Enqueue(m_isRunningCancellationTokenSource.Token);

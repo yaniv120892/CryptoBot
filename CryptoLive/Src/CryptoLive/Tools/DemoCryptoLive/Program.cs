@@ -46,7 +46,7 @@ namespace DemoCryptoLive
             var candleRepository = new RepositoryImpl<CandleStorageObject>(s_appParameters.Currencies
                     .ToDictionary(currency=> currency, 
                         currency=> 
-                            CalculatedFileProvider.GetCalculatedCandleFile(currency, s_appParameters.CandleSize  ,s_appParameters.CalculatedDataFolder)), 
+                            CalculatedFileProvider.GetCalculatedCandleFile(currency, s_appParameters.CalculatedDataFolder)), 
                 deleteOldData: false);
             var rsiRepository = new RepositoryImpl<RsiStorageObject>(s_appParameters.Currencies
                     .ToDictionary(currency=> currency, 

@@ -36,12 +36,9 @@ namespace DemoCryptoLive
         {
             return $"{base.ToString()},\n" +
                    $"Bot start time: {BotStartTime:dd/MM/yyyy HH:mm:ss},\n" +
-                   $"Bot end time: {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
-                   $"Price change to notify: {PriceChangeToNotify},\n" +
-                   $"Max rsi to notify: {MaxRsiToNotify},\n" +
-                   $"Rsi size : {RsiSize},\n" +
-                   $"Rsi memory size: {RsiMemorySize},\n" +
-                   $"Currencies: {string.Join(", ", Currencies)}";
+                   $"Bot end time  : {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Rsi size      : {RsiSize},\n" +
+                   $"Currencies    : {string.Join(", ", Currencies)}";
         }
     }
 }

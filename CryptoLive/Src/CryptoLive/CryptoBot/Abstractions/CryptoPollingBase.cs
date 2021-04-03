@@ -28,12 +28,12 @@ namespace CryptoBot.Abstractions
             }
             catch (OperationCanceledException)
             {
-                s_logger.LogWarning($"{PollingType}_{Currency}_{CurrentTime} - got cancellation request");
+                s_logger.LogWarning($"{PollingType}_{Currency}_{CurrentTime:dd/MM/yyyy HH:mm:ss} - got cancellation request");
                 pollingResponse = CreateGotCancelledPollingResponse();
             }
             catch (Exception e)
             {
-                s_logger.LogWarning(e, $"{PollingType}_{Currency}_{CurrentTime} - Failed, {e.Message}");
+                s_logger.LogWarning(e, $"{PollingType}_{Currency}_{CurrentTime:dd/MM/yyyy HH:mm:ss} - Failed, {e.Message}");
                 pollingResponse = CreateExceptionPollingResponse(e);
             }
             s_logger.LogDebug(EndPollingDescription(pollingResponse));
@@ -45,5 +45,5 @@ namespace CryptoBot.Abstractions
         protected abstract Task<PollingResponseBase> StartAsyncImpl(CancellationToken cancellationToken);
         protected abstract string StartPollingDescription();
         private string EndPollingDescription(PollingResponseBase pollingResponse) =>
-            $"{PollingType} {Currency} {CurrentTime}: done, {pollingResponse}";    }
+            $"{PollingType} {Currency} {CurrentTime:dd/MM/yyyy HH:mm:ss}: done, {pollingResponse}";    }
 }

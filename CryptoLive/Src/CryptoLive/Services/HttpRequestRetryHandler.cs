@@ -9,7 +9,7 @@ namespace Services
     public class HttpRequestRetryHandler
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<HttpRequestRetryHandler>();
-        private static readonly int s_totalRetriesToDo = 3;
+        private const int c_totalRetriesToDo = 3;
         
         public static async Task<WebCallResult<T>> RetryOnFailure<T>(
             Func<Task<WebCallResult<T>>> function,
@@ -17,7 +17,7 @@ namespace Services
         {
             Exception exceptionToThrowOnFailure = null;
 
-            for (var retryIteration = 0; retryIteration <= s_totalRetriesToDo; retryIteration++)
+            for (var retryIteration = 0; retryIteration <= c_totalRetriesToDo; retryIteration++)
             {
                 try
                 {

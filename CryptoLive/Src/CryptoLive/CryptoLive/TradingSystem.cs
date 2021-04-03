@@ -50,7 +50,7 @@ namespace CryptoLive
         { 
             var systemClock = new SystemClock();
             var stopWatchWrapper = new StopWatchWrapper();
-            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,m_cryptoLiveParameters.BotDelayTime);
+            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,m_cryptoLiveParameters.BotDelayTimeInMinutes);
 
             var currencyClientFactory = new CurrencyClientFactory(m_cryptoLiveParameters.BinanceApiKey, 
                 m_cryptoLiveParameters.BinanceApiSecretKey);
@@ -82,7 +82,7 @@ namespace CryptoLive
                     systemClock, stopWatchWrapper, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
-                await systemClock.Wait(CancellationToken.None, currency, m_cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
+                await systemClock.Wait(CancellationToken.None, currency, m_cryptoLiveParameters.BotDelayTimeInMinutes*60, "Init2",storageStartTime);
                 currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, 
                     currency, 
                     storageStartTime, 

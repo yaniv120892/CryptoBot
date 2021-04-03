@@ -16,7 +16,7 @@ namespace CryptoLive
         public string[] Currencies { get; }
         public NotificationType NotificationType { get; set; }
         public int RsiSize { get; set; }
-        public int BotDelayTime { get; set; }
+        public int BotDelayTimeInMinutes { get; set; }
         public string TelegramChatId { get; }
         public string TelegramAuthToken { get; }
         public string CryptoBotName { get; }
@@ -32,7 +32,7 @@ namespace CryptoLive
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             NotificationType = Enum.Parse<NotificationType>(applicationSection[nameof(NotificationType)]);
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
-            BotDelayTime = int.Parse(applicationSection[nameof(BotDelayTime)]);
+            BotDelayTimeInMinutes = int.Parse(applicationSection[nameof(BotDelayTimeInMinutes)]);
             TelegramChatId = applicationSection[nameof(TelegramChatId)];
             TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];
             CryptoBotName = applicationSection[nameof(CryptoBotName)];
@@ -44,7 +44,7 @@ namespace CryptoLive
                    $"Currencies {string.Join(", ", Currencies)},\n" +
                    $"Notification Type: {NotificationType.ToString()},\n" +
                    $"Rsi Size: {RsiSize},\n" +
-                   $"Bot Delay Time: {BotDelayTime}\n" +
+                   $"Bot Delay Time in minutes: {BotDelayTimeInMinutes}\n" +
                    $"Crypto Bot Name: {CryptoBotName}";
         }
     }

@@ -12,7 +12,7 @@ namespace CryptoBot.Abstractions.Factories
     {
         ISystemClock SystemClock { get; }
         ICurrencyDataProvider CurrencyDataProvider { get; }
-        ICryptoPolling CreateCandlePolling(decimal basePrice, int candleSize, decimal priceChangeToNotify);
+        ICryptoPolling CreateCandlePolling(decimal minPrice, decimal maxPrice, int candleSize);
         ICryptoPolling CreateOrderStatusPolling(long orderId);
         ICryptoPolling CreatePriceAndRsiPolling(decimal maxRsiToNotify, ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
             Queue<CancellationToken> parentRunningCancellationToken, int iterationToRunBeforeWaitingForParentToFinish);

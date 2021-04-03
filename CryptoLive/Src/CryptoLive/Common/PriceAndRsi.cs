@@ -17,7 +17,7 @@ namespace Common
 
         public override string ToString()
         {
-            return $"Time: {CandleTime}, Price: {Price}, Rsi: {Rsi:F2}";
+            return $"Time: {CandleTime:dd/MM/yyyy HH:mm:ss}, Price: {Price}, Rsi: {Rsi:F2}";
         }
     }
 }

@@ -28,15 +28,9 @@ namespace CryptoBot.Factories
             m_tradeService = tradeService;
         }
 
-        public ICryptoPolling CreateCandlePolling(decimal basePrice, 
-            int candleSize, 
-            decimal priceChangeToNotify)
-        {
-            decimal minPrice = basePrice * (100 - priceChangeToNotify) / 100;
-            decimal maxPrice = basePrice * (100 + priceChangeToNotify) / 100;
-            return new CandleCryptoPolling(CurrencyDataProvider, SystemClock, candleSize, minPrice, maxPrice);
-        }
-        
+        public ICryptoPolling CreateCandlePolling(decimal minPrice, decimal maxPrice, int candleSize) =>
+            new CandleCryptoPolling(CurrencyDataProvider, SystemClock, candleSize, minPrice, maxPrice);
+
         public ICryptoPolling CreatePriceAndRsiPolling(decimal maxRsiToNotify,
             ICryptoPriceAndRsiQueue<PriceAndRsi> cryptoPriceAndRsiQueue,
             Queue<CancellationToken> parentRunningCancellationToken,

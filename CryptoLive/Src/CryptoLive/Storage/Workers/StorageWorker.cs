@@ -69,21 +69,21 @@ namespace Storage.Workers
                 await StartAsyncImpl();
                 if (m_cancellationToken.IsCancellationRequested)
                 {
-                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
+                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime:dd/MM/yyyy HH:mm:ss}");
                     WorkerStatus = WorkerStatus.Cancelled;
                 }
             }
             catch (OperationCanceledException)
             {
-                s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
+                s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime:dd/MM/yyyy HH:mm:ss}");
                 WorkerStatus = WorkerStatus.Cancelled;
-                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime:dd/MM/yyyy HH:mm:ss}");
             }
             catch (Exception e)
             {
                 WorkerStatus = WorkerStatus.Faulted;
-                s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}");
-                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}, {e.Message}");
+                s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime:dd/MM/yyyy HH:mm:ss}");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime:dd/MM/yyyy HH:mm:ss}, {e.Message}");
             }
 
             await PersistRepositoriesDataIfNeeded();

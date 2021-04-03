@@ -26,12 +26,12 @@ namespace CryptoBot.CryptoValidators
             MyCandle currCandle = m_currencyDataProvider.GetLastCandle(currency, candleSize, currentTime);
             if (currCandle.Close < currCandle.Open * (decimal) (1 - s_candlePercentSize))
             {
-                message = $"{currency} {s_actionName} done, {currCandle} ,{currentTime}";
+                message = $"{currency} {s_actionName} done, {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
                 s_logger.LogInformation(message);
                 return true;
             }
 
-            message = $"{currency} {s_actionName} done, Candle is not red {currCandle} ,{currentTime}";
+            message = $"{currency} {s_actionName} done, Candle is not red {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
             s_logger.LogInformation(message);
             return false;
         }

@@ -27,7 +27,7 @@ namespace Storage.Updaters
         
         public async Task PersistDataToFileAsync()
         {
-            string candleStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, 1, m_calculatedDataFolder);
+            string candleStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, m_calculatedDataFolder);
             await m_candleRepository.SaveDataToFileAsync(m_currency, candleStorageObjectsFileName);
         }
     }
