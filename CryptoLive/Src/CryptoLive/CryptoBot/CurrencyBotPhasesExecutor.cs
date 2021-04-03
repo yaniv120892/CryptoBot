@@ -140,7 +140,7 @@ namespace CryptoBot
             IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateStopLimitBuyCryptoTrader();
             decimal quantity = quoteOrderQuantity / buyPrice;
             long orderId = await buyCryptoTrader.BuyAsync(currency, buyPrice, quantity, currentTime);
-            
+            currentTime = await WaitAsync(currentTime, cancellationToken, currency, 60, "WaitBeforeStartPollingOrderStatus");
             ICryptoPolling orderCryptoPolling = m_cryptoBotPhasesFactory.CreateOrderStatusPolling(orderId);
             PollingResponseBase pollingResponseBase = await orderCryptoPolling.StartAsync(currency, cancellationToken, currentTime);
             if (!pollingResponseBase.IsSuccess)

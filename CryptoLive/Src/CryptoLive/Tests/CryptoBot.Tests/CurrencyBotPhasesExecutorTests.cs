@@ -27,41 +27,46 @@ namespace CryptoBot.Tests
         private const long c_orderId = 1;
         private readonly Mock<ICryptoBotPhasesFactory> m_cryptoBotPhaseFactoryMock = new Mock<ICryptoBotPhasesFactory>();
         private readonly CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
-        private static readonly DateTime s_startTime = new DateTime(2021, 1, 1, 0, 0, 0);
+        private static readonly DateTime s_placeBuyOrderTime = new DateTime(2021, 1, 1, 0, 0, 0);
+        private static readonly DateTime s_startOrderPollingTime = s_placeBuyOrderTime.AddMinutes(1);
         
 
         [TestMethod]
         public async Task When_BuyAndPlaceSellOrder_Given_BuyLimitOrderNotSuccess_Should_IsDoneBuyAndSellEqualsFalse()
         {
             // Arrange
-            DateTime expectedEndTradeTime = s_startTime.AddMinutes(15);
+            DateTime expectedEndTradeTime = s_startOrderPollingTime.AddMinutes(15);
             CurrencyBotPhasesExecutor sut = CreateCurrencyBotPhasesExecutor();
             SetupPlaceBuyLimitOrder();
             SetupNonFilledBuyLimitOrder(expectedEndTradeTime);
             SetupCancelBuyLimitOrder();
+            SetupWaitBeforeOrderStatusPolling();
             
             // Act
-            BuyAndSellTradeInfo buyAndPlaceSellOrder =  await sut.BuyAndPlaceSellOrder(s_startTime, m_cancellationTokenSource.Token, c_currency, c_age, c_phaseNumber,
-                new List<string>(), c_buyPrice, c_quoteOrderQuantity);
+            BuyAndSellTradeInfo buyAndPlaceSellOrder =  await sut.BuyAndPlaceSellOrder(s_placeBuyOrderTime, 
+                m_cancellationTokenSource.Token, c_currency, c_age, c_phaseNumber, new List<string>(), 
+                c_buyPrice, c_quoteOrderQuantity);
 
             // Assert
             Assert.IsFalse(buyAndPlaceSellOrder.IsDoneBuyAndSell);
             Assert.AreEqual(expectedEndTradeTime, buyAndPlaceSellOrder.EndTradeTime);
         }
-        
+
         [TestMethod]
         public async Task When_BuyAndPlaceSellOrder_Given_BuyLimitOrderSuccess_Should_IsDoneBuyAndSellEqualsTrue()
         {
             // Arrange
-            DateTime expectedEndTradeTime = s_startTime;
+            DateTime expectedEndTradeTime = s_startOrderPollingTime;
             CurrencyBotPhasesExecutor sut = CreateCurrencyBotPhasesExecutor();
             SetupPlaceBuyLimitOrder();
             SetupFilledBuyLimitOrder(expectedEndTradeTime);
             SetupPlaceSellOcoOrder();
-            
+            SetupWaitBeforeOrderStatusPolling();
+
             // Act
-            BuyAndSellTradeInfo buyAndPlaceSellOrder =  await sut.BuyAndPlaceSellOrder(s_startTime, m_cancellationTokenSource.Token, c_currency, c_age, c_phaseNumber,
-                new List<string>(), c_buyPrice, c_quoteOrderQuantity);
+            BuyAndSellTradeInfo buyAndPlaceSellOrder =  await sut.BuyAndPlaceSellOrder(s_placeBuyOrderTime, 
+                m_cancellationTokenSource.Token, c_currency, c_age, c_phaseNumber, new List<string>(),
+                c_buyPrice, c_quoteOrderQuantity);
 
             // Assert
             Assert.IsTrue(buyAndPlaceSellOrder.IsDoneBuyAndSell);
@@ -84,7 +89,7 @@ namespace CryptoBot.Tests
         {
             Mock<ICryptoPolling> cryptoPollingBaseMock = new Mock<ICryptoPolling>();
             cryptoPollingBaseMock
-                .Setup(m => m.StartAsync(c_currency, m_cancellationTokenSource.Token, s_startTime))
+                .Setup(m => m.StartAsync(c_currency, m_cancellationTokenSource.Token, s_startOrderPollingTime))
                 .Returns(Task.FromResult<PollingResponseBase>(new OrderPollingResponse(expectedEndTradeTime, c_orderId)));
             m_cryptoBotPhaseFactoryMock.Setup(m => m.CreateOrderStatusPolling(c_orderId))
                 .Returns(cryptoPollingBaseMock.Object);        
@@ -95,7 +100,7 @@ namespace CryptoBot.Tests
             decimal quantity = c_quoteOrderQuantity / c_buyPrice;
             Mock<IBuyCryptoTrader> buyCryptoTraderMock = new Mock<IBuyCryptoTrader>();
             buyCryptoTraderMock
-                .Setup(m => m.BuyAsync(c_currency, c_buyPrice, quantity, s_startTime))
+                .Setup(m => m.BuyAsync(c_currency, c_buyPrice, quantity, s_placeBuyOrderTime))
                 .Returns(Task.FromResult(c_orderId));
             m_cryptoBotPhaseFactoryMock.Setup(m => m.CreateStopLimitBuyCryptoTrader())
                 .Returns(buyCryptoTraderMock.Object);           
@@ -115,10 +120,18 @@ namespace CryptoBot.Tests
         {
             Mock<ICryptoPolling> cryptoPollingBaseMock = new Mock<ICryptoPolling>();
             cryptoPollingBaseMock
-                .Setup(m => m.StartAsync(c_currency, m_cancellationTokenSource.Token, s_startTime))
+                .Setup(m => m.StartAsync(c_currency, m_cancellationTokenSource.Token, s_startOrderPollingTime))
                 .Returns(Task.FromResult<PollingResponseBase>(new OrderPollingResponse(expectedEndTradeTime, c_orderId, true)));
             m_cryptoBotPhaseFactoryMock.Setup(m => m.CreateOrderStatusPolling(c_orderId))
                 .Returns(cryptoPollingBaseMock.Object);
+        }
+        
+        private void SetupWaitBeforeOrderStatusPolling()
+        {
+            m_cryptoBotPhaseFactoryMock
+                .Setup(m => m.SystemClock.Wait(It.IsAny<CancellationToken>(), 
+                    c_currency, 60, "WaitBeforeStartPollingOrderStatus", s_placeBuyOrderTime))
+                .Returns(Task.FromResult(s_startOrderPollingTime));
         }
 
         private CurrencyBotPhasesExecutor CreateCurrencyBotPhasesExecutor()
