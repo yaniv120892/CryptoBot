@@ -21,7 +21,8 @@ namespace CryptoBot.Abstractions
         Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
-            decimal basePrice,
+            decimal minPrice,
+            decimal maxPrice,
             int age,
             int phaseNumber,
             List<string> phasesDescription);

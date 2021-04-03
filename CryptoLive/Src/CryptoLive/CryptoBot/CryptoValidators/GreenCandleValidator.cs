@@ -31,13 +31,13 @@ namespace CryptoBot.CryptoValidators
 
             if (prevCandle.High < currCandle.Close)
             {
-                message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime}";
+                message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
                 s_logger.LogInformation(message);
                 return true;
             }
 
             message =
-                $"{currency} {s_actionName} done, Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}";
+                $"{currency} {s_actionName} done, Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
             s_logger.LogInformation(message);
             return false;
         }

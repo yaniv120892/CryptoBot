@@ -23,14 +23,16 @@ namespace DemoCryptoLive
                 (int winCounter, int lossCounter, int evenCounter, string winAndLossesDescription, decimal _) = await tasks[currency];
                 s_logger.LogInformation(winAndLossesDescription);
                 total = winCounter + lossCounter;
+                decimal currencySuccess = CalculateSuccess(winCounter, total);
+                double currencyReturn = CalculateReturn(winCounter, lossCounter, priceChangeToNotify);
                 s_logger.LogInformation(
                     $"{currency} Summary: " +
-                    $"Success {CalculateSuccess(winCounter, total)}%, " +
-                    $"Return {CalculateReturn(winCounter, lossCounter, priceChangeToNotify)}%, " +
-                    $"Win - {winCounter}, " +
-                    $"Loss {lossCounter}, " +
-                    $"Even {evenCounter}, " +
-                    $"Total {total}");
+                    $"Success: {currencySuccess}%, " +
+                    $"Return: {currencyReturn:F2}%, " +
+                    $"Win: {winCounter}, " +
+                    $"Loss: {lossCounter}, " +
+                    $"Even: {evenCounter}, " +
+                    $"Total: {total}");
                 totalWinCounter += winCounter;
                 totalLossCounter += lossCounter;
                 totalEvenCounter += evenCounter;
@@ -43,10 +45,10 @@ namespace DemoCryptoLive
                 $"Final Summary: " +
                 $"Success: {totalSuccess}%, " +
                 $"Return: {totalReturn:F2}%, " +
-                $"Win - {totalWinCounter}, " +
-                $"Loss {totalLossCounter}, " +
-                $"Even {totalEvenCounter}, " +
-                $"Total {total}");
+                $"Win: {totalWinCounter}, " +
+                $"Loss: {totalLossCounter}, " +
+                $"Even: {totalEvenCounter}, " +
+                $"Total: {total}");
         }
 
         private static double CalculateReturn(decimal winCounter,

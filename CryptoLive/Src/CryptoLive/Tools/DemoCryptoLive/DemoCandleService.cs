@@ -55,7 +55,7 @@ namespace DemoCryptoLive
             { 
                 if (currentTime > m_endTime)
                 {
-                    throw new Exception($"No data available for {currentTime}, endTime is {m_endTime}");
+                    throw new Exception($"No data available for {currentTime:dd/MM/yyyy HH:mm:ss}, endTime is {m_endTime:dd/MM/yyyy HH:mm:ss}");
                 }
                 ans.Span[i] = m_mapCurrencyToCandle[currency][time];
             }
@@ -72,7 +72,7 @@ namespace DemoCryptoLive
         {
             if (currentTime > m_endTime)
             {
-                throw new Exception($"No data available for {currentTime}, endTime is {m_endTime}");
+                throw new Exception($"No data available for {currentTime:dd/MM/yyyy HH:mm:ss}, endTime is {m_endTime:dd/MM/yyyy HH:mm:ss}");
             }
 
             DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);

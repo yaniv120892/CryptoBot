@@ -52,7 +52,7 @@ namespace CryptoBot.CryptoPollings
         }
         
         protected override string StartPollingDescription() =>
-            $"{PollingType} {Currency} {CurrentTime} start, " +
+            $"{PollingType} {Currency} {CurrentTime:dd/MM/yyyy HH:mm:ss} start, " +
             $"Get update every {m_candleSize} minutes"; 
 
         private (bool isBelow, bool isAbove) IsCandleInRange(MyCandle currCandle) =>

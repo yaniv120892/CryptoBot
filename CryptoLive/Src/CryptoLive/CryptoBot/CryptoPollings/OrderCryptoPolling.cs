@@ -52,7 +52,7 @@ namespace CryptoBot.CryptoPollings
         }
         
         protected override string StartPollingDescription() =>
-            $"{PollingType} {Currency} {CurrentTime} start, " +
+            $"{PollingType} {Currency} {CurrentTime:dd/MM/yyyy HH:mm:ss} start, " +
             $"Get update every {s_delayTimeInSeconds / 60} minutes, max iterations {s_maxIterations}"; 
         
         protected override PollingResponseBase CreateExceptionPollingResponse(Exception e) => 
