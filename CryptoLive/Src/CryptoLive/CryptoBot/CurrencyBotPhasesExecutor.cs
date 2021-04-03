@@ -135,11 +135,13 @@ namespace CryptoBot
             decimal buyPrice,
             decimal quoteOrderQuantity)
         {
+            string currencyWithoutUsdt = currency.Replace("USDT", String.Empty);
             s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: Buy coin and place sell order {currentTime:dd/MM/yyyy HH:mm:ss}");
             DateTime startTradeTime = currentTime;
             IBuyCryptoTrader buyCryptoTrader = m_cryptoBotPhasesFactory.CreateStopLimitBuyCryptoTrader();
             decimal quantity = quoteOrderQuantity / buyPrice;
             long orderId = await buyCryptoTrader.BuyAsync(currency, buyPrice, quantity, currentTime);
+            DateTime placeBuyLimitTime = currentTime;
             currentTime = await WaitAsync(currentTime, cancellationToken, currency, 60, "WaitBeforeStartPollingOrderStatus");
             ICryptoPolling orderCryptoPolling = m_cryptoBotPhasesFactory.CreateOrderStatusPolling(orderId);
             PollingResponseBase pollingResponseBase = await orderCryptoPolling.StartAsync(currency, cancellationToken, currentTime);
@@ -147,7 +149,9 @@ namespace CryptoBot
             {
                 await CancelBuyLimitOrder(orderId, currency);
                 phasesDescription.Add(
-                    $"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Place Buy limit order at {buyPrice} expired");
+                    $"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Buy {currencyWithoutUsdt} with limit price {buyPrice:F8} expired\n" +
+                    $"Place buy limit time: {placeBuyLimitTime:dd/MM/yyyy HH:mm:ss}\n" +
+                    $"Expired buy limit time: {currentTime:dd/MM/yyyy HH:mm:ss}\n");
                 return new BuyAndSellTradeInfo(buyPrice,quantity, startTradeTime, pollingResponseBase.Time);
             }
 
@@ -158,15 +162,16 @@ namespace CryptoBot
             s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: Bought {quantity:F6} {currency.Replace("USDT",String.Empty)} at price {buyPrice}, " +
                                     $"place sell order for {sellPrice} and stop loss limit {stopAndLimitPrice} {currentTime:dd/MM/yyyy HH:mm:ss}");
             var buyAndSellTradeInfo = new BuyAndSellTradeInfo(buyPrice, sellPrice, stopAndLimitPrice, quantity, startTradeTime, pollingResponseBase.Time);
-            string currencyWithoutUsdt = currency.Replace("USDT", String.Empty);
-            phasesDescription.Add($"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Buy {currencyWithoutUsdt}\n" +
+            phasesDescription.Add($"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Buy {currencyWithoutUsdt} filled\n" +
+                                  $"Place buy limit time: {placeBuyLimitTime:dd/MM/yyyy HH:mm:ss}\n" +
+                                  $"Filled buy limit time: {placeBuyLimitTime:dd/MM/yyyy HH:mm:ss}\n" +
                                   $"Amount:{quantity:F8}\n" +
                                   $"Price:{buyPrice:F8}\n" +
-                                  $"Sell Price: {sellPrice:F8}\n" +
-                                  $"Stop Loss: {stopAndLimitPrice:F8}\n" +
-                                  $"Total Paid: {buyAndSellTradeInfo.QuoteOrderQuantityPaid:F2}\n" +
+                                  $"Sell price: {sellPrice:F8}\n" +
+                                  $"Stop loss: {stopAndLimitPrice:F8}\n" +
+                                  $"Total paid: {buyAndSellTradeInfo.QuoteOrderQuantityPaid:F2}\n" +
                                   $"Total on WIN: {buyAndSellTradeInfo.QuoteOrderQuantityOnWin:F2}\n" +
-                                  $"Total on LOSS: {buyAndSellTradeInfo.QuoteOrderQuantityOnLoss:F2}");
+                                  $"Total on LOSS: {buyAndSellTradeInfo.QuoteOrderQuantityOnLoss:F2}\n");
             return buyAndSellTradeInfo;
         }
 
