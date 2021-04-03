@@ -29,7 +29,7 @@ namespace Services
                 {
                     exceptionToThrowOnFailure = exception;
                     s_logger.LogDebug(retryIteration == 0
-                        ? $"First attempt to invoke {requestDescription} failed"
+                        ? $"First attempt to invoke {requestDescription} failed, Exception Message:{exception.Message}"
                         : $"Retry number {retryIteration} on {requestDescription} failed, Exception Message:{exception.Message}");
 
                     if (!ShouldRetry(exception))
