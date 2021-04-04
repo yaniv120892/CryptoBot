@@ -60,9 +60,11 @@ namespace CryptoLive
             var candleRepository = new RepositoryImpl<CandleStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var rsiRepository = new RepositoryImpl<RsiStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var wsmRepository = new RepositoryImpl<WsmaStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            
+            var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
+
             int rsiSize = m_cryptoLiveParameters.RsiSize;
             int candleSize = m_cryptoLiveParameters.CandleSize;
+            int meanAverageSize = m_cryptoLiveParameters.MeanAverageSize;
             
             ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
                 systemClockWithDelay, tradeService);
@@ -78,7 +80,7 @@ namespace CryptoLive
             for (int i = 0; i < currencyBotTasks.Length; i++)
             {
                 string currency = m_cryptoLiveParameters.Currencies[i];
-                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, candleRepository, candlesService,
+                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, candleRepository, meanAverageRepository, meanAverageSize, candlesService,
                     systemClock, stopWatchWrapper, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
@@ -99,18 +101,20 @@ namespace CryptoLive
 
         private StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
             string currency, int rsiSize, IRepository<CandleStorageObject> candleRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository, int meanAverageSize,
             ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper,
             int candleSize)
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency,string.Empty);
-            
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, currency, meanAverageSize, string.Empty);
             var storageWorker = new StorageWorker(m_notificationService,
                 candlesService,
                 systemClock,
                 stopWatchWrapper,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
+                meanAverageRepositoryUpdater,
                 m_systemCancellationTokenSource.Token,
                 candleSize,
                 currency,

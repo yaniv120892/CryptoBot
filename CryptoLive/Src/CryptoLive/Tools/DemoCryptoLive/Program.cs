@@ -53,6 +53,12 @@ namespace DemoCryptoLive
                         currency=> 
                             CalculatedFileProvider.GetCalculatedRsiFile(currency, s_appParameters.RsiSize  ,s_appParameters.CalculatedDataFolder)), 
                 deleteOldData: false);
+            
+            var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(s_appParameters.Currencies
+                    .ToDictionary(currency=> currency, 
+                        currency=> 
+                            CalculatedFileProvider.GetCalculatedMeanAverageFile(currency, s_appParameters.MeanAverageSize  ,s_appParameters.CalculatedDataFolder)), 
+                deleteOldData: false);
 
             var demoCandleService = new DemoCandleService(s_appParameters.Currencies, 
                 s_appParameters.CandlesDataFolder, 
@@ -60,7 +66,7 @@ namespace DemoCryptoLive
             var candlesProvider = new CandlesProvider(candleRepository);
             var tradeService = new DemoTradeService(candlesProvider);
 
-            await RunStorageWorkers(rsiRepository, candleRepository, systemClock, stopWatch, demoCandleService);
+            await RunStorageWorkers(rsiRepository, meanAverageRepository, candleRepository, systemClock, stopWatch, demoCandleService);
             ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(candleRepository, rsiRepository, systemClock, tradeService);
 
             var tasks = new Dictionary<string,Task<(int, int, int, string, decimal)>>();
@@ -88,6 +94,7 @@ namespace DemoCryptoLive
         }
 
         private static async Task RunStorageWorkers(IRepository<RsiStorageObject> rsiRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             IRepository<CandleStorageObject> candleRepository,
             ISystemClock systemClock,
             IStopWatch stopWatch,
@@ -102,7 +109,7 @@ namespace DemoCryptoLive
             for (int i = 0; i < storageWorkersTasks.Length; i++)
             {
                 string currency = s_appParameters.Currencies[i];
-                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, candleRepository, candlesService,
+                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, meanAverageRepository, candleRepository, candlesService,
                     systemClock, stopWatch, CancellationToken.None);
                 DateTime storageInitialTime = StorageWorkerInitialTimeProvider.GetStorageInitialTime(currency, candleRepository,
                     s_appParameters.BotStartTime, s_appParameters.BotEndTime);
@@ -115,6 +122,7 @@ namespace DemoCryptoLive
         private static StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository,
             IRepository<WsmaStorageObject> wsmRepository,
             string currency,
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             IRepository<CandleStorageObject> candleRepository,
             ICandlesService candlesService,
             ISystemClock systemClock,
@@ -125,11 +133,13 @@ namespace DemoCryptoLive
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, s_appParameters.RsiSize, s_appParameters.CalculatedDataFolder);
             var candleRepositoryUpdater =
                 new CandleRepositoryUpdater(candleRepository, currency, s_appParameters.CalculatedDataFolder);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, currency, s_appParameters.MeanAverageSize, s_appParameters.CalculatedDataFolder);
             var storageWorker = new StorageWorker(notificationService, candlesService,
                 systemClock,
                 stopWatch,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
+                meanAverageRepositoryUpdater,
                 cancellationToken,
                 s_appParameters.CandleSize,
                 currency,

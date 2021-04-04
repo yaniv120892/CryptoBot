@@ -22,6 +22,7 @@ namespace Storage.Tests
         private static readonly string s_calculatedDataFolder = string.Empty;
         private static readonly int s_candleSize = 2;
         private static readonly int s_rsiSize = 5;
+        private static readonly int s_meanAverageSize = 10;
         private static readonly Dictionary<string, string> s_currenciesToCalculatedDataFiles = 
             new Dictionary<string, string> {{s_currency, string.Empty}};
         private static readonly DateTime s_storageWorkerStartTime = new DateTime(2020,1,1,10,0,0);
@@ -43,12 +44,16 @@ namespace Storage.Tests
             var candleRepository = new RepositoryImpl<CandleStorageObject>(s_currenciesToCalculatedDataFiles, false);
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
+            var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(s_currenciesToCalculatedDataFiles, false);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
+            
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,
                 systemClockMock.Object,
                 stopWatchMock.Object,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
+                meanAverageRepositoryUpdater,
                 cancellationTokenSource.Token,
                 s_candleSize,
                 s_currency,
@@ -104,12 +109,16 @@ namespace Storage.Tests
             var candleRepository = new RepositoryImpl<CandleStorageObject>(s_currenciesToCalculatedDataFiles, false);
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
+            var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(s_currenciesToCalculatedDataFiles, false);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
+            
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,
                 systemClockMock.Object,
                 stopWatchMock.Object,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
+                meanAverageRepositoryUpdater,
                 cancellationTokenSource.Token,
                 s_candleSize,
                 s_currency,
