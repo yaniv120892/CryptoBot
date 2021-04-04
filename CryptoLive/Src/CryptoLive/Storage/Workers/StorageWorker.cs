@@ -22,6 +22,7 @@ namespace Storage.Workers
         private readonly ICandlesService m_candlesService;
         private readonly IRepositoryUpdater m_rsiRepositoryUpdater;
         private readonly IRepositoryUpdater m_candleRepositoryUpdater;
+        private readonly IRepositoryUpdater m_meanAverageRepositoryUpdater;
         private readonly CancellationToken m_cancellationToken;
         private readonly int m_candleSize;
         private readonly string m_currency;
@@ -38,6 +39,7 @@ namespace Storage.Workers
             IStopWatch stopWatch,
             IRepositoryUpdater rsiRepositoryUpdater, 
             IRepositoryUpdater candleRepositoryUpdater, 
+            IRepositoryUpdater meanAverageRepositoryUpdater,
             CancellationToken cancellationToken,
             int candleSize,
             string currency,
@@ -51,6 +53,7 @@ namespace Storage.Workers
             m_currency = currency;
             m_persistData = persistData;
             m_iterationTimeInSeconds = iterationTimeInSeconds;
+            m_meanAverageRepositoryUpdater = meanAverageRepositoryUpdater;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
             m_candlesService = candlesService;
@@ -130,12 +133,12 @@ namespace Storage.Workers
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_currency, amountOfOneMinuteKlines, m_currentTime);
             CandleStorageObject candleForRsi = CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span, m_candleSize);
-            CandleStorageObject candleOneMinute = 
-                CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span.Slice(oneMinuteCandlesDescription.Length - 2),
-                    1);
+            CandleStorageObject candleForMeanAverage = CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candleOneMinute = new CandleStorageObject(oneMinuteCandlesDescription.Span[oneMinuteCandlesDescription.Length - 2]);
             DateTime newCandleTime = candleOneMinute.Candle.CloseTime;
             m_candleRepositoryUpdater.AddInfo(candleOneMinute, newCandleTime);
             m_rsiRepositoryUpdater.AddInfo(candleForRsi, newCandleTime);
+            m_meanAverageRepositoryUpdater.AddInfo(candleForMeanAverage, newCandleTime);
         }
     }
 }
