@@ -135,7 +135,7 @@ namespace DemoCryptoLive
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, s_appParameters.RsiSize, s_appParameters.CalculatedDataFolder);
             var candleRepositoryUpdater =
                 new CandleRepositoryUpdater(candleRepository, currency, s_appParameters.CalculatedDataFolder);
-            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, currency, s_appParameters.MeanAverageSize, s_appParameters.CalculatedDataFolder);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, candleRepository, currency, s_appParameters.MeanAverageSize, s_appParameters.CalculatedDataFolder);
             var storageWorker = new StorageWorker(notificationService, candlesService,
                 systemClock,
                 stopWatch,

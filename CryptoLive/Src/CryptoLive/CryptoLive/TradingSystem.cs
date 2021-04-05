@@ -107,7 +107,7 @@ namespace CryptoLive
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency,string.Empty);
-            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, currency, meanAverageSize, string.Empty);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, candleRepository, currency, meanAverageSize, string.Empty);
             var storageWorker = new StorageWorker(m_notificationService,
                 candlesService,
                 systemClock,
