@@ -61,8 +61,9 @@ namespace CryptoLive
             
             var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
 
-            m_botResultsRepository = new MongoBotResultDetailsRepository(m_cryptoLiveParameters.CryptoBotName,
-                m_cryptoLiveParameters.MongoDbHost, m_cryptoLiveParameters.MongoDbDataBase);
+            m_botResultsRepository = BotResultsRepositoryFactory.Create(m_cryptoLiveParameters.MongoDbHost, 
+                m_cryptoLiveParameters.CryptoBotName,
+                m_cryptoLiveParameters.MongoDbDataBase);
             int rsiSize = m_cryptoLiveParameters.RsiSize;
             int candleSize = m_cryptoLiveParameters.CandleSize;
             int meanAverageSize = m_cryptoLiveParameters.MeanAverageSize;
