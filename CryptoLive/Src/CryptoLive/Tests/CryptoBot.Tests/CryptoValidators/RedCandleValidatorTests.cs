@@ -1,7 +1,6 @@
 using System;
 using Common;
 using CryptoBot.CryptoValidators;
-using Infra;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Storage.Abstractions.Providers;
@@ -14,7 +13,6 @@ namespace CryptoBot.Tests.CryptoValidators
         private static readonly string s_currency = "CurrencyName";
         private static readonly int s_candleSize = 15;
 
-        private readonly Mock<INotificationService> m_notificationServiceMock = new Mock<INotificationService>();
         private readonly Mock<ICurrencyDataProvider> m_currencyDataProviderMock = new Mock<ICurrencyDataProvider>();
 
         [TestMethod]
@@ -27,9 +25,9 @@ namespace CryptoBot.Tests.CryptoValidators
             MyCandle redCandle = CreateCandle(validatorStartTime, openValue, closeValue);
             var redCandleValidator = new RedCandleValidator(m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, validatorStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, s_candleSize, validatorStartTime))
                 .Returns(redCandle);
-            bool actual = redCandleValidator.Validate(s_currency, validatorStartTime);
+            bool actual = redCandleValidator.Validate(s_currency, s_candleSize,validatorStartTime);
 
             Assert.IsFalse(actual);
         }
@@ -44,9 +42,9 @@ namespace CryptoBot.Tests.CryptoValidators
             MyCandle redCandle = CreateCandle(validatorStartTime, openValue, closeValue);
             var redCandleValidator = new RedCandleValidator(m_currencyDataProviderMock.Object);
             m_currencyDataProviderMock
-                .Setup(m => m.GetLastCandle(s_currency, validatorStartTime))
+                .Setup(m => m.GetLastCandle(s_currency, s_candleSize,validatorStartTime))
                 .Returns(redCandle);
-            bool actual = redCandleValidator.Validate(s_currency, validatorStartTime);
+            bool actual = redCandleValidator.Validate(s_currency, s_candleSize,validatorStartTime);
 
             Assert.IsTrue(actual);
         }

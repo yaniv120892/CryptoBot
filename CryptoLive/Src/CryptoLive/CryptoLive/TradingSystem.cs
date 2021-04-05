@@ -48,7 +48,7 @@ namespace CryptoLive
         { 
             var systemClock = new SystemClock();
             var stopWatchWrapper = new StopWatchWrapper();
-            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,m_cryptoLiveParameters.BotDelayTime);
+            var systemClockWithDelay = new SystemClockWithDelay(systemClock ,m_cryptoLiveParameters.BotDelayTimeInMinutes);
 
             var currencyClientFactory = new CurrencyClientFactory(m_cryptoLiveParameters.BinanceApiKey, 
                 m_cryptoLiveParameters.BinanceApiSecretKey);
@@ -58,18 +58,17 @@ namespace CryptoLive
             var candleRepository = new RepositoryImpl<CandleStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var rsiRepository = new RepositoryImpl<RsiStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
             var wsmRepository = new RepositoryImpl<WsmaStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var macdRepository = new RepositoryImpl<MacdStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
-            var emaAndSignalStorageObject = new RepositoryImpl<EmaAndSignalStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
+            
+            var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(m_cryptoLiveParameters.Currencies.ToDictionary(currency=> currency));
+
             m_botResultsRepository = new MongoBotResultDetailsRepository(m_cryptoLiveParameters.CryptoBotName,
                 m_cryptoLiveParameters.MongoDbHost, m_cryptoLiveParameters.MongoDbDataBase);
             int rsiSize = m_cryptoLiveParameters.RsiSize;
-            int fastEmaSize = m_cryptoLiveParameters.FastEmaSize;
-            int slowEmaSize = m_cryptoLiveParameters.SlowEmaSize;
-            int signalSize = m_cryptoLiveParameters.SignalSize;
             int candleSize = m_cryptoLiveParameters.CandleSize;
+            int meanAverageSize = m_cryptoLiveParameters.MeanAverageSize;
             
-            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
-                macdRepository, systemClockWithDelay, tradeService);
+            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, meanAverageRepository,
+                systemClockWithDelay, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, m_cryptoLiveParameters);
@@ -82,12 +81,11 @@ namespace CryptoLive
             for (int i = 0; i < currencyBotTasks.Length; i++)
             {
                 string currency = m_cryptoLiveParameters.Currencies[i];
-                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, macdRepository,
-                    emaAndSignalStorageObject, fastEmaSize, slowEmaSize, signalSize, candleRepository, candlesService,
+                StorageWorker storageWorker = CreateStorageWorker(rsiRepository, wsmRepository, currency, rsiSize, candleRepository, meanAverageRepository, meanAverageSize, candlesService,
                     systemClock, stopWatchWrapper, candleSize);
                 DateTime storageStartTime = await systemClock.Wait(CancellationToken.None, currency, 0, "Init",DateTime.UtcNow);
                 storageWorkersTasks[i] = storageWorker.StartAsync(storageStartTime);
-                await systemClock.Wait(CancellationToken.None, currency, m_cryptoLiveParameters.BotDelayTime*60, "Init2",storageStartTime);
+                await systemClock.Wait(CancellationToken.None, currency, m_cryptoLiveParameters.BotDelayTimeInMinutes*60, "Init2",storageStartTime);
                 currencyBotTasks[i] = RunMultiplePhasesPerCurrency(currencyBotFactory, 
                     currency, 
                     storageStartTime, 
@@ -103,23 +101,21 @@ namespace CryptoLive
         }
 
         private StorageWorker CreateStorageWorker(IRepository<RsiStorageObject> rsiRepository, IRepository<WsmaStorageObject> wsmRepository,
-            string currency, int rsiSize, IRepository<MacdStorageObject> macdRepository, IRepository<EmaAndSignalStorageObject> emaAndSignalStorageObject,
-            int fastEmaSize, int slowEmaSize, int signalSize, IRepository<CandleStorageObject> candleRepository,
+            string currency, int rsiSize, IRepository<CandleStorageObject> candleRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository, int meanAverageSize,
             ICandlesService candlesService, ISystemClock systemClock, IStopWatch stopWatchWrapper,
             int candleSize)
         {
             var rsiRepositoryUpdater = new RsiRepositoryUpdater(rsiRepository, wsmRepository, currency, rsiSize, string.Empty);
-            var macdRepositoryUpdater = new MacdRepositoryUpdater(macdRepository, emaAndSignalStorageObject,
-                currency, fastEmaSize, slowEmaSize, signalSize, string.Empty);
-            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency, candleSize,string.Empty);
-            
+            var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, currency,string.Empty);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, candleRepository, currency, meanAverageSize, string.Empty);
             var storageWorker = new StorageWorker(m_notificationService,
                 candlesService,
                 systemClock,
                 stopWatchWrapper,
                 rsiRepositoryUpdater,
                 candleRepositoryUpdater,
-                macdRepositoryUpdater,
+                meanAverageRepositoryUpdater,
                 m_systemCancellationTokenSource.Token,
                 candleSize,
                 currency,
@@ -159,18 +155,18 @@ namespace CryptoLive
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
             IRepository<CandleStorageObject> candleRepository,
             IRepository<RsiStorageObject> rsiRepository,
-            IRepository<MacdStorageObject> macdRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             ISystemClock systemClock, 
             ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
-            var macdProvider = new MacdProvider(macdRepository);
+            var meanAverageProvider = new MeanAverageProvider(meanAverageRepository);
             var cryptoBotPhasesFactoryCreator = new CryptoBotPhasesFactoryCreator(
                 systemClock, 
                 rsiProvider, 
                 candlesProvider, 
-                macdProvider,
+                meanAverageProvider,
                 tradeService);
             return cryptoBotPhasesFactoryCreator.Create();
         }

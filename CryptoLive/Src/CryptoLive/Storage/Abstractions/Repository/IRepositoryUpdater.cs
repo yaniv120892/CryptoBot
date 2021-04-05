@@ -6,7 +6,7 @@ namespace Storage.Abstractions.Repository
 {
     public interface IRepositoryUpdater
     {
-        void AddInfo(CandleStorageObject candle, DateTime previousTime, DateTime newTime);
+        void AddInfo(CandleStorageObject candle, DateTime newTime);
         Task PersistDataToFileAsync();
     }
 }

@@ -40,7 +40,7 @@ namespace Common.Abstractions
 
         public override string ToString()
         {
-            return $"Time: {Time}";
+            return $"Time: {Time:dd/MM/yyyy HH:mm:ss}";
         }
     }
 }

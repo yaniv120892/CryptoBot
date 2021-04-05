@@ -11,6 +11,7 @@ namespace Common
         public DateTime CloseTime { get; set; }
         public decimal Low { get; set; }
         public decimal High { get; set; }
+        public TimeSpan CandleSizeInMinutes => TimeSpan.FromMinutes(CloseTime.Subtract(OpenTime).Minutes+1);
 
         public MyCandle()
         {
@@ -75,8 +76,8 @@ namespace Common
             return
                 $"Open = {Open}, " +
                 $"Close = {Close}, " +
-                $"OpenTime = {OpenTime}, " +
-                $"CloseTime = {CloseTime}, " +
+                $"OpenTime = {OpenTime:dd/MM/yyyy HH:mm:ss}, " +
+                $"CloseTime = {CloseTime:dd/MM/yyyy HH:mm:ss}, " +
                 $"Low = {Low}, " +
                 $"High = {High}";
         }

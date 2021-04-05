@@ -19,9 +19,9 @@ namespace CryptoBot.CryptoValidators
             m_currencyDataProvider = currencyDataProvider;
         }
         
-        public bool Validate(string currency, DateTime currentTime)
+        public bool Validate(string currency, int candleSize, DateTime currentTime)
         {
-            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, currentTime);
+            (MyCandle prevCandle, MyCandle currCandle) = m_currencyDataProvider.GetLastCandles(currency, candleSize, currentTime);
 
             string message;
             if (currCandle.Close < currCandle.Open)
@@ -31,13 +31,13 @@ namespace CryptoBot.CryptoValidators
 
             if (prevCandle.High < currCandle.Close)
             {
-                message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime}";
+                message = $"{currency} {s_actionName} done, {prevCandle}, {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
                 s_logger.LogInformation(message);
                 return true;
             }
 
             message =
-                $"{currency} {s_actionName} done, Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime}";
+                $"{currency} {s_actionName} done, Previous.High is larger than Current.Close, {prevCandle}, {currCandle} ,{currentTime:dd/MM/yyyy HH:mm:ss}";
             s_logger.LogInformation(message);
             return false;
         }

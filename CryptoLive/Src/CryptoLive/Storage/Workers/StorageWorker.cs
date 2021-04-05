@@ -22,7 +22,7 @@ namespace Storage.Workers
         private readonly ICandlesService m_candlesService;
         private readonly IRepositoryUpdater m_rsiRepositoryUpdater;
         private readonly IRepositoryUpdater m_candleRepositoryUpdater;
-        private readonly IRepositoryUpdater m_macdRepositoryUpdater;
+        private readonly IRepositoryUpdater m_meanAverageRepositoryUpdater;
         private readonly CancellationToken m_cancellationToken;
         private readonly int m_candleSize;
         private readonly string m_currency;
@@ -39,7 +39,7 @@ namespace Storage.Workers
             IStopWatch stopWatch,
             IRepositoryUpdater rsiRepositoryUpdater, 
             IRepositoryUpdater candleRepositoryUpdater, 
-            IRepositoryUpdater macdRepositoryUpdater,
+            IRepositoryUpdater meanAverageRepositoryUpdater,
             CancellationToken cancellationToken,
             int candleSize,
             string currency,
@@ -53,9 +53,9 @@ namespace Storage.Workers
             m_currency = currency;
             m_persistData = persistData;
             m_iterationTimeInSeconds = iterationTimeInSeconds;
+            m_meanAverageRepositoryUpdater = meanAverageRepositoryUpdater;
             m_rsiRepositoryUpdater = rsiRepositoryUpdater;
             m_candleRepositoryUpdater = candleRepositoryUpdater;
-            m_macdRepositoryUpdater = macdRepositoryUpdater;
             m_candlesService = candlesService;
             m_cancellationToken = cancellationToken;
             WorkerStatus = WorkerStatus.Created;
@@ -64,7 +64,7 @@ namespace Storage.Workers
         public async Task StartAsync(DateTime startTime)
         {
             m_currentTime = startTime;
-            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime}");
+            s_logger.LogInformation($"Start {nameof(StorageWorker)} for {m_currency} at {m_currentTime:dd/MM/yyyy HH:mm:ss}");
 
             WorkerStatus = WorkerStatus.Running;
             try
@@ -72,21 +72,21 @@ namespace Storage.Workers
                 await StartAsyncImpl();
                 if (m_cancellationToken.IsCancellationRequested)
                 {
-                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime}");
+                    s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime:dd/MM/yyyy HH:mm:ss}");
                     WorkerStatus = WorkerStatus.Cancelled;
                 }
             }
             catch (OperationCanceledException)
             {
-                s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime}");
+                s_logger.LogError($"{m_currency} {nameof(StorageWorker)} got cancellationRequest {m_currentTime:dd/MM/yyyy HH:mm:ss}");
                 WorkerStatus = WorkerStatus.Cancelled;
-                m_notificationService.Notify($"StorageWorker {m_currency} got cancellation request");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got cancellation request {m_currentTime:dd/MM/yyyy HH:mm:ss}");
             }
             catch (Exception e)
             {
                 WorkerStatus = WorkerStatus.Faulted;
-                s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime}");
-                m_notificationService.Notify($"StorageWorker {m_currency} failure");
+                s_logger.LogError(e, $"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime:dd/MM/yyyy HH:mm:ss}");
+                m_notificationService.Notify($"{m_currency} {nameof(StorageWorker)} got exception {m_currentTime:dd/MM/yyyy HH:mm:ss}, {e.Message}");
             }
 
             await PersistRepositoriesDataIfNeeded();
@@ -126,26 +126,20 @@ namespace Storage.Workers
         {
             await m_candleRepositoryUpdater.PersistDataToFileAsync();
             await m_rsiRepositoryUpdater.PersistDataToFileAsync();
-            await m_macdRepositoryUpdater.PersistDataToFileAsync();
-        }
-
-        private (DateTime previousTime, DateTime newTime) GetNewAndPreviousCandleTimes(CandleStorageObject candleDescription)
-        {
-            DateTime newTime = candleDescription.Candle.CloseTime;
-            DateTime previousTime = newTime.Subtract(TimeSpan.FromMinutes(m_candleSize));
-
-            return (previousTime, newTime);
+            await m_meanAverageRepositoryUpdater.PersistDataToFileAsync();
         }
 
         private async Task AddDataToRepositories()
         {
             int amountOfOneMinuteKlines = m_candleSize + 1; // +1 in order to ignore last candle that didn't finish yet
             Memory<MyCandle> oneMinuteCandlesDescription = await m_candlesService.GetOneMinuteCandles(m_currency, amountOfOneMinuteKlines, m_currentTime);
-            CandleStorageObject candle = BinanceKlineToMyCandleConverter.ConvertByCandleSize(oneMinuteCandlesDescription.Span, m_candleSize);
-            (DateTime previousCandleTime, DateTime newCandleTime)  = GetNewAndPreviousCandleTimes(candle);
-            m_candleRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
-            m_rsiRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
-            //m_macdRepositoryUpdater.AddInfo(candle, previousCandleTime, newCandleTime);
+            CandleStorageObject candleForRsi = CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candleForMeanAverage = CandleConverter.ConvertByCandleSizeAndIgnoreLastCandle(oneMinuteCandlesDescription.Span, m_candleSize);
+            CandleStorageObject candleOneMinute = new CandleStorageObject(oneMinuteCandlesDescription.Span[oneMinuteCandlesDescription.Length - 2]);
+            DateTime newCandleTime = candleOneMinute.Candle.CloseTime;
+            m_candleRepositoryUpdater.AddInfo(candleOneMinute, newCandleTime);
+            m_rsiRepositoryUpdater.AddInfo(candleForRsi, newCandleTime);
+            m_meanAverageRepositoryUpdater.AddInfo(candleForMeanAverage, newCandleTime);
         }
     }
 }

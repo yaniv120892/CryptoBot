@@ -28,6 +28,7 @@ namespace Storage.Tests
             // Act
             Memory<MyCandle> candles = sut.GetCandles(s_currency,
                 s_amountOfCandles,
+                s_candleSize,
                 s_currentTime);
             int actualAmountOfCandles = candles.Length;
             
@@ -46,6 +47,7 @@ namespace Storage.Tests
             // Act
             Memory<MyCandle> candles = sut.GetCandles(s_currency,
                 s_amountOfCandles,
+                s_candleSize,
                 s_currentTime);
             
             // Assert
@@ -66,6 +68,7 @@ namespace Storage.Tests
 
             // Act
             Memory<MyCandle> candles = sut.GetCandles(s_currency,
+                s_candleSize,
                 s_amountOfCandles,
                 s_currentTime);
             
@@ -85,6 +88,7 @@ namespace Storage.Tests
 
             // Act
             MyCandle candle = sut.GetLastCandle(s_currency,
+                s_candleSize,
                 s_currentTime);
             
             // Assert
@@ -99,14 +103,11 @@ namespace Storage.Tests
             DateTime expectedCandleOpenTime = new DateTime(2020,1,1,9,50,0);
             DateTime expectedCandleCloseTime = new DateTime(2020,1,1,9,59,59);
             DateTime currentTime = new DateTime(2020,1,1,10,0,40);
-            var storageCandle1 = CreateStorageCandle(expectedCandleCloseTime);
-            m_repositoryMock = new Mock<IRepository<CandleStorageObject>>();
-            m_repositoryMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
-                .Returns(storageCandle1);
+            SetupRepositoryMock();
             var sut = new CandlesProvider(m_repositoryMock.Object);
 
             // Act
-            MyCandle candle = sut.GetLastCandle(s_currency, currentTime);
+            MyCandle candle = sut.GetLastCandle(s_currency, s_candleSize, currentTime);
             
             // Assert
             Assert.AreEqual(expectedCandleCloseTime, candle.CloseTime);
@@ -115,16 +116,13 @@ namespace Storage.Tests
 
         private void SetupRepositoryMock()
         {
-            var storageCandle1 = CreateStorageCandle(s_currentTime.Subtract(TimeSpan.FromMinutes(s_candleSize * 2)));
-            var storageCandle2 = CreateStorageCandle(s_currentTime.Subtract(TimeSpan.FromMinutes(s_candleSize * 1)));
-            var storageCandle3 = CreateStorageCandle(s_currentTime);
             m_repositoryMock = new Mock<IRepository<CandleStorageObject>>();
-            m_repositoryMock.Setup(m => m.Get(s_currency, storageCandle1.Candle.CloseTime))
-                .Returns(storageCandle1);
-            m_repositoryMock.Setup(m => m.Get(s_currency, storageCandle2.Candle.CloseTime))
-                .Returns(storageCandle2);
-            m_repositoryMock.Setup(m => m.Get(s_currency, storageCandle3.Candle.CloseTime))
-                .Returns(storageCandle3);
+            for (int i = 0; i < s_candleSize * s_amountOfCandles; i++)
+            {
+                var storageCandle = CreateStorageCandle(s_currentTime.Subtract(TimeSpan.FromMinutes(i)));
+                m_repositoryMock.Setup(m => m.Get(s_currency, storageCandle.Candle.CloseTime))
+                    .Returns(storageCandle);
+            }
         }
 
         private static CandleStorageObject CreateStorageCandle(DateTime closeTime) =>
@@ -138,6 +136,6 @@ namespace Storage.Tests
                     2));
 
         private static DateTime GetCandleOpenTime(DateTime closeTime) => 
-            closeTime.Subtract(TimeSpan.FromMinutes(s_candleSize-1)).AddSeconds(-closeTime.Second);
+            closeTime.AddSeconds(-closeTime.Second);
     }
 }

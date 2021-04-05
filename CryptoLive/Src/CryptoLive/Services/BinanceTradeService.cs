@@ -28,17 +28,41 @@ namespace Services
             m_symbolToStepSizesMapping = new Dictionary<string, decimal>();
         }
 
-        public async Task<(decimal buyPrice, decimal quantity)> PlaceBuyMarketOrderAsync(string currency,
-            decimal quoteOrderQuantity, DateTime currentTime)
+        public async Task<long> PlaceBuyLimitOrderAsync(string currency,
+            decimal limitPrice,
+            decimal quantity, 
+            DateTime currentTime)
         {
-            decimal quoteOrderQuantityByTickSize = await GetPriceAlignedToTickSizeAsync(currency, quoteOrderQuantity);
+            decimal priceByTickSize = await GetPriceAlignedToTickSizeAsync(currency, limitPrice);
+            decimal quantityByStepSize = await GetQuantityAlignedToStepSizeAsync(currency, quantity);
+
             var action = new Func<Task<WebCallResult<BinancePlacedOrder>>>(async () =>
-                await PlaceBuyMarketOrderImplAsync(currency, quoteOrderQuantityByTickSize));
-            string actionDescription = $"Place Market Buy {quoteOrderQuantityByTickSize}$ of {currency}";
+                await PlaceBuyLimitOrderImplAsync(currency, quantityByStepSize, priceByTickSize));
+            string actionDescription = $"Place Limit Buy {quantityByStepSize}$ of {currency}";
             var response = await ExecuteTradeAndAssert(action, actionDescription);
-            (decimal buyPrice, decimal quantity) = ExtractPriceAndFilledQuantity(response);
-            s_logger.LogDebug($"{currency}: buy Price: {buyPrice}, quantity: {quantity}");
-            return (buyPrice, quantity);
+            long orderId = ExtractOrderId(response);
+            s_logger.LogDebug($"{currency}: buy Price: {priceByTickSize}, quantity: {quantityByStepSize}");
+            return orderId;
+        }
+
+        public async Task CancelOrderAsync(string currency, long orderId)
+        {
+            var action = new Func<Task<WebCallResult<BinanceCanceledOrder>>>(async () =>
+                await CancelOrderImplAsync(currency, orderId));
+            string actionDescription = $"Cancel order {orderId}";
+            await ExecuteTradeAndAssert(action, actionDescription);
+            s_logger.LogDebug($"{currency}: Cancel order: {orderId}");
+        }
+        
+        public async Task<string> GetOrderStatusAsync(string currency, long orderId, DateTime currentTime)
+        {
+            var action = new Func<Task<WebCallResult<BinanceOrder>>>(async () =>
+                await GetOrderStatusImplAsync(currency, orderId));
+            string actionDescription = $"Get status for order {orderId}";
+            var response = await ExecuteTradeAndAssert(action, actionDescription);
+            string orderStatus = ExtractOrderStatusFromResponse(response);
+            s_logger.LogDebug($"{currency}: order {orderId} status: {orderStatus}");
+            return orderStatus;
         }
 
         public async Task PlaceSellOcoOrderAsync(string currency, decimal quantity, decimal price,
@@ -74,14 +98,28 @@ namespace Services
             }
         }
 
-        private async Task<WebCallResult<BinancePlacedOrder>> PlaceBuyMarketOrderImplAsync(string currency, decimal quoteOrderQuantity)
+        private async Task<WebCallResult<BinancePlacedOrder>> PlaceBuyLimitOrderImplAsync(string currency, decimal quantity, decimal limitPrice)
         {
             BinanceClient client = m_currencyClientFactory.Create();
-            var response = await client.Spot.Order.PlaceOrderAsync(currency, OrderSide.Buy, OrderType.Market,
-                quoteOrderQuantity: quoteOrderQuantity);
+            var response = await client.Spot.Order.PlaceOrderAsync(currency, OrderSide.Buy, OrderType.Limit,
+                quantity: quantity, price:limitPrice, timeInForce:TimeInForce.GoodTillCancel, orderResponseType:OrderResponseType.Acknowledge);
             return response;
         }
         
+        private async Task<WebCallResult<BinanceCanceledOrder>> CancelOrderImplAsync(string currency, long orderId)
+        {
+            BinanceClient client = m_currencyClientFactory.Create();
+            var response = await client.Spot.Order.CancelOrderAsync(currency, orderId);
+            return response;        
+        }
+        
+        private async Task<WebCallResult<BinanceOrder>> GetOrderStatusImplAsync(string currency, long orderId)
+        {
+            BinanceClient client = m_currencyClientFactory.Create();
+            var response = await client.Spot.Order.GetOrderAsync(currency, orderId);
+            return response;
+        }
+
         private async Task<WebCallResult<BinanceOrderOcoList>> PlaceSellOcoOrderImplAsync(string currency, 
             decimal quantity, 
             decimal price,
@@ -110,21 +148,12 @@ namespace Services
             return (int)(quantity / stepSizes) * stepSizes;
         }
 
-        private static (decimal buyPrice, decimal quantity) ExtractPriceAndFilledQuantity(CallResult<BinancePlacedOrder> response)
-        {  
-            BinanceOrderTrade[] binanceOrderTrades = (response.Data.Fills ?? throw new InvalidOperationException()).ToArray();
-            decimal quantityAmount = 0;
-            decimal paidAmount = 0;
-            foreach (var binanceOrderTrade in binanceOrderTrades)
-            {
-                quantityAmount = quantityAmount + binanceOrderTrade.Quantity - binanceOrderTrade.Commission;
-                paidAmount += binanceOrderTrade.Price * binanceOrderTrade.Quantity;
-            }
+        private static long ExtractOrderId(WebCallResult<BinancePlacedOrder> response) => 
+            response.Data.OrderId;
 
-            decimal avgBuyPrice = paidAmount / quantityAmount;
-            return (avgBuyPrice, quantityAmount);
-        }
-
+        private static string ExtractOrderStatusFromResponse(WebCallResult<BinanceOrder> response) => 
+            response.Data.Status.ToString();
+        
         private async ValueTask<decimal> GetTickSizesAsync(string currency)
         {
             if (!m_symbolToTickSizesMapping.TryGetValue(currency, out decimal tickSizes))

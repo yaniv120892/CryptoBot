@@ -11,25 +11,25 @@ namespace CryptoBot.Factories
         private readonly ISystemClock m_systemClock;
         private readonly IRsiProvider m_rsiProvider;
         private readonly ICandlesProvider m_candlesProvider;
-        private readonly IMacdProvider m_macdProvider;
+        private readonly IMeanAverageProvider m_meanAverageProvider;
         private readonly ITradeService m_tradeService;
 
         public CryptoBotPhasesFactoryCreator(ISystemClock systemClock, 
             IRsiProvider rsiProvider, 
             ICandlesProvider candlesProvider, 
-            IMacdProvider macdProvider, 
+            IMeanAverageProvider meanAverageProvider,
             ITradeService tradeService)
         {
             m_systemClock = systemClock;
             m_rsiProvider = rsiProvider;
             m_candlesProvider = candlesProvider;
-            m_macdProvider = macdProvider;
+            m_meanAverageProvider = meanAverageProvider;
             m_tradeService = tradeService;
         }
         
         public ICryptoBotPhasesFactory Create()
         {
-            var currencyDataProvider = new CurrencyDataProvider(m_candlesProvider, m_rsiProvider, m_macdProvider);
+            var currencyDataProvider = new CurrencyDataProvider(m_candlesProvider, m_rsiProvider, m_meanAverageProvider);
             return new CryptoBotPhasesFactory(currencyDataProvider, m_systemClock, m_tradeService);
         }
     }
