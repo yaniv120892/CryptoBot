@@ -112,7 +112,7 @@ namespace CryptoLive
                 int winAmount = mapCurrencyToBotResultDetails[currency]
                     .Count(m => m.BotResult.Equals(BotResult.Win));
                 int lossAmount = mapCurrencyToBotResultDetails[currency]
-                    .Count(m => m.BotResult.Equals(BotResult.Win));
+                    .Count(m => m.BotResult.Equals(BotResult.Loss));
                 string currencyResult = $"{currency} Win: {winAmount}, Loss: {lossAmount}\n";
                 botResultDescription += currencyResult;
                 totalWin += winAmount;
