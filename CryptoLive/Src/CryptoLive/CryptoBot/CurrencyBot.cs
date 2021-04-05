@@ -124,9 +124,13 @@ namespace CryptoBot
 
             bool isCandleGreen = m_currencyBotPhasesExecutor.ValidateCandleIsGreen(m_currentTime, m_currency, m_age,
                 ++m_phaseNumber, m_phasesDescription);
-            s_logger.LogInformation($"{m_currency}_{m_age}: Done iteration - candle is green {isCandleGreen}");
+            s_logger.LogInformation($"{m_currency}_{m_age}: candle is green: {isCandleGreen}");
 
-            return isCandleGreen;
+            bool isPriceAboveMeanAverage = m_currencyBotPhasesExecutor.ValidatePriceAboveMeanAverage(m_currentTime, m_currency, m_age,
+                ++m_phaseNumber, m_phasesDescription);
+            s_logger.LogInformation($"{m_currency}_{m_age}: price is above mean average: {isPriceAboveMeanAverage}");
+            
+            return isCandleGreen && isPriceAboveMeanAverage;
         }
 
         private void ReleaseWaitingChildren()

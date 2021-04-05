@@ -115,6 +115,34 @@ namespace CryptoBot
             phasesDescription.Add($"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Validate candle is green: {isCandleGreen}\n");
             return isCandleGreen;
         }
+        
+        public bool ValidatePriceBelowMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription)
+        {
+            s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: validate price is below mean average {currentTime:dd/MM/yyyy HH:mm:ss}");
+            MeanAveragePriceValidator meanAveragePriceValidator = m_cryptoBotPhasesFactory.CreateMeanAveragePriceValidator();
+            bool isPriceBelowMeanAverage = meanAveragePriceValidator.ValidateBelow(currency, currentTime);
+            s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current price is below mean average: {isPriceBelowMeanAverage} {currentTime:dd/MM/yyyy HH:mm:ss}");
+            phasesDescription.Add($"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Validate price is below mean average: {isPriceBelowMeanAverage}\n");
+            return isPriceBelowMeanAverage;
+        }
+        
+        public bool ValidatePriceAboveMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription)
+        {
+            s_logger.LogInformation($"{currency}_{age} Start phase {phaseNumber}: validate price is above mean average {currentTime:dd/MM/yyyy HH:mm:ss}");
+            MeanAveragePriceValidator meanAveragePriceValidator = m_cryptoBotPhasesFactory.CreateMeanAveragePriceValidator();
+            bool isPriceAboveMeanAverage = meanAveragePriceValidator.ValidateAbove(currency, currentTime);
+            s_logger.LogInformation($"{currency}_{age} Done phase {phaseNumber}: current price is above mean average: {isPriceAboveMeanAverage} {currentTime:dd/MM/yyyy HH:mm:ss}");
+            phasesDescription.Add($"{currency} {currentTime:dd/MM/yyyy HH:mm:ss}\n{phaseNumber}.Validate price is above mean average: {isPriceAboveMeanAverage}\n");
+            return isPriceAboveMeanAverage;
+        }
 
         public Task<DateTime> WaitAsync(DateTime currentTime,
             CancellationToken cancellationToken,

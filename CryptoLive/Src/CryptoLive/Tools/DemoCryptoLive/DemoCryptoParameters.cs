@@ -37,11 +37,11 @@ namespace DemoCryptoLive
         public override string ToString()
         {
             return $"{base.ToString()},\n" +
-                   $"Bot start time: {BotStartTime:dd/MM/yyyy HH:mm:ss},\n" +
-                   $"Bot end time  : {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
-                   $"Rsi size      : {RsiSize},\n" +
-                   $"Mean average size      : {MeanAverageSize},\n" +
-                   $"Currencies    : {string.Join(", ", Currencies)}";
+                   $"Bot start time    : {BotStartTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Bot end time      : {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Rsi size          : {RsiSize},\n" +
+                   $"Mean average size : {MeanAverageSize},\n" +
+                   $"Currencies        : {string.Join(", ", Currencies)}";
         }
     }
 }

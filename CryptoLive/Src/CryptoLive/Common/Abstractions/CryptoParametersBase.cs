@@ -19,10 +19,10 @@ namespace Common.Abstractions
         
         public override string ToString()
         {
-            return $"Price signal  : {PriceChangeToNotify}%,\n" +
-                   $"Rsi signal    : {MaxRsiToNotify},\n" +
-                   $"Candle size   : {CandleSize},\n" +
-                   $"Rsi history   : {RsiMemorySize/60} hours";
+            return $"Price signal      : {PriceChangeToNotify}%,\n" +
+                   $"Rsi signal        : {MaxRsiToNotify},\n" +
+                   $"Candle size       : {CandleSize},\n" +
+                   $"Rsi history       : {RsiMemorySize/60} hours";
         }
     }
 }
