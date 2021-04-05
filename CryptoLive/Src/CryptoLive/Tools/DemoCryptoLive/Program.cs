@@ -67,7 +67,7 @@ namespace DemoCryptoLive
             var tradeService = new DemoTradeService(candlesProvider);
 
             await RunStorageWorkers(rsiRepository, meanAverageRepository, candleRepository, systemClock, stopWatch, demoCandleService);
-            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(candleRepository, rsiRepository, systemClock, tradeService);
+            ICurrencyBotFactory currencyBotFactory = CreateCurrencyBotFactory(candleRepository, rsiRepository, meanAverageRepository, systemClock, tradeService);
 
             var tasks = new Dictionary<string,Task<(int, int, int, string, decimal)>>();
             foreach (string currency in s_appParameters.Currencies)
@@ -79,12 +79,14 @@ namespace DemoCryptoLive
             await ReportGenerator.GenerateReport(tasks, s_appParameters.Currencies, s_appParameters.PriceChangeToNotify);
         }
 
-        private static ICurrencyBotFactory CreateCurrencyBotFactory(RepositoryImpl<CandleStorageObject> candleRepository, RepositoryImpl<RsiStorageObject> rsiRepository,
+        private static ICurrencyBotFactory CreateCurrencyBotFactory(IRepository<CandleStorageObject> candleRepository,
+            IRepository<RsiStorageObject> rsiRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             DummySystemClock systemClock, 
             ITradeService tradeService)
         {
-            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository,
-                systemClock, tradeService);
+            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
+                meanAverageRepository, systemClock, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             CurrencyBotPhasesExecutor currencyBotPhasesExecutor =
                 currencyBotPhasesExecutorFactory.Create(cryptoBotPhasesFactory, s_appParameters);
@@ -151,13 +153,15 @@ namespace DemoCryptoLive
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
             IRepository<CandleStorageObject> candleRepository,
             IRepository<RsiStorageObject> rsiRepository, 
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             ISystemClock systemClock,
             ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
+            var meanAverageProvider = new MeanAverageProvider(meanAverageRepository);
             var currencyDataProvider =
-                new CurrencyDataProvider(candlesProvider, rsiProvider);
+                new CurrencyDataProvider(candlesProvider, rsiProvider, meanAverageProvider);
             var cryptoBotPhasesFactory = new CryptoBotPhasesFactory(currencyDataProvider, systemClock, tradeService);
             return cryptoBotPhasesFactory;
         }

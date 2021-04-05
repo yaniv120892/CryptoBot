@@ -38,6 +38,17 @@ namespace CryptoBot.Abstractions
             int age,
             int phaseNumber, List<string> phasesDescription);
         
+        bool ValidatePriceAboveMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription);
+        bool ValidatePriceBelowMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription);
+        
         Task<DateTime> WaitAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,

@@ -14,6 +14,7 @@ namespace Storage.Tests
 
         private Mock<ICandlesProvider> m_candlesProviderMock;
         private Mock<IRsiProvider> m_rsiProviderMock;
+        private Mock<IMeanAverageProvider> m_meanAverageProviderMock;
 
         [TestMethod]
         public void When_GetRsiAndClosePrice_Given_CurrentTimeIsEndOfMinute_Return_RsiAndPriceOfLastCandleCloseTime()
@@ -23,7 +24,7 @@ namespace Storage.Tests
             const decimal expectedRsi = 30;
             DateTime expectedCandleCloseTime = new DateTime(2020,1,1,10,0,59);
             DateTime requestedTimeEndOfMinute = expectedCandleCloseTime;
-            
+
             m_candlesProviderMock = new Mock<ICandlesProvider>();
             m_candlesProviderMock
                 .Setup(m => m.GetLastCandle(s_currency, 1, expectedCandleCloseTime))
@@ -34,8 +35,10 @@ namespace Storage.Tests
                 .Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
 
+            m_meanAverageProviderMock = new Mock<IMeanAverageProvider>();
+            
             var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
-                m_rsiProviderMock.Object);
+                m_rsiProviderMock.Object, m_meanAverageProviderMock.Object);
 
             // Act
             PriceAndRsi priceAndRsi = sut.GetRsiAndClosePrice(s_currency, requestedTimeEndOfMinute);
@@ -62,10 +65,11 @@ namespace Storage.Tests
             m_rsiProviderMock = new Mock<IRsiProvider>();
             m_rsiProviderMock.Setup(m => m.Get(s_currency, expectedCandleCloseTime))
                 .Returns(expectedRsi);
-
+            
+            m_meanAverageProviderMock = new Mock<IMeanAverageProvider>();
+            
             var sut = new CurrencyDataProvider(m_candlesProviderMock.Object, 
-                m_rsiProviderMock.Object);
-
+                m_rsiProviderMock.Object, m_meanAverageProviderMock.Object);
             // Act
             PriceAndRsi priceAndRsi = sut.GetRsiAndClosePrice(s_currency, requestedTimeEndOfMinute);
 

@@ -66,7 +66,7 @@ namespace CryptoLive
             int candleSize = m_cryptoLiveParameters.CandleSize;
             int meanAverageSize = m_cryptoLiveParameters.MeanAverageSize;
             
-            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, 
+            ICryptoBotPhasesFactory cryptoBotPhasesFactory = CreateCryptoPhasesFactory(candleRepository, rsiRepository, meanAverageRepository,
                 systemClockWithDelay, tradeService);
             var currencyBotPhasesExecutorFactory = new CurrencyBotPhasesExecutorFactory();
             ICurrencyBotPhasesExecutor currencyBotPhasesExecutor =  
@@ -154,15 +154,18 @@ namespace CryptoLive
         private static ICryptoBotPhasesFactory CreateCryptoPhasesFactory(
             IRepository<CandleStorageObject> candleRepository,
             IRepository<RsiStorageObject> rsiRepository,
+            IRepository<MeanAverageStorageObject> meanAverageRepository,
             ISystemClock systemClock, 
             ITradeService tradeService)
         {
             var candlesProvider = new CandlesProvider(candleRepository);
             var rsiProvider = new RsiProvider(rsiRepository);
+            var meanAverageProvider = new MeanAverageProvider(meanAverageRepository);
             var cryptoBotPhasesFactoryCreator = new CryptoBotPhasesFactoryCreator(
                 systemClock, 
                 rsiProvider, 
                 candlesProvider, 
+                meanAverageProvider,
                 tradeService);
             return cryptoBotPhasesFactoryCreator.Create();
         }

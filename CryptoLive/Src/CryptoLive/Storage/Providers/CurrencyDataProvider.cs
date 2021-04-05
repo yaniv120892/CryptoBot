@@ -8,12 +8,15 @@ namespace Storage.Providers
     {
         private readonly ICandlesProvider m_candlesProvider;
         private readonly IRsiProvider m_rsiProvider;
+        private readonly IMeanAverageProvider m_meanAverageProvider;
 
         public CurrencyDataProvider(ICandlesProvider candlesProvider,
-            IRsiProvider rsiProvider)
+            IRsiProvider rsiProvider, 
+            IMeanAverageProvider meanAverageProvider)
         {
             m_candlesProvider = candlesProvider;
             m_rsiProvider = rsiProvider;
+            m_meanAverageProvider = meanAverageProvider;
         }
 
         public decimal GetPriceAsync(string currency, DateTime currentTime) => 
@@ -21,6 +24,12 @@ namespace Storage.Providers
 
         public decimal GetRsi(string currency, DateTime currentTime) => 
             m_rsiProvider.Get(currency, currentTime);
+
+        public decimal GetMeanAverage(string currency, DateTime currentTime)
+        {
+            DateTime time = GetLastCandle(currency, 1, currentTime).CloseTime;
+            return m_meanAverageProvider.Get(currency, time);
+        }
 
         public PriceAndRsi GetRsiAndClosePrice(string currency, DateTime currentTime) =>
             GetRsiAndPriceImpl(currency, currentTime);

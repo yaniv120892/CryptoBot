@@ -51,6 +51,9 @@ namespace CryptoBot.Factories
         public GreenCandleValidator CreateGreenCandleValidator() =>
             new GreenCandleValidator(CurrencyDataProvider);
 
+        public MeanAveragePriceValidator CreateMeanAveragePriceValidator() =>
+            new MeanAveragePriceValidator(CurrencyDataProvider);
+
         public IBuyCryptoTrader CreateStopLimitBuyCryptoTrader() => new LimitBuyCryptoTrader(m_tradeService);
         public ISellCryptoTrader CreateOcoSellCryptoTrader() => new OcoSellCryptoTrader(m_tradeService);
         public ICancelOrderCryptoTrader CreateCancelOrderCryptoTrader() => new CancelOrderCryptoTrader(m_tradeService);

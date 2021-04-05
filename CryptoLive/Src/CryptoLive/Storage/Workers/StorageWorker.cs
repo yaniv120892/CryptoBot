@@ -126,6 +126,7 @@ namespace Storage.Workers
         {
             await m_candleRepositoryUpdater.PersistDataToFileAsync();
             await m_rsiRepositoryUpdater.PersistDataToFileAsync();
+            await m_meanAverageRepositoryUpdater.PersistDataToFileAsync();
         }
 
         private async Task AddDataToRepositories()

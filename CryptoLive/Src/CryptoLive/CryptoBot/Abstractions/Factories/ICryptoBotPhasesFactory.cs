@@ -18,6 +18,7 @@ namespace CryptoBot.Abstractions.Factories
             Queue<CancellationToken> parentRunningCancellationToken, int iterationToRunBeforeWaitingForParentToFinish);
         RedCandleValidator CreateRedCandleValidator();
         GreenCandleValidator CreateGreenCandleValidator();
+        MeanAveragePriceValidator CreateMeanAveragePriceValidator();
         IBuyCryptoTrader CreateStopLimitBuyCryptoTrader();
         ISellCryptoTrader CreateOcoSellCryptoTrader();
         ICancelOrderCryptoTrader CreateCancelOrderCryptoTrader();
