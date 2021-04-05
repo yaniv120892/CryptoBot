@@ -45,7 +45,7 @@ namespace Storage.Tests
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
             var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(s_currenciesToCalculatedDataFiles, false);
-            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, candleRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
             
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,
@@ -110,7 +110,7 @@ namespace Storage.Tests
             var candleRepositoryUpdater = new CandleRepositoryUpdater(candleRepository, s_currency, s_calculatedDataFolder);
             
             var meanAverageRepository = new RepositoryImpl<MeanAverageStorageObject>(s_currenciesToCalculatedDataFiles, false);
-            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
+            var meanAverageRepositoryUpdater = new MeanAverageRepositoryUpdater(meanAverageRepository, candleRepository, s_currency, s_meanAverageSize, s_calculatedDataFolder);
             
             var sut = new StorageWorker(notificationServiceMock.Object,
                 candlesServiceMock.Object,
