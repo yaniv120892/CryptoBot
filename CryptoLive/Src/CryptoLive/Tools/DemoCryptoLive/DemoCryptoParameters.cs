@@ -13,10 +13,7 @@ namespace DemoCryptoLive
         public string[] Currencies { get; }
         public string CandlesDataFolder { get; }
         public int RsiSize { get; }
-        public int FastEmaSize { get;  }
-        public int SlowEmaSize { get;  }
-        public int SignalSize { get; }
-        public int MaxMacdPollingTime { get; }
+        public int MeanAverageSize { get; set; }
         public string CalculatedDataFolder { get; }
         public DateTime BotStartTime { get; }
         public DateTime BotEndTime { get; }
@@ -30,10 +27,7 @@ namespace DemoCryptoLive
             CandlesDataFolder = applicationSection[nameof(CandlesDataFolder)];
             CalculatedDataFolder = applicationSection[nameof(CalculatedDataFolder)];
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
-            FastEmaSize = int.Parse(applicationSection[nameof(FastEmaSize)]);
-            SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
-            SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
-            MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
+            MeanAverageSize = int.Parse(applicationSection[nameof(MeanAverageSize)]);
             BotStartTime = DateTime.ParseExact(applicationSection[nameof(BotStartTime)], 
                 CsvFileAccess.DateTimeFormat, CultureInfo.InvariantCulture);
             BotEndTime = DateTime.ParseExact(applicationSection[nameof(BotEndTime)], 
@@ -42,18 +36,12 @@ namespace DemoCryptoLive
 
         public override string ToString()
         {
-            return $"Bot start time: {BotStartTime}, " +
-                   $"Bot end time: {BotEndTime}, " +
-                   $"Candle size in minutes: {CandleSize}, " +
-                   $"Price change to notify: {PriceChangeToNotify}, " +
-                   $"Max rsi to notify: {MaxRsiToNotify}, " +
-                   $"Rsi size : {RsiSize}, " +
-                   $"Fast EMA size : {FastEmaSize}, " +
-                   $"Slow EMA size : {SlowEmaSize}, " +
-                   $"Signal size : {SignalSize}, " +
-                   $"Max macd polling time : {MaxMacdPollingTime}, " +
-                   $"Rsi memory size: {RsiMemorySize}, " +
-                   $"Currencies: {string.Join(", ", Currencies)}";
+            return $"{base.ToString()},\n" +
+                   $"Bot start time    : {BotStartTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Bot end time      : {BotEndTime:dd/MM/yyyy HH:mm:ss},\n" +
+                   $"Rsi size          : {RsiSize},\n" +
+                   $"Mean average size : {MeanAverageSize},\n" +
+                   $"Currencies        : {string.Join(", ", Currencies)}";
         }
     }
 }

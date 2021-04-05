@@ -42,7 +42,7 @@ namespace DataGenerator
             DateTime endTime = dataGeneratorParameters.CandlesEndTime;
             while(currentTime < endTime)
             {
-                s_logger.LogInformation($"{currency}: Start Download data for {currentTime:dd/MM/yyyy}");
+                s_logger.LogInformation($"{currency}: Start Download data for {currentTime:dd/MM/yyyy HH:mm:ss}");
                 MyCandle[] newCandles = (await candleService.GetOneMinuteCandles(currency, currentTime)).ToArray();
             
                 if (File.Exists(fileName))
@@ -54,7 +54,7 @@ namespace DataGenerator
                 }
 
                 await CsvFileAccess.WriteCsvAsync(fileName, newCandles.Distinct().ToArray());
-                s_logger.LogInformation($"{currency}: Done Download data for {currentTime:dd/MM/yyyy}");
+                s_logger.LogInformation($"{currency}: Done Download data for {currentTime:dd/MM/yyyy HH:mm:ss}");
                 currentTime = currentTime.AddMinutes(999);
                 await Task.Delay(s_requestsIntervalInMilliseconds);
             }

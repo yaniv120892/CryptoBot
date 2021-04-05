@@ -21,7 +21,8 @@ namespace CryptoBot.Abstractions
         Task<(bool, PollingResponseBase)> WaitUnitPriceChangeAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
-            decimal basePrice,
+            decimal minPrice,
+            decimal maxPrice,
             int age,
             int phaseNumber,
             List<string> phasesDescription);
@@ -37,6 +38,17 @@ namespace CryptoBot.Abstractions
             int age,
             int phaseNumber, List<string> phasesDescription);
         
+        bool ValidatePriceAboveMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription);
+        bool ValidatePriceBelowMeanAverage(DateTime currentTime, 
+            string currency, 
+            int age, 
+            int phaseNumber, 
+            List<string> phasesDescription);
+        
         Task<DateTime> WaitAsync(DateTime currentTime,
             CancellationToken cancellationToken,
             string currency,
@@ -48,10 +60,14 @@ namespace CryptoBot.Abstractions
             string currency);
         
         Task<BuyAndSellTradeInfo> BuyAndPlaceSellOrder(DateTime currentTime,
+            CancellationToken cancellationToken,
             string currency,
             int age,
             int phaseNumber,
             List<string> phasesDescription,
+            decimal buyPrice,
             decimal quoteOrderQuantity);
+
+        decimal GetLastRecordedPrice(string currency, DateTime currentTime);
     }
 }

@@ -41,7 +41,7 @@ namespace Services
             }
             catch (Exception e)
             {
-                s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency}");
+                s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency}: {e.Message}");
                 throw new Exception($"Failed to get {candlesAmount} candles for {currency}");
             }
         }
@@ -60,8 +60,8 @@ namespace Services
             }
             catch (Exception e)
             {
-                s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency} from {startTime}");
-                throw new Exception($"Failed to get {candlesAmount} candles for {currency} from {startTime}");
+                s_logger.LogError(e,$"Failed to get {candlesAmount} candles for {currency} from {startTime:dd/MM/yyyy HH:mm:ss}");
+                throw new Exception($"Failed to get {candlesAmount} candles for {currency} from {startTime:dd/MM/yyyy HH:mm:ss}");
             }
         }
         
@@ -70,7 +70,7 @@ namespace Services
         {
             IBinanceKline[] binanceKlinesArr = response.Data as IBinanceKline[] ?? response.Data.ToArray();
             Memory<MyCandle> candlesDescription =
-                BinanceKlineToMyCandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
+                CandleConverter.ConvertByCandleSize(binanceKlinesArr, 1, candlesAmount);
             return candlesDescription;
         }
     }

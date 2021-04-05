@@ -16,16 +16,13 @@ namespace CryptoLive
         public string[] Currencies { get; }
         public NotificationType NotificationType { get; set; }
         public int RsiSize { get; set; }
-        public int FastEmaSize { get; set; }
-        public int SlowEmaSize { get; set; }
-        public int SignalSize { get; set; }
-        public int MaxMacdPollingTime { get; set; }
-        public int BotDelayTime { get; set; }
+        public int BotDelayTimeInMinutes { get; set; }
         public string TelegramChatId { get; }
         public string TelegramAuthToken { get; }
         public string CryptoBotName { get; }
         public string MongoDbHost { get; }
         public string MongoDbDataBase { get; }
+        public int MeanAverageSize { get; set; }
 
         public CryptoLiveParameters(IConfigurationSection applicationSection) : base(applicationSection)
         {
@@ -38,11 +35,8 @@ namespace CryptoLive
             Currencies = applicationSection[nameof(Currencies)].Split(",");
             NotificationType = Enum.Parse<NotificationType>(applicationSection[nameof(NotificationType)]);
             RsiSize = int.Parse(applicationSection[nameof(RsiSize)]);
-            FastEmaSize = int.Parse(applicationSection[nameof(FastEmaSize)]);
-            SlowEmaSize = int.Parse(applicationSection[nameof(SlowEmaSize)]);
-            SignalSize = int.Parse(applicationSection[nameof(SignalSize)]);
-            MaxMacdPollingTime = int.Parse(applicationSection[nameof(MaxMacdPollingTime)]);
-            BotDelayTime = int.Parse(applicationSection[nameof(BotDelayTime)]);
+            MeanAverageSize = int.Parse(applicationSection[nameof(MeanAverageSize)]);
+            BotDelayTimeInMinutes = int.Parse(applicationSection[nameof(BotDelayTimeInMinutes)]);
             TelegramChatId = applicationSection[nameof(TelegramChatId)];
             TelegramAuthToken = applicationSection[nameof(TelegramAuthToken)];
             CryptoBotName = applicationSection[nameof(CryptoBotName)];
@@ -56,7 +50,8 @@ namespace CryptoLive
                    $"Currencies {string.Join(", ", Currencies)},\n" +
                    $"Notification Type: {NotificationType.ToString()},\n" +
                    $"Rsi Size: {RsiSize},\n" +
-                   $"Bot Delay Time: {BotDelayTime}\n" +
+                   $"Mean Average Size: {RsiSize},\n" +
+                   $"Bot Delay Time in minutes: {BotDelayTimeInMinutes}\n" +
                    $"Crypto Bot Name: {CryptoBotName}";
         }
     }

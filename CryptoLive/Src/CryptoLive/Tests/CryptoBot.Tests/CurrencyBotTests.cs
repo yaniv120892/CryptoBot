@@ -18,12 +18,17 @@ namespace CryptoBot.Tests
     {
         private static readonly string s_currency = "CurrencyName";
         private static readonly decimal s_quoteOrderQuantity = 100;
-        private static readonly decimal s_basePrice = 1;
+        private static readonly decimal s_minPrice = (decimal)0.92;
+        private static readonly decimal s_maxPrice = (decimal)1.012;
+        private static readonly decimal s_buyPrice = 1;
         private static readonly int s_candleSize = 15;
         private static readonly DateTime s_botStartTime =  new DateTime(2020, 1, 1, 10, 10, 0);
         private static readonly DateTime s_rsiPollingEndTime = s_botStartTime.AddMinutes(10);
         private static readonly DateTime s_childStartTime = s_rsiPollingEndTime.AddMinutes(1);
         private static readonly DateTime s_validateCandleIsGreenStartTime = s_childStartTime.AddMinutes(s_candleSize-1);
+        private static readonly BuyAndSellTradeInfo s_buyAndSellTradeInfoFilled = new BuyAndSellTradeInfo(s_buyPrice, 
+            s_maxPrice, s_minPrice, s_quoteOrderQuantity/s_buyPrice, 
+            s_validateCandleIsGreenStartTime, s_validateCandleIsGreenStartTime);
 
         private readonly Mock<ICurrencyBotPhasesExecutor> m_currencyBotPhasesExecutorMock = new Mock<ICurrencyBotPhasesExecutor>();
         private readonly Mock<ICurrencyBotFactory> m_currencyBotFactoryMock = new Mock<ICurrencyBotFactory>();
@@ -54,6 +59,7 @@ namespace CryptoBot.Tests
             Assert.AreEqual(BotResult.Faulted, botResult.BotResult);
             Assert.AreEqual(s_botStartTime, botResult.EndTime);
         }
+
 
         [TestMethod]
         public async Task When_StartAsync_Given_ValidateCandleIsRed_ThrowsException_Return_FaultedBotResult()
@@ -139,8 +145,11 @@ namespace CryptoBot.Tests
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, 
-                    s_currency, 0, 4, It.IsAny <List<string>>(), s_quoteOrderQuantity))
+                .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
+                .Returns(s_buyPrice);
+            m_currencyBotPhasesExecutorMock
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, m_cancellationTokenSource.Token,
+                    s_currency, 0, 4, It.IsAny <List<string>>(), s_buyPrice ,s_quoteOrderQuantity))
                 .Throws(new Exception());
             SetupWaitAsyncMethod(m_currencyBotPhasesExecutorMock, s_rsiPollingEndTime, m_cancellationTokenSource, s_childStartTime, 
                 s_validateCandleIsGreenStartTime);
@@ -177,15 +186,16 @@ namespace CryptoBot.Tests
                     m.ValidateCandleIsGreen(s_validateCandleIsGreenStartTime, s_currency, 0,
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
-            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(s_basePrice, 
-                s_basePrice*(decimal) 1.01, s_basePrice * (decimal) 0.99, s_quoteOrderQuantity/s_basePrice);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, 
-                    s_currency, 0, 4, It.IsAny <List<string>>(), s_quoteOrderQuantity))
-                .Returns(Task.FromResult(buyAndSellTradeInfo));
+                .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
+                .Returns(s_buyPrice);
+            m_currencyBotPhasesExecutorMock
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, m_cancellationTokenSource.Token,
+                    s_currency, 0, 4, It.IsAny <List<string>>(),  s_buyPrice, s_quoteOrderQuantity))
+                .Returns(Task.FromResult(s_buyAndSellTradeInfoFilled));
             m_currencyBotPhasesExecutorMock
                 .Setup(m => m.WaitUnitPriceChangeAsync(s_validateCandleIsGreenStartTime,
-                    It.IsAny<CancellationToken>(), s_currency, s_basePrice, 0, 
+                    It.IsAny<CancellationToken>(), s_currency, s_minPrice, s_maxPrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Throws(new Exception());
             SetupWaitAsyncMethod(m_currencyBotPhasesExecutorMock, s_rsiPollingEndTime, m_cancellationTokenSource, s_childStartTime, 
@@ -228,15 +238,16 @@ namespace CryptoBot.Tests
                     m.ValidateCandleIsGreen(s_validateCandleIsGreenStartTime, s_currency, 0,
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
-            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(s_basePrice, 
-                s_basePrice*(decimal) 1.01, s_basePrice * (decimal) 0.99, s_quoteOrderQuantity/s_basePrice);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, 
-                    s_currency, 0, 4, It.IsAny <List<string>>(), s_quoteOrderQuantity))
-                .Returns(Task.FromResult(buyAndSellTradeInfo));
+                .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
+                .Returns(s_buyPrice);
+            m_currencyBotPhasesExecutorMock
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, It.IsAny<CancellationToken>(),
+                    s_currency, 0, 4, It.IsAny <List<string>>(), s_buyPrice, s_quoteOrderQuantity))
+                .Returns(Task.FromResult(s_buyAndSellTradeInfoFilled));
             m_currencyBotPhasesExecutorMock
                 .Setup(m => m.WaitUnitPriceChangeAsync(s_validateCandleIsGreenStartTime,
-                    It.IsAny<CancellationToken>(), s_currency, s_basePrice, 0, 
+                    It.IsAny<CancellationToken>(), s_currency, s_minPrice, s_maxPrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((true,pricePollingResponse)));
             SetupChildCurrencyBotMock(childBotDetailsResult, s_childStartTime,m_currencyBotFactoryMock);
@@ -249,14 +260,9 @@ namespace CryptoBot.Tests
            BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
+            Assert.IsNull(botResult.Exception, $"expected exception to be null but was {botResult.Exception?.StackTrace}");
             Assert.AreEqual(BotResult.Win, botResult.BotResult);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
-        }
-
-        private void SetupAccountQuoteProvider()
-        {
-            m_accountQuoteProvider.Setup(m => m.GetAvailableQuote())
-                .Returns(Task.FromResult(s_quoteOrderQuantity));
         }
 
         [TestMethod]
@@ -334,15 +340,16 @@ namespace CryptoBot.Tests
                     m.ValidateCandleIsGreen(s_validateCandleIsGreenStartTime, s_currency, 0,
                         3, It.IsAny<List<string>>()))
                 .Returns(true);
-            var buyAndSellTradeInfo = new BuyAndSellTradeInfo(s_basePrice, 
-                s_basePrice*(decimal) 1.01, s_basePrice * (decimal) 0.99, s_quoteOrderQuantity/s_basePrice);
             m_currencyBotPhasesExecutorMock
-                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, 
-                    s_currency, 0, 4, It.IsAny <List<string>>(), s_quoteOrderQuantity))
-                .Returns(Task.FromResult(buyAndSellTradeInfo));
+                .Setup(m => m.GetLastRecordedPrice(s_currency, s_validateCandleIsGreenStartTime))
+                .Returns(s_buyPrice);
+            m_currencyBotPhasesExecutorMock
+                .Setup(m => m.BuyAndPlaceSellOrder(s_validateCandleIsGreenStartTime, It.IsAny<CancellationToken>(),
+                    s_currency, 0, 4, It.IsAny <List<string>>(), s_buyPrice, s_quoteOrderQuantity))
+                .Returns(Task.FromResult(s_buyAndSellTradeInfoFilled));
             m_currencyBotPhasesExecutorMock
                 .Setup(m => m.WaitUnitPriceChangeAsync(s_validateCandleIsGreenStartTime,
-                    It.IsAny<CancellationToken>(), s_currency, s_basePrice, 0, 
+                    It.IsAny<CancellationToken>(), s_currency, s_minPrice, s_maxPrice, 0, 
                     5, It.IsAny<List<string>>()))
                 .Returns(Task.FromResult<(bool, PollingResponseBase)>((false,pricePollingResponse)));
             SetupChildCurrencyBotMock(childBotDetailsResult, s_childStartTime,
@@ -354,6 +361,7 @@ namespace CryptoBot.Tests
             BotResultDetails botResult = await sut.StartAsync();
             
             // Assert
+            Assert.IsNull(botResult.Exception, $"expected exception to be null but was {botResult.Exception?.StackTrace}");
             Assert.AreEqual(BotResult.Loss, botResult.BotResult);
             Assert.AreEqual(pricePollingEndTime, botResult.EndTime);
         }
@@ -459,6 +467,12 @@ namespace CryptoBot.Tests
                 .Setup(m =>
                     m.WaitForNextCandleAsync(childStartTime, cancellationTokenSource.Token, s_currency))
                 .Returns(Task.FromResult(validateCandleIsGreenStartTime));
+        }
+        
+        private void SetupAccountQuoteProvider()
+        {
+            m_accountQuoteProvider.Setup(m => m.GetAvailableQuote())
+                .Returns(Task.FromResult(s_quoteOrderQuantity));
         }
     }
 

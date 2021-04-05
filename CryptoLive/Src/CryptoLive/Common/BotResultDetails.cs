@@ -38,7 +38,7 @@ namespace Common
         {
             return $"Currency: {Currency}, " +
                    $"BotResult: {BotResult}, " +
-                   $"End time: {EndTime}, " +
+                   $"End time: {EndTime:dd/MM/yyyy HH:mm:ss}, " +
                    $"Exception: {Exception?.Message}" +
                    $"\nPhases description: {string.Join(",\n", PhasesDescription)}, ";
         }

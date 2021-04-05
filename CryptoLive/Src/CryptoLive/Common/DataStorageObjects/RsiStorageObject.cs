@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace Common.DataStorageObjects
 {
@@ -34,6 +35,11 @@ namespace Common.DataStorageObjects
         public override int GetHashCode()
         {
             return HashCode.Combine(base.GetHashCode(), Rsi);
+        }
+
+        public override string ToString()
+        {
+            return Rsi.ToString(CultureInfo.InvariantCulture);
         }
     }
 }

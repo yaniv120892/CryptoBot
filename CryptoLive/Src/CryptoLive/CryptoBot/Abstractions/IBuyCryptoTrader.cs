@@ -5,6 +5,6 @@ namespace CryptoBot.Abstractions
 {
     public interface IBuyCryptoTrader
     {
-        Task<(decimal buyPrice, decimal quantity)> Buy(string currency, decimal quoteOrderQuantity, DateTime currentTime);
+        Task<long> BuyAsync(string currency, decimal price, decimal quantity, DateTime currentTime);
     }
 }

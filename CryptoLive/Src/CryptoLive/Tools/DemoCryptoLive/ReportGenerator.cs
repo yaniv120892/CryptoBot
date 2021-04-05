@@ -10,26 +10,32 @@ namespace DemoCryptoLive
     {
         private static readonly ILogger s_logger = ApplicationLogging.CreateLogger<ReportGenerator>();
 
-        public static async Task GenerateReport(Dictionary<string, Task<(int, int, string, decimal)>> tasks, 
+        public static async Task GenerateReport(Dictionary<string, Task<(int, int, int, string, decimal)>> tasks, 
             string[] currencies, decimal priceChangeToNotify)
         {
             int totalWinCounter = 0;
             int totalLossCounter = 0;
+            int totalEvenCounter = 0;
             int total;
             
             foreach (string currency in currencies)
             {
-                (int winCounter, int lossCounter, string _, decimal _) = await tasks[currency];
+                (int winCounter, int lossCounter, int evenCounter, string winAndLossesDescription, decimal _) = await tasks[currency];
+                s_logger.LogInformation(winAndLossesDescription);
                 total = winCounter + lossCounter;
+                decimal currencySuccess = CalculateSuccess(winCounter, total);
+                double currencyReturn = CalculateReturn(winCounter, lossCounter, priceChangeToNotify);
                 s_logger.LogInformation(
                     $"{currency} Summary: " +
-                    $"Success {CalculateSuccess(winCounter, total)}%, " +
-                    $"Return {CalculateReturn(winCounter, lossCounter, priceChangeToNotify)}%, " +
-                    $"Win - {winCounter}, " +
-                    $"Loss {lossCounter}, " +
-                    $"Total {total}");
+                    $"Success: {currencySuccess}%, " +
+                    $"Return: {currencyReturn:F2}%, " +
+                    $"Win: {winCounter}, " +
+                    $"Loss: {lossCounter}, " +
+                    $"Even: {evenCounter}, " +
+                    $"Total: {total}");
                 totalWinCounter += winCounter;
                 totalLossCounter += lossCounter;
+                totalEvenCounter += evenCounter;
             }
 
             total = totalWinCounter + totalLossCounter;
@@ -39,9 +45,10 @@ namespace DemoCryptoLive
                 $"Final Summary: " +
                 $"Success: {totalSuccess}%, " +
                 $"Return: {totalReturn:F2}%, " +
-                $"Win - {totalWinCounter}, " +
-                $"Loss {totalLossCounter}, " +
-                $"Total {total}");
+                $"Win: {totalWinCounter}, " +
+                $"Loss: {totalLossCounter}, " +
+                $"Even: {totalEvenCounter}, " +
+                $"Total: {total}");
         }
 
         private static double CalculateReturn(decimal winCounter,

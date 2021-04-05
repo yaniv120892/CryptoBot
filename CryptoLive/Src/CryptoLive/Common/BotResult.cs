@@ -4,6 +4,7 @@
     {
         Loss,
         Win,
-        Faulted
+        Faulted,
+        Even
     }
 }
