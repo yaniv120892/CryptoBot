@@ -2,6 +2,7 @@ using System;
 using Common.DataStorageObjects;
 using Storage.Abstractions.Providers;
 using Storage.Abstractions.Repository;
+using Storage.Repository;
 
 namespace Storage.Providers
 {
@@ -14,6 +15,10 @@ namespace Storage.Providers
             m_rsiRepository = rsiRepository;
         }
 
-        public decimal Get(string currency, DateTime dateTime) => m_rsiRepository.Get(currency, dateTime).Rsi;
+        public decimal Get(string currency, DateTime dateTime)
+        {
+            DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(dateTime);
+            return m_rsiRepository.Get(currency, time).Rsi;
+        } 
     }
 }

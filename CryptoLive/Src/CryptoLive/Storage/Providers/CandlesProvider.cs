@@ -35,7 +35,8 @@ namespace Storage.Providers
 
         public MyCandle GetLastCandle(string currency, int candleSize, DateTime currentTime)
         {
-            Memory<MyCandle> candles = GetCandles(currency, 1, candleSize, currentTime);
+            DateTime time = RepositoryKeyConverter.AlignTimeToRepositoryKeyFormat(currentTime);
+            Memory<MyCandle> candles = GetCandles(currency, 1, candleSize, time);
             return candles.Span[0];
         }
     }

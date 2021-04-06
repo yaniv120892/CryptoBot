@@ -25,11 +25,8 @@ namespace Storage.Providers
         public decimal GetRsi(string currency, DateTime currentTime) => 
             m_rsiProvider.Get(currency, currentTime);
 
-        public decimal GetMeanAverage(string currency, DateTime currentTime)
-        {
-            DateTime time = GetLastCandle(currency, 1, currentTime).CloseTime;
-            return m_meanAverageProvider.Get(currency, time);
-        }
+        public decimal GetMeanAverage(string currency, DateTime currentTime) => 
+            m_meanAverageProvider.Get(currency, currentTime);
 
         public PriceAndRsi GetRsiAndClosePrice(string currency, DateTime currentTime) =>
             GetRsiAndPriceImpl(currency, currentTime);
