@@ -12,7 +12,7 @@ namespace CryptoBot.CryptoPollings
     public class OrderCryptoPolling : CryptoPollingBase
     {
         private static string s_actionName = "Order polling";
-        private static readonly int s_maxIterations = 15;
+        private static readonly int s_maxIterations = 5;
         private static readonly int s_delayTimeInSeconds = 60;
 
         private readonly ISystemClock m_systemClock;
