@@ -10,6 +10,8 @@ namespace Storage.Updaters
         private readonly IRepository<CandleStorageObject> m_candleRepository;
         private readonly string m_currency;
         private readonly string m_calculatedDataFolder;
+        
+        private bool m_addedNewData;
 
         public CandleRepositoryUpdater(IRepository<CandleStorageObject> candleRepository, 
             string currency, 
@@ -22,13 +24,21 @@ namespace Storage.Updaters
 
         public void AddInfo(CandleStorageObject candle, DateTime newTime)
         {
+            if (m_candleRepository.TryGet(m_currency, newTime, out _))
+            {
+                return;
+            }
+            m_addedNewData = true;
             m_candleRepository.Add(m_currency, newTime, candle);
         }
         
         public async Task PersistDataToFileAsync()
         {
-            string candleStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, m_calculatedDataFolder);
-            await m_candleRepository.SaveDataToFileAsync(m_currency, candleStorageObjectsFileName);
+            if (m_addedNewData)
+            {
+                string candleStorageObjectsFileName = CalculatedFileProvider.GetCalculatedCandleFile(m_currency, m_calculatedDataFolder);
+                await m_candleRepository.SaveDataToFileAsync(m_currency, candleStorageObjectsFileName);
+            }
         }
     }
 }
