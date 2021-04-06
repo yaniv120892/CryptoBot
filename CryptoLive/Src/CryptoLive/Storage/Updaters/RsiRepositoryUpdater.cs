@@ -18,6 +18,8 @@ namespace Storage.Updaters
         private readonly int m_rsiSize;
         private readonly string m_calculatedDataFolder;
 
+        private bool m_addedNewData;
+
         public RsiRepositoryUpdater(IRepository<RsiStorageObject> rsiRepository, 
             IRepository<WsmaStorageObject> wsmaRepository, string currency, int rsiSize,
             string calculatedDataFolder)
@@ -35,19 +37,23 @@ namespace Storage.Updaters
             {
                 return;
             }
-            
+
+            m_addedNewData = true;
             AddWsmaToRepository(candle, newTime);
             AddRsiToRepository(newTime);
         }
 
         public async Task PersistDataToFileAsync()
         {
-            string rsiStorageObjectsFileName =
-                CalculatedFileProvider.GetCalculatedRsiFile(m_currency, m_rsiSize, m_calculatedDataFolder);
-            await m_rsiRepository.SaveDataToFileAsync(m_currency, rsiStorageObjectsFileName);
-            string wsmaStorageObjectsFileName = 
-                CalculatedFileProvider.GetCalculatedWsmaFile(m_currency, m_rsiSize, m_calculatedDataFolder);
-            await m_wsmaRepository.SaveDataToFileAsync(m_currency, wsmaStorageObjectsFileName);
+            if (m_addedNewData)
+            {
+                string rsiStorageObjectsFileName =
+                    CalculatedFileProvider.GetCalculatedRsiFile(m_currency, m_rsiSize, m_calculatedDataFolder);
+                await m_rsiRepository.SaveDataToFileAsync(m_currency, rsiStorageObjectsFileName);
+                string wsmaStorageObjectsFileName = 
+                    CalculatedFileProvider.GetCalculatedWsmaFile(m_currency, m_rsiSize, m_calculatedDataFolder);
+                await m_wsmaRepository.SaveDataToFileAsync(m_currency, wsmaStorageObjectsFileName);
+            }
         }
 
         private void AddRsiToRepository(DateTime newTime)

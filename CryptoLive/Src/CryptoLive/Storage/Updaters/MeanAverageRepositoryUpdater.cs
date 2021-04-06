@@ -17,6 +17,8 @@ namespace Storage.Updaters
         private readonly int m_meanAverageSize;
         private readonly string m_calculatedDataFolder;
 
+        private bool m_addedNewData;
+
         public MeanAverageRepositoryUpdater(IRepository<MeanAverageStorageObject> meanAverageRepository,
             IRepository<CandleStorageObject> candleRepository,
             string currency, 
@@ -36,15 +38,18 @@ namespace Storage.Updaters
             {
                 return;
             }
-            
+            m_addedNewData = true;
             AddMeanAverageToRepository(candle, newTime);
         }
 
         public async Task PersistDataToFileAsync()
         {
-            string storageObjectsFileName =
-                CalculatedFileProvider.GetCalculatedMeanAverageFile(m_currency, m_meanAverageSize, m_calculatedDataFolder);
-            await m_meanAverageRepository.SaveDataToFileAsync(m_currency, storageObjectsFileName);
+            if (m_addedNewData)
+            {
+                string storageObjectsFileName =
+                    CalculatedFileProvider.GetCalculatedMeanAverageFile(m_currency, m_meanAverageSize, m_calculatedDataFolder);
+                await m_meanAverageRepository.SaveDataToFileAsync(m_currency, storageObjectsFileName);
+            }
         }
         
         private void AddMeanAverageToRepository(CandleStorageObject candle, DateTime newTime)
